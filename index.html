@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <title>M-Picture</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="images/icons/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="images/icons/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="images/icons/favicon-16x16.png"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/docx@7.1.0/build/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <header>
+      <h1>M-Picture</h1>
+      <div class="header-controls">
+        <div class="toggle-container">
+          <div class="labels">
+            <span class="label" data-value="left">刑事案件</span>
+            <span class="label" data-value="middle">交通事故</span>
+            <span class="label" data-value="right">交通違規</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="zip-controls">
+        <button
+          id="downloadZip"
+          class="downzip-btn downzip-btn-disabled tooltip-bottom"
+        >
+          <span class="material-symbols-outlined">deployed_code_update</span>
+          <span class="tooltip-text">打包照片</span>
+        </button>
+        <div class="download-dropdown">
+          <button
+            id="generate"
+            class="create-btn create-btn-disabled tooltip-bottom"
+          >
+            <span class="material-symbols-outlined">file_save</span>
+            <span class="tooltip-text">下載文件</span>
+          </button>
+          <div class="download-menu" id="downloadMenu">
+            <button type="button" class="download-option" id="downloadDocx">
+              <span class="material-symbols-outlined">description</span>
+              <span>DOCX</span>
+            </button>
+            <button type="button" class="download-option" id="downloadPdf">
+              <span class="material-symbols-outlined">picture_as_pdf</span>
+              <span>PDF</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <aside class="sidebar">
+      <div class="form-group" data-format="left">
+        <label for="zipPrefix">案 由</label>
+        <input
+          type="text"
+          id="zipPrefix"
+          class="sidebar-input"
+          placeholder="竊盜案"
+        />
+      </div>
+      <div class="form-group" data-format="left">
+        <label for="caseUni">單 位</label>
+        <input
+          type="text"
+          id="caseUni"
+          class="sidebar-input"
+          placeholder="龜有公園前派出所"
+        />
+      </div>
+
+      <div class="form-group" data-format="right">
+        <label for="markNumber">標示單號</label>
+        <input
+          type="text"
+          id="markNumber"
+          class="sidebar-input"
+          placeholder="W123456789"
+        />
+      </div>
+      <div class="form-group" data-format="right">
+        <label for="ticketNumber">舉發單號</label>
+        <input
+          type="text"
+          id="ticketNumber"
+          class="sidebar-input"
+          placeholder="Z987654321"
+        />
+      </div>
+
+      <div class="form-group-row" data-format="left middle right">
+        <label for="caseDate" id="dateLabelText">攝影日期</label>
+        <label class="switch">
+          <input type="checkbox" id="dateModeSwitch" />
+          <span class="slider"></span>
+        </label>
+        <span id="dateModeLabel"></span>
+      </div>
+      <div class="form-group" data-format="left middle right">
+        <input
+          type="text"
+          id="caseDate"
+          class="sidebar-input"
+          placeholder="115/05/16 09:18"
+        />
+      </div>
+
+      <div class="form-group" data-format="left right" id="addressGroup">
+        <label for="caseAddress" id="addressLabelText">攝影地址</label>
+        <input
+          type="text"
+          id="caseAddress"
+          class="sidebar-input"
+          placeholder="東京都葛飾區龜有3丁目32番17號"
+        />
+      </div>
+
+      <div class="form-group" data-format="right">
+        <label for="plateNumber">違規車號</label>
+        <input
+          type="text"
+          id="plateNumber"
+          class="sidebar-input"
+          placeholder="ABC-1234"
+        />
+      </div>
+      <div class="form-group" data-format="right">
+        <label for="violationLaw">違規法條</label>
+        <input
+          type="text"
+          id="violationLaw"
+          class="sidebar-input"
+          placeholder="第 56 條 1 項 1 款"
+        />
+      </div>
+      <div class="form-group" data-format="right">
+        <label for="violationFact">違規事實</label>
+        <input
+          type="text"
+          id="violationFact"
+          class="sidebar-input"
+          placeholder="紅線停車"
+        />
+      </div>
+
+      <div class="form-group" data-format="left right" id="personGroup">
+        <label for="caseNumber" id="personLabelText">攝影人員</label>
+        <input
+          type="text"
+          id="caseNumber"
+          class="sidebar-input"
+          placeholder="毛利小五郎"
+        />
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="view-switch-container">
+        <div class="size-slider-container">
+          <button type="button" id="sizeDecBtn" class="size-btn" title="縮小">
+            <span class="material-symbols-outlined">remove</span>
+          </button>
+          <input
+            type="range"
+            id="photoSizeSlider"
+            min="120"
+            max="600"
+            value="250"
+            step="20"
+          />
+          <button type="button" id="sizeIncBtn" class="size-btn" title="放大">
+            <span class="material-symbols-outlined">add</span>
+          </button>
+        </div>
+        <button
+          type="button"
+          id="gridViewBtn"
+          class="view-btn active"
+          title="格狀版面配置"
+        >
+          <span class="material-symbols-outlined">grid_view</span>
+        </button>
+        <button
+          type="button"
+          id="listViewBtn"
+          class="view-btn"
+          title="列表版面配置"
+        >
+          <span class="material-symbols-outlined">view_list</span>
+        </button>
+      </div>
+      <div class="container">
+        <div id="imagePreview"></div>
+      </div>
+    </main>
+
+    <div id="uploadingModal" class="modal">
+      <div class="modal-content">
+        <p>🚀 照片載入中，請稍候...</p>
+        <div class="loader"></div>
+      </div>
+    </div>
+
+    <div id="loadingModal" class="modal">
+      <div class="modal-content">
+        <p>🖨️ 照片黏貼中，請稍候...</p>
+        <div class="loader"></div>
+      </div>
+    </div>
+    <div id="zippingModal" class="modal">
+      <div class="modal-content">
+        <p>📦 照片打包中，請稍候...</p>
+        <div class="loader"></div>
+      </div>
+    </div>
+    <div id="conversionModal" class="modal">
+      <div class="modal-content">
+        <p>⚙️ 轉換.heic檔案中，請稍候...</p>
+        <div class="loader"></div>
+      </div>
+    </div>
+
+    <button class="fab-add-photo" id="fabAddPhoto" title="新增照片">
+      <span class="material-symbols-outlined" style="font-size: 60px">add</span>
+    </button>
+    <input
+      type="file"
+      id="imageInput"
+      multiple
+      accept="image/*,.heic,.HEIC"
+      style="display: none"
+    />
+
+    <script type="module" src="js/main.js"></script>
+
+    <footer>
+      <h3>🚧 Copyright© 2024 thehsiuhsiu. All rights reserved.🚧</h3>
+      <p>本網頁內容與ChatGPT、Claude、Gemini及GitHub Copilot共同協作開發。</p>
+    </footer>
+
+    <div id="resize-warning" class="modal">
+      <div class="modal-content">
+        <p>提醒：網頁視窗過小！</p>
+        <p>請放大視窗或縮小比例以確保獲得最佳體驗。</p>
+      </div>
+    </div>
+  </body>
+</html>
