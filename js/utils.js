@@ -1,1 +1,161 @@
-const _0x34948e=_0x3c72;(function(_0x488192,_0x1e1851){const _0x4762d5=_0x3c72,_0x139833=_0x488192();while(!![]){try{const _0x20915d=-parseInt(_0x4762d5(0x71))/0x1+-parseInt(_0x4762d5(0x6f))/0x2+parseInt(_0x4762d5(0x84))/0x3*(-parseInt(_0x4762d5(0x6e))/0x4)+-parseInt(_0x4762d5(0x7e))/0x5+parseInt(_0x4762d5(0x72))/0x6*(parseInt(_0x4762d5(0x6b))/0x7)+-parseInt(_0x4762d5(0x6c))/0x8+-parseInt(_0x4762d5(0x66))/0x9*(-parseInt(_0x4762d5(0x68))/0xa);if(_0x20915d===_0x1e1851)break;else _0x139833['push'](_0x139833['shift']());}catch(_0x42e561){_0x139833['push'](_0x139833['shift']());}}}(_0x3f38,0xb5892));export const EMPTY_STATE_HTML=_0x34948e(0x79);export const createThumbnail=(_0x5767d4,_0x5cb50e=0x320,_0x2fa314=0x320)=>{return new Promise((_0x4dd3d6,_0x25b01a)=>{const _0x1cf474=_0x3c72,_0x4553f9=new Image();_0x4553f9[_0x1cf474(0x81)]=()=>{const _0x5d1e53=_0x1cf474,{width:_0x2c70b3,height:_0x2a1caf}=_0x4553f9;let _0x3b0bc9=_0x2c70b3,_0x180ca5=_0x2a1caf;_0x2c70b3>_0x2a1caf?_0x2c70b3>_0x5cb50e&&(_0x180ca5=_0x2a1caf*(_0x5cb50e/_0x2c70b3),_0x3b0bc9=_0x5cb50e):_0x2a1caf>_0x2fa314&&(_0x3b0bc9=_0x2c70b3*(_0x2fa314/_0x2a1caf),_0x180ca5=_0x2fa314);const _0x12197c=document[_0x5d1e53(0x74)]('canvas');_0x12197c[_0x5d1e53(0x87)]=_0x3b0bc9,_0x12197c[_0x5d1e53(0x7b)]=_0x180ca5;const _0x56677e=_0x12197c[_0x5d1e53(0x76)]('2d');_0x56677e['drawImage'](_0x4553f9,0x0,0x0,_0x3b0bc9,_0x180ca5),_0x4dd3d6(_0x12197c[_0x5d1e53(0x7d)]('image/jpeg',0.8));},_0x4553f9['onerror']=_0x25b01a,_0x4553f9['src']=_0x5767d4;});};export const resizeImageForDoc=(_0x5bc7e9,_0x398262=0x4b0)=>{return new Promise((_0x1ca020,_0x31e914)=>{const _0x1599de=_0x3c72,_0x3e7388=new Image();_0x3e7388[_0x1599de(0x81)]=()=>{const _0x1ad511=_0x1599de,{width:_0x5d0bf3,height:_0x224411}=_0x3e7388;let _0x1e3bb9=_0x5d0bf3,_0x1ffc95=_0x224411;(_0x5d0bf3>_0x398262||_0x224411>_0x398262)&&(_0x5d0bf3>_0x224411?(_0x1e3bb9=_0x398262,_0x1ffc95=_0x224411*(_0x398262/_0x5d0bf3)):(_0x1ffc95=_0x398262,_0x1e3bb9=_0x5d0bf3*(_0x398262/_0x224411)));const _0x192753=document[_0x1ad511(0x74)]('canvas');_0x192753['width']=_0x1e3bb9,_0x192753[_0x1ad511(0x7b)]=_0x1ffc95;const _0x37c757=_0x192753[_0x1ad511(0x76)]('2d');_0x37c757['drawImage'](_0x3e7388,0x0,0x0,_0x1e3bb9,_0x1ffc95),_0x1ca020(_0x192753[_0x1ad511(0x7d)](_0x1ad511(0x6d),0.9));},_0x3e7388[_0x1599de(0x7c)]=_0x31e914,_0x3e7388[_0x1599de(0x69)]=_0x5bc7e9;});};export const formatExifDate=_0x1c703a=>{const _0xd67185=_0x34948e;if(!_0x1c703a)return'';const [_0x2d22e3,_0x249e02]=_0x1c703a[_0xd67185(0x70)]('\x20');if(!_0x2d22e3||!_0x249e02)return'';const [_0x1fae8b,_0x2cdf87,_0xcdab35]=_0x2d22e3[_0xd67185(0x70)](':'),_0x2e773f=parseInt(_0x1fae8b,0xa)-0x777,[_0x25b2a8,_0x59a9fa]=_0x249e02[_0xd67185(0x70)](':');return _0x2e773f+'/'+_0x2cdf87+'/'+_0xcdab35+'\x20'+_0x25b2a8+':'+_0x59a9fa;};export const getFormattedDate=()=>{const _0x20ebe8=_0x34948e,_0x40a311=new Date();return _0x40a311[_0x20ebe8(0x6a)]()-0x777+('0'+(_0x40a311['getMonth']()+0x1))[_0x20ebe8(0x75)](-0x2)+('0'+_0x40a311[_0x20ebe8(0x82)]())['slice'](-0x2)+'_'+('0'+_0x40a311[_0x20ebe8(0x86)]())[_0x20ebe8(0x75)](-0x2)+('0'+_0x40a311[_0x20ebe8(0x85)]())[_0x20ebe8(0x75)](-0x2);};let uploadingModalShowTime=0x0;export const showUploadingModal=()=>{const _0x3ebd97=_0x34948e;document[_0x3ebd97(0x7f)](_0x3ebd97(0x83))[_0x3ebd97(0x88)]['display']=_0x3ebd97(0x7a),uploadingModalShowTime=Date[_0x3ebd97(0x67)]();};export const hideUploadingModal=()=>{const _0x23564d=_0x34948e,_0x3b13ee=Date[_0x23564d(0x67)]()-uploadingModalShowTime,_0x128038=0x1f4;_0x3b13ee<_0x128038?setTimeout(()=>{const _0x55898e=_0x23564d;document[_0x55898e(0x7f)](_0x55898e(0x83))[_0x55898e(0x88)]['display']='none';},_0x128038-_0x3b13ee):document[_0x23564d(0x7f)](_0x23564d(0x83))[_0x23564d(0x88)]['display']=_0x23564d(0x80);};function _0x3c72(_0x1fd757,_0x7baab6){const _0x3f38c1=_0x3f38();return _0x3c72=function(_0x3c726d,_0xb29fa4){_0x3c726d=_0x3c726d-0x66;let _0x2eca88=_0x3f38c1[_0x3c726d];return _0x2eca88;},_0x3c72(_0x1fd757,_0x7baab6);}export const showLoadingModal=()=>{const _0x6969ea=_0x34948e;document[_0x6969ea(0x7f)](_0x6969ea(0x73))[_0x6969ea(0x88)][_0x6969ea(0x77)]='block';};function _0x3f38(){const _0x35557f=['\x0a\x20\x20\x20\x20<h3\x20class=\x22disclaimer-primary\x22\x20style=\x22color:\x20#e81a1aff;\x22>免責聲明</h3>\x0a\x20\x20\x20\x20<p\x20>本網頁為個人開發之輔助工具，僅供參考使用<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20使用者應自行負責驗證文件所有信息的正確性<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20開發者對此不擔保任何法律責任</p>\x0a\x20\x20\x20\x20<h3\x20class=\x22disclaimer-primary\x22>【\x20<span\x20style=\x22color:\x20#ff9800;\x22>Auto-fill\x20EXIF</span>\x20】</h3>\x0a\x20\x20\x20\x20<p\x20>本功能為自動讀取照片檔案內嵌之\x20EXIF\x20拍攝日期資訊</br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20使用者仍需自行確認文件內所有資訊之正確性</p>\x20\x20\x20\x0a\x20\x20\x20\x20<h3\x20class=\x22disclaimer-primary\x22>🚀\x20快速開始</h3>\x0a\x20\x20\x20<p\x20>選擇文件類型「刑事案件」「交通事故」「交通違規」<br>\x0a\x20\x20\x20\x20\x20\x20\x20點擊左欄下方\x20\x22\x20+\x20\x22\x20按鈕開始新增照片<br>\x0a\x20\x20\x20\x20\x20\x20\x20切換至\x20「列表版面」可輸入照片說明文字<br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20點擊下載文件按鈕即可下載DOCX、PDF文件<br>\x0a\x20\x20\x20\x20\x20\x20\x20提醒：Word\x202007或更舊版本不支援本網頁生成之DOCX文件</p>\x0a\x20\x20\x20\x20<p\x20style=\x22font-size:\x200.85em;\x20color:\x20#888;\x22>💡\x20可拖曳照片調整順序\x20｜\x20支援部分\x20HEIC\x20格式自動轉換</p>\x0a','block','height','onerror','toDataURL','5350165nBQuUi','getElementById','none','onload','getDate','uploadingModal','3276573wZWoXP','getMinutes','getHours','width','style','36JbmJul','now','10674890FmzuxP','src','getFullYear','119GIhCmb','8218576kYNGvj','image/jpeg','4oPGVxl','386122tQiBhL','split','1051528WSfngq','320382wXUYqf','loadingModal','createElement','slice','getContext','display','conversionModal'];_0x3f38=function(){return _0x35557f;};return _0x3f38();}export const hideLoadingModal=()=>{const _0x50f4bf=_0x34948e;document['getElementById'](_0x50f4bf(0x73))['style'][_0x50f4bf(0x77)]=_0x50f4bf(0x80);};export const showConversionModal=()=>{const _0x1ac7a6=_0x34948e;document[_0x1ac7a6(0x7f)](_0x1ac7a6(0x78))['style'][_0x1ac7a6(0x77)]=_0x1ac7a6(0x7a);};export const hideConversionModal=()=>{const _0x40211c=_0x34948e;document['getElementById']('conversionModal')[_0x40211c(0x88)][_0x40211c(0x77)]='none';};
+// utils.js - 工具函數模組
+
+// ============ 共用 HTML 內容 ============
+
+/**
+ * 空狀態提示 HTML（首頁說明文字）
+ */
+export const EMPTY_STATE_HTML = `
+    <h3 class="disclaimer-primary" style="color: #e81a1aff;">免責聲明</h3>
+    <p >本網頁為個人開發之輔助工具，僅供參考使用<br>
+                                  使用者應自行負責驗證文件所有信息的正確性<br>
+                                  開發者對此不擔保任何法律責任</p>
+    <h3 class="disclaimer-primary">【 <span style="color: #ff9800;">Auto-fill EXIF</span> 】</h3>
+    <p >本功能為自動讀取照片檔案內嵌之 EXIF 拍攝日期資訊</br>
+                                  使用者仍需自行確認文件內所有資訊之正確性</p>   
+    <h3 class="disclaimer-primary">🚀 快速開始</h3>
+   <p >選擇文件類型「刑事案件」「交通事故」「交通違規」<br>
+       點擊左欄下方 " + " 按鈕開始新增照片<br>
+       切換至 「列表版面」可輸入照片說明文字<br>
+        點擊下載文件按鈕即可下載DOCX、PDF文件<br>
+       提醒：Word 2007或更舊版本不支援本網頁生成之DOCX文件</p>
+    <p style="font-size: 0.85em; color: #888;">💡 可拖曳照片調整順序 ｜ 支援部分 HEIC 格式自動轉換</p>
+`;
+
+// ============ 圖片處理函數 ============
+
+/**
+ * 建立縮圖
+ */
+export const createThumbnail = (dataUrl, maxWidth = 800, maxHeight = 800) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const { width, height } = img;
+      let newWidth = width;
+      let newHeight = height;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          newHeight = height * (maxWidth / width);
+          newWidth = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          newWidth = width * (maxHeight / height);
+          newHeight = maxHeight;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, newWidth, newHeight);
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+};
+
+/**
+ * 調整圖片大小（用於文件生成）
+ */
+export const resizeImageForDoc = (dataUrl, maxDimension = 1200) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const { width, height } = img;
+      let newWidth = width;
+      let newHeight = height;
+
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          newWidth = maxDimension;
+          newHeight = height * (maxDimension / width);
+        } else {
+          newHeight = maxDimension;
+          newWidth = width * (maxDimension / height);
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, newWidth, newHeight);
+      resolve(canvas.toDataURL("image/jpeg", 0.9));
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+};
+
+/**
+ * 格式化 EXIF 日期
+ * @param {string} exifDate - EXIF 日期格式，例：2024:06:11 14:23:45
+ * @returns {string} 民國年格式日期
+ */
+export const formatExifDate = (exifDate) => {
+  if (!exifDate) return "";
+  const [datePart, timePart] = exifDate.split(" ");
+  if (!datePart || !timePart) return "";
+  const [y, m, d] = datePart.split(":");
+  const year = parseInt(y, 10) - 1911;
+  const [hh, mm] = timePart.split(":");
+  return `${year}/${m}/${d} ${hh}:${mm}`;
+};
+
+/**
+ * 取得格式化日期（用於檔名）
+ */
+export const getFormattedDate = () => {
+  const now = new Date();
+  return (
+    now.getFullYear() -
+    1911 +
+    ("0" + (now.getMonth() + 1)).slice(-2) +
+    ("0" + now.getDate()).slice(-2) +
+    "_" +
+    ("0" + now.getHours()).slice(-2) +
+    ("0" + now.getMinutes()).slice(-2)
+  );
+};
+
+// ============ Modal 控制函數 ============
+
+let uploadingModalShowTime = 0;
+
+export const showUploadingModal = () => {
+  document.getElementById("uploadingModal").style.display = "block";
+  uploadingModalShowTime = Date.now();
+};
+
+export const hideUploadingModal = () => {
+  const elapsed = Date.now() - uploadingModalShowTime;
+  const minDuration = 500; // 至少顯示 0.5 秒
+  if (elapsed < minDuration) {
+    setTimeout(() => {
+      document.getElementById("uploadingModal").style.display = "none";
+    }, minDuration - elapsed);
+  } else {
+    document.getElementById("uploadingModal").style.display = "none";
+  }
+};
+
+export const showLoadingModal = () => {
+  document.getElementById("loadingModal").style.display = "block";
+};
+
+export const hideLoadingModal = () => {
+  document.getElementById("loadingModal").style.display = "none";
+};
+
+export const showConversionModal = () => {
+  document.getElementById("conversionModal").style.display = "block";
+};
+
+export const hideConversionModal = () => {
+  document.getElementById("conversionModal").style.display = "none";
+};

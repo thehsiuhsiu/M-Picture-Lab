@@ -1,1 +1,27 @@
-function _0x5881(){const _0x4df291=['4894530KOglgz','交通違規','3890IMMUjJ','382ZqZapj','182dbLtnZ','1851lDarTf','2057940uOMcrQ','left','交通違規逕行舉發照片黏貼表','非道路交通事故照片黏貼紀錄表','交通事故','grid','1837176iieeSU','38688aPDnPi','14985YAYWiT','2343699Wquyjl'];_0x5881=function(){return _0x4df291;};return _0x5881();}const _0x69cdb7=_0x49fa;function _0x49fa(_0x1bfcda,_0x14882e){const _0x5881c9=_0x5881();return _0x49fa=function(_0x49faf9,_0x905d2e){_0x49faf9=_0x49faf9-0xb5;let _0xfde7f1=_0x5881c9[_0x49faf9];return _0xfde7f1;},_0x49fa(_0x1bfcda,_0x14882e);}(function(_0x5bc27b,_0xf57d00){const _0x50d2bb=_0x49fa,_0x4bc8a3=_0x5bc27b();while(!![]){try{const _0x5cd539=-parseInt(_0x50d2bb(0xb9))/0x1*(parseInt(_0x50d2bb(0xb7))/0x2)+-parseInt(_0x50d2bb(0xc3))/0x3+parseInt(_0x50d2bb(0xc0))/0x4+-parseInt(_0x50d2bb(0xba))/0x5+parseInt(_0x50d2bb(0xc4))/0x6+parseInt(_0x50d2bb(0xb8))/0x7*(parseInt(_0x50d2bb(0xc1))/0x8)+-parseInt(_0x50d2bb(0xc2))/0x9*(-parseInt(_0x50d2bb(0xb6))/0xa);if(_0x5cd539===_0xf57d00)break;else _0x4bc8a3['push'](_0x4bc8a3['shift']());}catch(_0x2a25d0){_0x4bc8a3['push'](_0x4bc8a3['shift']());}}}(_0x5881,0x7a95c));export const state={'selectedImages':[],'imageCounter':0x0,'isGenerating':![],'isInitialized':![],'selectedFormat':_0x69cdb7(0xbb),'viewMode':_0x69cdb7(0xbf),'imageDescriptions':{},'imageDates':{},'imageAddresses':{}};export const FORMAT_NAMES={'left':'刑案','middle':_0x69cdb7(0xbe),'right':_0x69cdb7(0xb5)};export const FORMAT_TITLES={'left':'刑案照片黏貼表','middle':_0x69cdb7(0xbd),'right':_0x69cdb7(0xbc)};
+// state.js - 共用狀態管理模組
+
+export const state = {
+  selectedImages: [],
+  imageCounter: 0,
+  isGenerating: false,
+  isInitialized: false,
+  selectedFormat: "left", // 'left': 刑事案件, 'middle': 交通事故, 'right': 交通違規
+  viewMode: "grid", // 'grid' or 'list'
+  imageDescriptions: {}, // 儲存圖片說明，以 image id 為 key
+  imageDates: {}, // 儲存圖片日期，以 image id 為 key
+  imageAddresses: {}, // 儲存圖片地址，以 image id 為 key
+};
+
+// 格式名稱對應
+export const FORMAT_NAMES = {
+  left: "刑案",
+  middle: "交通事故",
+  right: "交通違規",
+};
+
+// 格式標題對應
+export const FORMAT_TITLES = {
+  left: "刑案照片黏貼表",
+  middle: "非道路交通事故照片黏貼紀錄表",
+  right: "交通違規逕行舉發照片黏貼表",
+};

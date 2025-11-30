@@ -1,1 +1,365 @@
-const _0x329eed=_0xde0b;(function(_0xfecc5e,_0x1e4cf7){const _0xd04e4b=_0xde0b,_0x43c31f=_0xfecc5e();while(!![]){try{const _0x42ba42=parseInt(_0xd04e4b(0x19c))/0x1+parseInt(_0xd04e4b(0x195))/0x2+parseInt(_0xd04e4b(0x187))/0x3+parseInt(_0xd04e4b(0x166))/0x4*(-parseInt(_0xd04e4b(0x162))/0x5)+-parseInt(_0xd04e4b(0x1a9))/0x6+parseInt(_0xd04e4b(0x171))/0x7*(parseInt(_0xd04e4b(0x179))/0x8)+-parseInt(_0xd04e4b(0x16b))/0x9*(parseInt(_0xd04e4b(0x16c))/0xa);if(_0x42ba42===_0x1e4cf7)break;else _0x43c31f['push'](_0x43c31f['shift']());}catch(_0x17003f){_0x43c31f['push'](_0x43c31f['shift']());}}}(_0x30c5,0xe241d));import{state}from'./state.js';function _0xde0b(_0x193e1a,_0x12bff5){const _0x30c581=_0x30c5();return _0xde0b=function(_0xde0b81,_0xb53003){_0xde0b81=_0xde0b81-0x154;let _0x425230=_0x30c581[_0xde0b81];return _0x425230;},_0xde0b(_0x193e1a,_0x12bff5);}import{handleImageSelection,handleViewModeChange,handleImageContainerEvents,updateCreateButtonState,updateDownloadZipButtonState}from'./imageHandler.js';function _0x30c5(){const _0x1b2c86=['dragover','2944220PUtord','caseDate','selectedImages','remove','8QdvYNb','photoSizeSlider','getElementById','classList','dateModeSwitch','5341491mkMMzd','20zHDsju','trim','違規時間','fabAddPhoto','舉發人員','1974SSYnrn','listViewBtn','log','values','personLabelText','className','.sidebar\x20[data-format]','disabled','23432BlgaDi','click','imagePreview','file','generate','active','.label','value','none','zipPrefix','max','getAttribute','generateAsync','caseUni','3460824ZPqSMY','caseAddress','list','show','maxHeight','querySelectorAll','checked','攝影地址','every','add','length','isInitialized','downloadZip','input','2025146pFgLvE','必要的\x20DOM\x20元素未找到','block','name','downloadPdf','includes','resize','1549600UeGUdK','dragstart','textContent','appendChild','imageInput','style','setAttribute','Resize\x20warning\x20modal\x20not\x20found!','div','selectedFormat','.toggle-container','forEach','data-state','7501944aboTEs','照片黏貼表-編號','empty-state','change','addressLabelText','resize-warning','.sidebar-input','createObjectURL','gridViewBtn','DOMContentLoaded','data-value','dragenter','Auto-fill\x20EXIF','zippingModal','returnValue','removeChild','Uncaught\x20error:','min','違規地點','stopPropagation','innerWidth','dragend','generateButton','dragleave','toggle','dateModeLabel','drop','addEventListener','right','發生了意外錯誤。請重新加載頁面並重試。如果問題持續存在，請聯繫支持團隊。','split','caseNumber','攝影日期','querySelector','data','downloadMenu','display','grid','preventDefault','error','.image-container\x20img','createElement'];_0x30c5=function(){return _0x1b2c86;};return _0x30c5();}import{handleGenerateWrapper}from'./docxGenerator.js';import{handleGeneratePDF}from'./pdfGenerator.js';import{EMPTY_STATE_HTML}from'./utils.js';const initEmptyState=()=>{const _0x1fce6e=_0xde0b,_0x5a54e0=document[_0x1fce6e(0x168)](_0x1fce6e(0x17b));if(_0x5a54e0&&state[_0x1fce6e(0x164)][_0x1fce6e(0x191)]===0x0){const _0x6331d7=document['createElement'](_0x1fce6e(0x1a4));_0x6331d7[_0x1fce6e(0x176)]=_0x1fce6e(0x1ab),_0x6331d7['innerHTML']=EMPTY_STATE_HTML,_0x5a54e0[_0x1fce6e(0x19f)](_0x6331d7);}},updateToggleState=_0x1d4bfa=>{const _0x5a1e86=_0xde0b,_0x872b99=document[_0x5a1e86(0x158)](_0x5a1e86(0x1a6));_0x872b99[_0x5a1e86(0x1a2)](_0x5a1e86(0x1a8),_0x1d4bfa),state[_0x5a1e86(0x1a5)]=_0x1d4bfa;const _0x22e8f4=_0x872b99[_0x5a1e86(0x18c)](_0x5a1e86(0x17f));_0x22e8f4[_0x5a1e86(0x1a7)](_0x3f374a=>{const _0x21acba=_0x5a1e86;_0x3f374a[_0x21acba(0x169)][_0x21acba(0x1c1)](_0x21acba(0x17e),_0x3f374a[_0x21acba(0x184)](_0x21acba(0x1b3))===_0x1d4bfa);}),updateSidebarFields(_0x1d4bfa);},updateSidebarFields=_0x96e2ab=>{const _0x416864=_0xde0b,_0x3946ff=document['querySelectorAll'](_0x416864(0x177));_0x3946ff[_0x416864(0x1a7)](_0x571938=>{const _0xdc4656=_0x416864,_0x897b50=_0x571938['getAttribute']('data-format')['split']('\x20');_0x897b50[_0xdc4656(0x19a)](_0x96e2ab)?_0x571938[_0xdc4656(0x1a1)][_0xdc4656(0x15b)]='':_0x571938[_0xdc4656(0x1a1)][_0xdc4656(0x15b)]=_0xdc4656(0x181);});const _0x258ef2=document[_0x416864(0x168)]('dateLabelText'),_0x277c82=document[_0x416864(0x168)](_0x416864(0x1ad)),_0x27d043=document[_0x416864(0x168)](_0x416864(0x175));if(_0x96e2ab===_0x416864(0x1c5)){if(_0x258ef2)_0x258ef2[_0x416864(0x19e)]=_0x416864(0x16e);if(_0x277c82)_0x277c82['textContent']=_0x416864(0x1bb);if(_0x27d043)_0x27d043[_0x416864(0x19e)]=_0x416864(0x170);}else{if(_0x258ef2)_0x258ef2[_0x416864(0x19e)]=_0x416864(0x157);if(_0x277c82)_0x277c82[_0x416864(0x19e)]=_0x416864(0x18e);if(_0x27d043)_0x27d043[_0x416864(0x19e)]='攝影人員';}},init=()=>{const _0x513dd0=_0xde0b;if(state[_0x513dd0(0x192)])return;state[_0x513dd0(0x192)]=!![];const _0x321c58={'imageInput':document[_0x513dd0(0x168)](_0x513dd0(0x1a0)),'generateButton':document[_0x513dd0(0x168)](_0x513dd0(0x17d)),'imagePreview':document[_0x513dd0(0x168)](_0x513dd0(0x17b))};if(!Object[_0x513dd0(0x174)](_0x321c58)[_0x513dd0(0x18f)](Boolean)){console[_0x513dd0(0x15e)](_0x513dd0(0x196));return;}_0x321c58[_0x513dd0(0x1a0)]['addEventListener'](_0x513dd0(0x1ac),handleImageSelection);const _0x4ad128=document[_0x513dd0(0x168)](_0x513dd0(0x15a)),_0x3a766d=document[_0x513dd0(0x168)]('downloadDocx'),_0x2a13e2=document[_0x513dd0(0x168)](_0x513dd0(0x199));_0x321c58[_0x513dd0(0x1bf)]['addEventListener']('click',_0x4cab79=>{const _0x10a841=_0x513dd0;_0x4cab79[_0x10a841(0x1bc)](),state[_0x10a841(0x164)][_0x10a841(0x191)]>0x0?_0x4ad128[_0x10a841(0x169)]['toggle'](_0x10a841(0x18a)):alert('😵尚未新增照片可建立文件...');}),_0x3a766d[_0x513dd0(0x1c4)](_0x513dd0(0x17a),_0x23375a=>{const _0x3aecc8=_0x513dd0;_0x23375a[_0x3aecc8(0x1bc)](),_0x4ad128['classList'][_0x3aecc8(0x165)](_0x3aecc8(0x18a)),handleGenerateWrapper(_0x23375a);}),_0x2a13e2[_0x513dd0(0x1c4)](_0x513dd0(0x17a),_0x53b818=>{const _0x301735=_0x513dd0;_0x53b818[_0x301735(0x1bc)](),_0x4ad128['classList'][_0x301735(0x165)](_0x301735(0x18a)),handleGeneratePDF();}),document['addEventListener']('click',()=>{const _0x43e849=_0x513dd0;_0x4ad128[_0x43e849(0x169)][_0x43e849(0x165)](_0x43e849(0x18a));});const _0x36e357=document[_0x513dd0(0x158)](_0x513dd0(0x1a6)),_0xf309d0=_0x36e357[_0x513dd0(0x18c)](_0x513dd0(0x17f));_0xf309d0['forEach'](_0x54785e=>{_0x54785e['addEventListener']('click',()=>{const _0x21925a=_0xde0b,_0x2addb4=_0x54785e['getAttribute'](_0x21925a(0x1b3));updateToggleState(_0x2addb4);});}),updateToggleState(state[_0x513dd0(0x1a5)]),updateCreateButtonState();const _0x5d3d83=document[_0x513dd0(0x168)](_0x513dd0(0x1b1)),_0x5f51bc=document[_0x513dd0(0x168)](_0x513dd0(0x172));_0x5d3d83&&_0x5f51bc&&(_0x5d3d83[_0x513dd0(0x1c4)]('click',()=>handleViewModeChange(_0x513dd0(0x15c))),_0x5f51bc[_0x513dd0(0x1c4)](_0x513dd0(0x17a),()=>handleViewModeChange(_0x513dd0(0x189)))),console[_0x513dd0(0x173)]('圖片管理腳本初始化完成');},setupEventListeners=()=>{const _0x1eb70c=_0xde0b,_0x2733c4=document['getElementById'](_0x1eb70c(0x17b));[_0x1eb70c(0x19d),_0x1eb70c(0x161),_0x1eb70c(0x1b4),_0x1eb70c(0x1c0),'drop',_0x1eb70c(0x1be)][_0x1eb70c(0x1a7)](_0x468376=>{const _0x268fda=_0x1eb70c;_0x2733c4[_0x268fda(0x1c4)](_0x468376,handleImageContainerEvents);}),window['addEventListener'](_0x1eb70c(0x15e),_0x132e9c=>{const _0x49b17a=_0x1eb70c;console[_0x49b17a(0x15e)](_0x49b17a(0x1b9),_0x132e9c[_0x49b17a(0x15e)]),alert(_0x49b17a(0x154));});},setupPhotoSizeSlider=()=>{const _0x576bfd=_0xde0b,_0x4b38c0=document[_0x576bfd(0x168)](_0x576bfd(0x167)),_0x146432=document['getElementById']('sizeDecBtn'),_0x31502a=document['getElementById']('sizeIncBtn'),_0x478e1f=()=>{const _0x1864f6=_0x576bfd,_0x1d28dc=document[_0x1864f6(0x18c)](_0x1864f6(0x15f));_0x1d28dc[_0x1864f6(0x1a7)](_0x45e829=>{const _0x2c46e6=_0x1864f6;_0x45e829[_0x2c46e6(0x1a1)]['maxWidth']=_0x4b38c0['value']+'px',_0x45e829[_0x2c46e6(0x1a1)][_0x2c46e6(0x18b)]=_0x4b38c0['value']+'px';});};_0x4b38c0[_0x576bfd(0x1c4)](_0x576bfd(0x194),_0x478e1f),_0x146432['addEventListener']('click',()=>{const _0x4daf46=_0x576bfd,_0xa6f3a5=Math[_0x4daf46(0x183)](parseInt(_0x4b38c0[_0x4daf46(0x1ba)]),parseInt(_0x4b38c0[_0x4daf46(0x180)])-0x28);_0x4b38c0['value']=_0xa6f3a5,_0x478e1f();}),_0x31502a[_0x576bfd(0x1c4)](_0x576bfd(0x17a),()=>{const _0x431cbd=_0x576bfd,_0x24eb6a=Math[_0x431cbd(0x1ba)](parseInt(_0x4b38c0[_0x431cbd(0x183)]),parseInt(_0x4b38c0['value'])+0x28);_0x4b38c0['value']=_0x24eb6a,_0x478e1f();});},setupSidebarInputs=()=>{const _0x1f260c=_0xde0b,_0x103a3e=document[_0x1f260c(0x18c)](_0x1f260c(0x1af));_0x103a3e[_0x1f260c(0x1a7)](_0xb23b77=>{const _0x26ee19=_0x1f260c;_0xb23b77[_0x26ee19(0x1c4)](_0x26ee19(0x161),_0x37314d=>{const _0x54d2bd=_0x26ee19;_0x37314d[_0x54d2bd(0x15d)]();}),_0xb23b77[_0x26ee19(0x1c4)](_0x26ee19(0x1c3),_0x19edea=>{const _0x7de576=_0x26ee19;_0x19edea[_0x7de576(0x15d)](),_0x19edea[_0x7de576(0x1bc)]();});});},setupDateModeSwitch=()=>{const _0x2f8329=_0xde0b,_0x4fb28f=document[_0x2f8329(0x168)](_0x2f8329(0x16a)),_0xa9baf4=document[_0x2f8329(0x168)](_0x2f8329(0x163)),_0x1eb55f=document[_0x2f8329(0x168)](_0x2f8329(0x1c2));function _0x5867e2(){const _0x525cbd=_0x2f8329;_0x4fb28f[_0x525cbd(0x18d)]?(_0xa9baf4[_0x525cbd(0x178)]=!![],_0x1eb55f[_0x525cbd(0x19e)]=_0x525cbd(0x1b5),_0x1eb55f[_0x525cbd(0x169)][_0x525cbd(0x165)](_0x525cbd(0x178))):(_0xa9baf4[_0x525cbd(0x178)]=![],_0x1eb55f['textContent']='Auto-fill\x20EXIF',_0x1eb55f[_0x525cbd(0x169)][_0x525cbd(0x190)](_0x525cbd(0x178)));}_0x4fb28f[_0x2f8329(0x1c4)](_0x2f8329(0x1ac),_0x5867e2),_0x5867e2();},setupZipDownload=()=>{const _0x267111=_0xde0b;document[_0x267111(0x168)](_0x267111(0x193))[_0x267111(0x1c4)](_0x267111(0x17a),async()=>{const _0x2b9d4b=_0x267111;if(!state[_0x2b9d4b(0x164)][_0x2b9d4b(0x191)]){alert('😱我等這顆鏡頭等了一輩子...記憶卡呢?照片呢?');return;}document[_0x2b9d4b(0x168)]('zippingModal')['style'][_0x2b9d4b(0x15b)]=_0x2b9d4b(0x197),setTimeout(async()=>{const _0x1f5887=_0x2b9d4b;try{const _0x424cce=new JSZip(),_0x45fefb=document['getElementById'](_0x1f5887(0x182)),_0x2f736f=_0x45fefb?_0x45fefb[_0x1f5887(0x180)]['trim']():'';for(let _0x2c3443=0x0;_0x2c3443<state[_0x1f5887(0x164)][_0x1f5887(0x191)];_0x2c3443++){const _0x2da2c3=state['selectedImages'][_0x2c3443],_0x64b231=_0x2da2c3[_0x1f5887(0x198)]['split']('.')['pop'](),_0x55884c=_0x2f736f+_0x1f5887(0x1aa)+(_0x2c3443+0x1)+'.'+_0x64b231,_0x1c0e76=_0x2da2c3[_0x1f5887(0x159)][_0x1f5887(0x155)](',')[0x1];_0x424cce[_0x1f5887(0x17c)](_0x55884c,_0x1c0e76,{'base64':!![]});}const _0x51cfc9=await _0x424cce[_0x1f5887(0x185)]({'type':'blob'}),_0x993cee=document[_0x1f5887(0x160)]('a');_0x993cee['href']=URL[_0x1f5887(0x1b0)](_0x51cfc9),_0x993cee['download']=_0x2f736f+'照片打包下載.zip',document['body'][_0x1f5887(0x19f)](_0x993cee),_0x993cee['click'](),document['body'][_0x1f5887(0x1b8)](_0x993cee);}finally{document[_0x1f5887(0x168)](_0x1f5887(0x1b6))[_0x1f5887(0x1a1)][_0x1f5887(0x15b)]=_0x1f5887(0x181);}},0x0);});},setupBeforeUnload=()=>{window['onbeforeunload']=function(_0x40435c){const _0x4247d7=_0xde0b,_0x545b39=document[_0x4247d7(0x168)](_0x4247d7(0x182))[_0x4247d7(0x180)]['trim']()||document[_0x4247d7(0x168)](_0x4247d7(0x186))[_0x4247d7(0x180)][_0x4247d7(0x16d)]()||document[_0x4247d7(0x168)](_0x4247d7(0x188))['value'][_0x4247d7(0x16d)]()||document[_0x4247d7(0x168)](_0x4247d7(0x163))[_0x4247d7(0x180)]['trim']()||document[_0x4247d7(0x168)](_0x4247d7(0x156))[_0x4247d7(0x180)]['trim']()||state[_0x4247d7(0x164)]&&state[_0x4247d7(0x164)][_0x4247d7(0x191)]>0x0;if(_0x545b39)return _0x40435c[_0x4247d7(0x15d)](),_0x40435c[_0x4247d7(0x1b7)]='','';};},setupResizeWarning=()=>{const _0x1ea97f=_0xde0b,_0x5d2c96=document['getElementById'](_0x1ea97f(0x1ae));if(!_0x5d2c96){console[_0x1ea97f(0x15e)](_0x1ea97f(0x1a3));return;}const _0x1a4518=()=>{const _0x5b9b11=_0x1ea97f;window[_0x5b9b11(0x1bd)]<0x44c||window['innerHeight']<0x366?_0x5d2c96['style']['display']='flex':_0x5d2c96[_0x5b9b11(0x1a1)]['display']=_0x5b9b11(0x181);};window[_0x1ea97f(0x1c4)](_0x1ea97f(0x19b),_0x1a4518),_0x1a4518();};document[_0x329eed(0x1c4)](_0x329eed(0x1b2),()=>{const _0x6b5efb=_0x329eed;document[_0x6b5efb(0x168)](_0x6b5efb(0x16f))[_0x6b5efb(0x1c4)]('click',function(){const _0x10ac82=_0x6b5efb;document[_0x10ac82(0x168)](_0x10ac82(0x1a0))[_0x10ac82(0x17a)]();}),initEmptyState(),init(),setupEventListeners(),setupPhotoSizeSlider(),setupSidebarInputs(),setupDateModeSwitch(),setupZipDownload(),setupBeforeUnload(),setupResizeWarning();});
+// main.js - 主入口模組
+
+import { state } from "./state.js";
+import {
+  handleImageSelection,
+  handleViewModeChange,
+  handleImageContainerEvents,
+  updateCreateButtonState,
+  updateDownloadZipButtonState,
+} from "./imageHandler.js";
+import { handleGenerateWrapper } from "./docxGenerator.js";
+import { handleGeneratePDF } from "./pdfGenerator.js";
+import { EMPTY_STATE_HTML } from "./utils.js";
+
+/**
+ * 初始化空狀態提示
+ */
+const initEmptyState = () => {
+  const imagePreview = document.getElementById("imagePreview");
+  if (imagePreview && state.selectedImages.length === 0) {
+    const emptyStateDiv = document.createElement("div");
+    emptyStateDiv.className = "empty-state";
+    emptyStateDiv.innerHTML = EMPTY_STATE_HTML;
+    imagePreview.appendChild(emptyStateDiv);
+  }
+};
+
+/**
+ * 更新 toggle switch 狀態
+ */
+const updateToggleState = (value) => {
+  const toggleContainer = document.querySelector(".toggle-container");
+  toggleContainer.setAttribute("data-state", value);
+  state.selectedFormat = value;
+
+  const labels = toggleContainer.querySelectorAll(".label");
+  labels.forEach((label) => {
+    label.classList.toggle(
+      "active",
+      label.getAttribute("data-value") === value
+    );
+  });
+
+  // 更新側邊欄欄位顯示
+  updateSidebarFields(value);
+};
+
+/**
+ * 根據選擇的格式更新側邊欄欄位顯示
+ */
+const updateSidebarFields = (format) => {
+  // 獲取所有帶有 data-format 屬性的欄位
+  const allFields = document.querySelectorAll(".sidebar [data-format]");
+
+  allFields.forEach((field) => {
+    const formats = field.getAttribute("data-format").split(" ");
+    if (formats.includes(format)) {
+      field.style.display = "";
+    } else {
+      field.style.display = "none";
+    }
+  });
+
+  // 更新標籤文字
+  const dateLabelText = document.getElementById("dateLabelText");
+  const addressLabelText = document.getElementById("addressLabelText");
+  const personLabelText = document.getElementById("personLabelText");
+
+  if (format === "right") {
+    // 交通違規
+    if (dateLabelText) dateLabelText.textContent = "違規時間";
+    if (addressLabelText) addressLabelText.textContent = "違規地點";
+    if (personLabelText) personLabelText.textContent = "舉發人員";
+  } else {
+    // 刑事案件 或 交通事故
+    if (dateLabelText) dateLabelText.textContent = "攝影日期";
+    if (addressLabelText) addressLabelText.textContent = "攝影地址";
+    if (personLabelText) personLabelText.textContent = "攝影人員";
+  }
+};
+
+/**
+ * 主要初始化函數
+ */
+const init = () => {
+  if (state.isInitialized) return;
+  state.isInitialized = true;
+
+  const elements = {
+    imageInput: document.getElementById("imageInput"),
+    generateButton: document.getElementById("generate"),
+    imagePreview: document.getElementById("imagePreview"),
+  };
+
+  if (!Object.values(elements).every(Boolean)) {
+    console.error("必要的 DOM 元素未找到");
+    return;
+  }
+
+  elements.imageInput.addEventListener("change", handleImageSelection);
+
+  // 下載按鈕下拉選單功能
+  const downloadMenu = document.getElementById("downloadMenu");
+  const downloadDocx = document.getElementById("downloadDocx");
+  const downloadPdf = document.getElementById("downloadPdf");
+
+  elements.generateButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (state.selectedImages.length > 0) {
+      downloadMenu.classList.toggle("show");
+    } else {
+      alert("😵尚未新增照片可建立文件...");
+    }
+  });
+
+  downloadDocx.addEventListener("click", (e) => {
+    e.stopPropagation();
+    downloadMenu.classList.remove("show");
+    handleGenerateWrapper(e);
+  });
+
+  downloadPdf.addEventListener("click", (e) => {
+    e.stopPropagation();
+    downloadMenu.classList.remove("show");
+    handleGeneratePDF();
+  });
+
+  // 點擊其他地方關閉選單
+  document.addEventListener("click", () => {
+    downloadMenu.classList.remove("show");
+  });
+
+  // Toggle switch 事件監聽
+  const toggleContainer = document.querySelector(".toggle-container");
+  const labels = toggleContainer.querySelectorAll(".label");
+
+  labels.forEach((label) => {
+    label.addEventListener("click", () => {
+      const value = label.getAttribute("data-value");
+      updateToggleState(value);
+    });
+  });
+
+  updateToggleState(state.selectedFormat);
+  updateCreateButtonState();
+
+  // List/Grid View Switch 事件監聽
+  const gridViewBtn = document.getElementById("gridViewBtn");
+  const listViewBtn = document.getElementById("listViewBtn");
+  if (gridViewBtn && listViewBtn) {
+    gridViewBtn.addEventListener("click", () => handleViewModeChange("grid"));
+    listViewBtn.addEventListener("click", () => handleViewModeChange("list"));
+  }
+
+  console.log("圖片管理腳本初始化完成");
+};
+
+/**
+ * 設置圖片預覽區拖曳事件
+ */
+const setupEventListeners = () => {
+  const imagePreview = document.getElementById("imagePreview");
+  [
+    "dragstart",
+    "dragover",
+    "dragenter",
+    "dragleave",
+    "drop",
+    "dragend",
+  ].forEach((eventName) => {
+    imagePreview.addEventListener(eventName, handleImageContainerEvents);
+  });
+
+  // 全局錯誤處理
+  window.addEventListener("error", (event) => {
+    console.error("Uncaught error:", event.error);
+    alert(
+      "發生了意外錯誤。請重新加載頁面並重試。如果問題持續存在，請聯繫支持團隊。"
+    );
+  });
+};
+
+/**
+ * 設置照片大小滑桿
+ */
+const setupPhotoSizeSlider = () => {
+  const slider = document.getElementById("photoSizeSlider");
+  const sizeDecBtn = document.getElementById("sizeDecBtn");
+  const sizeIncBtn = document.getElementById("sizeIncBtn");
+
+  const updateImageSizes = () => {
+    const imgs = document.querySelectorAll(".image-container img");
+    imgs.forEach((img) => {
+      img.style.maxWidth = slider.value + "px";
+      img.style.maxHeight = slider.value + "px";
+    });
+  };
+
+  slider.addEventListener("input", updateImageSizes);
+
+  // - 按鈕：縮小
+  sizeDecBtn.addEventListener("click", () => {
+    const newValue = Math.max(
+      parseInt(slider.min),
+      parseInt(slider.value) - 40
+    );
+    slider.value = newValue;
+    updateImageSizes();
+  });
+
+  // + 按鈕：放大
+  sizeIncBtn.addEventListener("click", () => {
+    const newValue = Math.min(
+      parseInt(slider.max),
+      parseInt(slider.value) + 40
+    );
+    slider.value = newValue;
+    updateImageSizes();
+  });
+};
+
+/**
+ * 阻止 sidebar 輸入欄位的拖放事件
+ */
+const setupSidebarInputs = () => {
+  const sidebarInputs = document.querySelectorAll(".sidebar-input");
+  sidebarInputs.forEach((input) => {
+    input.addEventListener("dragover", (e) => {
+      e.preventDefault();
+    });
+    input.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  });
+};
+
+/**
+ * 設置日期模式切換
+ */
+const setupDateModeSwitch = () => {
+  const dateSwitch = document.getElementById("dateModeSwitch");
+  const dateInput = document.getElementById("caseDate");
+  const dateModeLabel = document.getElementById("dateModeLabel");
+
+  function setDateInputMode() {
+    if (dateSwitch.checked) {
+      dateInput.disabled = true;
+      dateModeLabel.textContent = "Auto-fill EXIF";
+      dateModeLabel.classList.remove("disabled");
+    } else {
+      dateInput.disabled = false;
+      dateModeLabel.textContent = "Auto-fill EXIF";
+      dateModeLabel.classList.add("disabled");
+    }
+  }
+
+  dateSwitch.addEventListener("change", setDateInputMode);
+  setDateInputMode();
+};
+
+/**
+ * 設置 ZIP 下載功能
+ */
+const setupZipDownload = () => {
+  document.getElementById("downloadZip").addEventListener("click", async () => {
+    if (!state.selectedImages.length) {
+      alert("😱我等這顆鏡頭等了一輩子...記憶卡呢?照片呢?");
+      return;
+    }
+
+    // 顯示「照片打包中」modal
+    document.getElementById("zippingModal").style.display = "block";
+
+    setTimeout(async () => {
+      try {
+        const zip = new JSZip();
+        const prefixInput = document.getElementById("zipPrefix");
+        const prefix = prefixInput ? prefixInput.value.trim() : "";
+        for (let i = 0; i < state.selectedImages.length; i++) {
+          const img = state.selectedImages[i];
+          const ext = img.name.split(".").pop();
+          const newName = `${prefix}照片黏貼表-編號${i + 1}.${ext}`;
+          const data = img.data.split(",")[1];
+          zip.file(newName, data, { base64: true });
+        }
+        const content = await zip.generateAsync({ type: "blob" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(content);
+        a.download = `${prefix}照片打包下載.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } finally {
+        document.getElementById("zippingModal").style.display = "none";
+      }
+    }, 0);
+  });
+};
+
+/**
+ * 設置離開網頁提醒
+ */
+const setupBeforeUnload = () => {
+  window.onbeforeunload = function (e) {
+    const hasInput =
+      document.getElementById("zipPrefix").value.trim() ||
+      document.getElementById("caseUni").value.trim() ||
+      document.getElementById("caseAddress").value.trim() ||
+      document.getElementById("caseDate").value.trim() ||
+      document.getElementById("caseNumber").value.trim() ||
+      (state.selectedImages && state.selectedImages.length > 0);
+
+    if (hasInput) {
+      e.preventDefault();
+      e.returnValue = "";
+      return "";
+    }
+  };
+};
+
+/**
+ * 設置視窗大小警告
+ */
+const setupResizeWarning = () => {
+  const resizeWarningModal = document.getElementById("resize-warning");
+
+  if (!resizeWarningModal) {
+    console.error("Resize warning modal not found!");
+    return;
+  }
+
+  const checkWindowSize = () => {
+    if (window.innerWidth < 1100 || window.innerHeight < 870) {
+      resizeWarningModal.style.display = "flex";
+    } else {
+      resizeWarningModal.style.display = "none";
+    }
+  };
+
+  window.addEventListener("resize", checkWindowSize);
+  checkWindowSize(); // Initial check
+};
+
+// ============ DOM 載入後初始化 ============
+
+document.addEventListener("DOMContentLoaded", () => {
+  // FAB 按鈕點擊
+  document.getElementById("fabAddPhoto").addEventListener("click", function () {
+    document.getElementById("imageInput").click();
+  });
+
+  // 初始化空狀態提示
+  initEmptyState();
+
+  // 主要初始化
+  init();
+  setupEventListeners();
+  setupPhotoSizeSlider();
+  setupSidebarInputs();
+  setupDateModeSwitch();
+  setupZipDownload();
+  setupBeforeUnload();
+  setupResizeWarning();
+});

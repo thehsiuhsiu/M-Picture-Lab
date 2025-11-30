@@ -1,1 +1,451 @@
-(function(_0x114398,_0x142345){const _0x137962=_0x4660,_0x548bd9=_0x114398();while(!![]){try{const _0x25ae72=parseInt(_0x137962(0x167))/0x1*(parseInt(_0x137962(0x171))/0x2)+-parseInt(_0x137962(0x142))/0x3+-parseInt(_0x137962(0x19c))/0x4+-parseInt(_0x137962(0x197))/0x5+parseInt(_0x137962(0x199))/0x6*(parseInt(_0x137962(0x193))/0x7)+-parseInt(_0x137962(0x15e))/0x8*(parseInt(_0x137962(0x156))/0x9)+parseInt(_0x137962(0x17d))/0xa;if(_0x25ae72===_0x142345)break;else _0x548bd9['push'](_0x548bd9['shift']());}catch(_0x22731b){_0x548bd9['push'](_0x548bd9['shift']());}}}(_0x5abc,0xa74b9));import{state}from'./state.js';import{createThumbnail,formatExifDate,showUploadingModal,hideUploadingModal,showConversionModal,hideConversionModal,EMPTY_STATE_HTML}from'./utils.js';export const handleImageSelection=_0x4936cc=>{const _0x375f1c=_0x4660,_0x18f9fa=Array['from'](_0x4936cc[_0x375f1c(0x1a5)][_0x375f1c(0x129)]);showUploadingModal(),processFiles(_0x18f9fa),_0x4936cc[_0x375f1c(0x1a5)][_0x375f1c(0x17b)]='';};const processFiles=_0xc8749=>{const _0x410673=_0x4660;console[_0x410673(0x16f)](_0x410673(0x14e),_0xc8749[_0x410673(0x170)]);const _0x191bf7=_0xc8749[_0x410673(0x124)](_0x4eab98=>new Promise((_0x230852,_0xee415a)=>{const _0x4b6110=_0x410673,_0x5e1cc1=_0x4eab98[_0x4b6110(0x15c)]==='image/heic'||_0x4eab98[_0x4b6110(0x15c)]==='image/heif'||_0x4eab98[_0x4b6110(0x16b)][_0x4b6110(0x184)]()[_0x4b6110(0x1a3)](_0x4b6110(0x165))||_0x4eab98['name'][_0x4b6110(0x184)]()[_0x4b6110(0x1a3)](_0x4b6110(0x174)),_0xce5ce0=(_0x2b4aa6,_0xdee461)=>{const _0x21c577=_0x4b6110,_0x405d41=new FileReader();_0x405d41[_0x21c577(0x18c)]=_0x43bd25=>{const _0x290284=_0x21c577,_0x2af5a2=_0x43bd25[_0x290284(0x1a5)][_0x290284(0x14b)],_0x4f6d08=new Image();_0x4f6d08[_0x290284(0x18c)]=()=>{EXIF['getData'](_0x4f6d08,function(){const _0x24aa42=_0x4660,_0x42983b=EXIF[_0x24aa42(0x126)](this,_0x24aa42(0x180)),_0xe33382=formatExifDate(_0x42983b);createThumbnail(_0x2af5a2)[_0x24aa42(0x1a6)](_0xded3d1=>{const _0x4aaa33=_0x24aa42;_0x230852({'id':Date[_0x4aaa33(0x192)]()+Math[_0x4aaa33(0x15b)](),'data':_0x2af5a2,'thumbnail':_0xded3d1,'name':_0xdee461,'size':_0x2b4aa6[_0x4aaa33(0x15f)],'width':_0x4f6d08[_0x4aaa33(0x1a4)],'height':_0x4f6d08[_0x4aaa33(0x16d)],'date':_0xe33382});})[_0x24aa42(0x143)](_0xee415a);});},_0x4f6d08['onerror']=_0xee415a,_0x4f6d08[_0x290284(0x148)]=_0x2af5a2;},_0x405d41[_0x21c577(0x190)]=_0xee415a,_0x405d41[_0x21c577(0x175)](_0x2b4aa6);};_0x5e1cc1?(showConversionModal(),heic2any({'blob':_0x4eab98,'toType':_0x4b6110(0x125),'quality':0.8})[_0x4b6110(0x1a6)](_0x57b6fd=>{const _0x18f6ce=_0x4b6110;hideConversionModal(),_0xce5ce0(_0x57b6fd,_0x4eab98['name'][_0x18f6ce(0x19b)](/\.(heic|heif)$/i,_0x18f6ce(0x12e)));})[_0x4b6110(0x143)](_0x4d9850=>{const _0x30fa37=_0x4b6110;hideConversionModal(),console['error'](_0x30fa37(0x162),_0x4d9850),alert(_0x30fa37(0x18d)+_0x4eab98['name']+_0x30fa37(0x14d)),_0xee415a(_0x4d9850);})):_0xce5ce0(_0x4eab98,_0x4eab98[_0x4b6110(0x16b)]);}));Promise[_0x410673(0x166)](_0x191bf7)[_0x410673(0x1a6)](_0x32e306=>{const _0xf23d5a=_0x410673;console[_0xf23d5a(0x16f)](_0xf23d5a(0x140),_0x32e306[_0xf23d5a(0x170)]),_0x32e306['forEach'](handleImageAddition),hideUploadingModal();})[_0x410673(0x143)](_0xe681a4=>{const _0x34a5c5=_0x410673;hideConversionModal(),hideUploadingModal(),console['error']('Error\x20processing\x20images:',_0xe681a4),alert(_0x34a5c5(0x135));});},handleImageAddition=_0x936244=>{const _0x440481=_0x4660,_0x209ffb=document[_0x440481(0x127)](_0x440481(0x130));_0x209ffb&&_0x209ffb[_0x440481(0x1ab)](),isDuplicateImage(_0x936244)?(console['log'](_0x440481(0x1a0),_0x936244['name']),confirm(_0x440481(0x168)+_0x936244[_0x440481(0x16b)]+_0x440481(0x158))?addImageToCollection(_0x936244):console['log']('User\x20chose\x20not\x20to\x20add\x20duplicate\x20image')):addImageToCollection(_0x936244);},isDuplicateImage=_0x57eb37=>{const _0x1eefe3=_0x4660;return state[_0x1eefe3(0x133)]['some'](_0x50e79b=>_0x50e79b[_0x1eefe3(0x16b)]===_0x57eb37[_0x1eefe3(0x16b)]&&_0x50e79b[_0x1eefe3(0x15f)]===_0x57eb37[_0x1eefe3(0x15f)]&&_0x50e79b[_0x1eefe3(0x1a4)]===_0x57eb37[_0x1eefe3(0x1a4)]&&_0x50e79b['height']===_0x57eb37[_0x1eefe3(0x16d)]);},addImageToCollection=_0x40f677=>{const _0x353980=_0x4660;state[_0x353980(0x133)]['push'](_0x40f677),addImageToPreview(_0x40f677,state['selectedImages']['length']),updateCreateButtonState(),updateDownloadZipButtonState(),console[_0x353980(0x16f)](_0x353980(0x16a),_0x40f677['name']),console['log'](_0x353980(0x1a1),state[_0x353980(0x133)]['length']);},addImageToPreview=(_0x1d1e9d,_0x486bda)=>{const _0x5965d7=_0x4660,_0xd91cb3=document[_0x5965d7(0x131)](_0x5965d7(0x187)),_0x58a292=document[_0x5965d7(0x196)](_0x5965d7(0x155));_0x58a292[_0x5965d7(0x188)]=_0x5965d7(0x17e),_0x58a292[_0x5965d7(0x16e)]['id']=_0x1d1e9d['id'],_0x58a292[_0x5965d7(0x173)]=!![];const _0x34511e=document[_0x5965d7(0x196)]('div');_0x34511e['className']='image-counter',_0x34511e[_0x5965d7(0x144)]=_0x486bda,_0x58a292[_0x5965d7(0x19a)](_0x34511e);const _0x372d0a=document[_0x5965d7(0x196)](_0x5965d7(0x12f));_0x372d0a['src']=_0x1d1e9d['thumbnail'],_0x372d0a[_0x5965d7(0x182)]=_0x1d1e9d['name'],_0x58a292[_0x5965d7(0x19a)](_0x372d0a);const _0x6d8703=document[_0x5965d7(0x131)]('photoSizeSlider');_0x6d8703&&(_0x372d0a[_0x5965d7(0x146)][_0x5965d7(0x151)]=_0x6d8703['value']+'px',_0x372d0a[_0x5965d7(0x146)][_0x5965d7(0x178)]=_0x6d8703[_0x5965d7(0x17b)]+'px');const _0x587944=document[_0x5965d7(0x196)]('div');_0x587944['className']='image-description';const _0x2adbb9=document[_0x5965d7(0x196)](_0x5965d7(0x14a));_0x2adbb9[_0x5965d7(0x15c)]=_0x5965d7(0x141),_0x2adbb9['className']=_0x5965d7(0x134),_0x2adbb9[_0x5965d7(0x1a9)]=_0x5965d7(0x137),_0x2adbb9[_0x5965d7(0x17b)]=state[_0x5965d7(0x121)][_0x1d1e9d['id']]||'',_0x2adbb9[_0x5965d7(0x13e)](_0x5965d7(0x14a),_0x3ba32a=>{const _0x53076c=_0x5965d7;state['imageDates'][_0x1d1e9d['id']]=_0x3ba32a[_0x53076c(0x1a5)][_0x53076c(0x17b)];}),_0x2adbb9[_0x5965d7(0x13e)](_0x5965d7(0x13c),_0x17d462=>_0x17d462['preventDefault']()),_0x2adbb9[_0x5965d7(0x13e)]('drop',_0xc1650=>{const _0x185a3c=_0x5965d7;_0xc1650['preventDefault'](),_0xc1650[_0x185a3c(0x136)]();}),_0x587944[_0x5965d7(0x19a)](_0x2adbb9);const _0x411ce1=document[_0x5965d7(0x196)](_0x5965d7(0x14a));_0x411ce1[_0x5965d7(0x15c)]='text',_0x411ce1[_0x5965d7(0x188)]=_0x5965d7(0x163),_0x411ce1[_0x5965d7(0x1a9)]=_0x5965d7(0x186),_0x411ce1[_0x5965d7(0x17b)]=state[_0x5965d7(0x150)][_0x1d1e9d['id']]||'',_0x411ce1['addEventListener'](_0x5965d7(0x14a),_0x33a0ad=>{const _0x225397=_0x5965d7;state['imageAddresses'][_0x1d1e9d['id']]=_0x33a0ad[_0x225397(0x1a5)]['value'];}),_0x411ce1[_0x5965d7(0x13e)]('dragover',_0x5d2232=>_0x5d2232['preventDefault']()),_0x411ce1[_0x5965d7(0x13e)]('drop',_0x3c9575=>{const _0x404fbf=_0x5965d7;_0x3c9575[_0x404fbf(0x128)](),_0x3c9575['stopPropagation']();}),_0x587944['appendChild'](_0x411ce1);const _0x45dfc1=document[_0x5965d7(0x196)](_0x5965d7(0x18a));_0x45dfc1[_0x5965d7(0x1a9)]='說明\x20(選填，僅限刑事案件格式)',_0x45dfc1['value']=state[_0x5965d7(0x176)][_0x1d1e9d['id']]||'',_0x45dfc1['addEventListener']('input',_0x2cef2e=>{const _0x5a27e2=_0x5965d7;state[_0x5a27e2(0x176)][_0x1d1e9d['id']]=_0x2cef2e[_0x5a27e2(0x1a5)]['value'];}),_0x45dfc1[_0x5965d7(0x13e)]('dragover',_0x398600=>{const _0x34981b=_0x5965d7;_0x398600[_0x34981b(0x128)]();}),_0x45dfc1[_0x5965d7(0x13e)](_0x5965d7(0x179),_0x127603=>{const _0xfe3088=_0x5965d7;_0x127603[_0xfe3088(0x128)](),_0x127603['stopPropagation']();}),_0x587944[_0x5965d7(0x19a)](_0x45dfc1),_0x58a292[_0x5965d7(0x19a)](_0x587944);const _0x2ed7ef=document[_0x5965d7(0x196)](_0x5965d7(0x154));_0x2ed7ef[_0x5965d7(0x188)]=_0x5965d7(0x164),_0x2ed7ef[_0x5965d7(0x144)]='×',_0x2ed7ef[_0x5965d7(0x177)]=()=>removeImage(_0x1d1e9d['id']),_0x58a292['appendChild'](_0x2ed7ef),_0xd91cb3[_0x5965d7(0x19a)](_0x58a292),console['log']('Image\x20preview\x20added:',_0x1d1e9d['name']);};export const handleViewModeChange=_0x47cfd8=>{const _0x3964b4=_0x4660;state['viewMode']=_0x47cfd8;const _0x4e8570=document[_0x3964b4(0x131)](_0x3964b4(0x187)),_0x2842d9=document[_0x3964b4(0x131)](_0x3964b4(0x13a)),_0x48195b=document['getElementById'](_0x3964b4(0x149));if(_0x47cfd8===_0x3964b4(0x195))_0x4e8570[_0x3964b4(0x1a7)]['add']('list-view'),_0x2842d9[_0x3964b4(0x1a7)][_0x3964b4(0x1ab)]('active'),_0x48195b[_0x3964b4(0x1a7)][_0x3964b4(0x189)](_0x3964b4(0x17a));else{_0x4e8570[_0x3964b4(0x1a7)]['remove'](_0x3964b4(0x16c)),_0x2842d9[_0x3964b4(0x1a7)][_0x3964b4(0x189)](_0x3964b4(0x17a)),_0x48195b['classList'][_0x3964b4(0x1ab)](_0x3964b4(0x17a));const _0x39fa30=document[_0x3964b4(0x131)](_0x3964b4(0x17c));if(_0x39fa30){const _0x113517=_0x4e8570[_0x3964b4(0x14f)](_0x3964b4(0x157));_0x113517[_0x3964b4(0x183)](_0x53469f=>{const _0x508b87=_0x3964b4;_0x53469f[_0x508b87(0x146)]['maxWidth']=_0x39fa30[_0x508b87(0x17b)]+'px',_0x53469f[_0x508b87(0x146)][_0x508b87(0x178)]=_0x39fa30['value']+'px';});}}console[_0x3964b4(0x16f)]('View\x20mode\x20changed\x20to:',state['viewMode']);};function _0x5abc(){const _0x3f7a40=['downzip-btn-disabled','tagName','gridViewBtn','create-btn-disabled','dragover','downzip-btn-enabled','addEventListener','text/plain','Image\x20data\x20processed:','text','1212462GUNglB','catch','textContent','from','style','TEXTAREA','src','listViewBtn','input','result','splice','\x22\x20轉換失敗，請嘗試其他格式的圖片。','Processing\x20files:','querySelectorAll','imageAddresses','maxWidth','No\x20images\x20left,\x20displaying\x20empty\x20state.','dragend','button','div','531297qleqGm','.image-container\x20img','\x22\x20已經存在。是否重複新增？','dragenter','drag-over','random','type','empty-state','80dyYaOZ','size','toggle','generate','HEIC\x20conversion\x20failed:','image-address-input','delete-button','.heic','all','16192gWJlCJ','檔案\x20\x22','.image-counter','Image\x20added\x20to\x20collection:','name','list-view','height','dataset','log','length','96dErTOW','downloadZip','draggable','.heif','readAsDataURL','imageDescriptions','onclick','maxHeight','drop','active','value','photoSizeSlider','13652290cRvrQI','image-container','Image\x20counters\x20updated.\x20New\x20count:','DateTimeOriginal','closest','alt','forEach','toLowerCase','indexOf','地址\x20(留空則使用側邊欄資訊)','imagePreview','className','add','textarea','filter','onload','HEIC\x20檔案\x20\x22','imageCounter','parentNode','onerror','create-btn-enabled','now','4291beQdYx','Create\x20button\x20not\x20found','list','createElement','801065UPAMUS','dataTransfer','3714tqKOdX','appendChild','replace','2727816XiGmDw','insertBefore','setData','.image-container','Duplicate\x20found:','Total\x20images\x20in\x20collection:','Image\x20order\x20updated.\x20New\x20order:','endsWith','width','target','then','classList','.image-container[data-id=\x22','placeholder','innerHTML','remove','imageDates','Selected\x20images\x20count:','Removing\x20image\x20with\x20id:','map','image/jpeg','getTag','querySelector','preventDefault','files','Image\x20removed.\x20Remaining\x20images:','Total\x20images\x20after\x20reorder:','0.5','opacity','.jpg','img','.empty-state','getElementById','nextSibling','selectedImages','image-date-input','處理圖片時發生錯誤，請重試。','stopPropagation','日期\x20(留空則使用側邊欄資訊)'];_0x5abc=function(){return _0x3f7a40;};return _0x5abc();}export const handleImageContainerEvents=_0x388a31=>{const _0x569c86=_0x4660;if(_0x388a31[_0x569c86(0x1a5)][_0x569c86(0x139)]===_0x569c86(0x147))return;const _0x18ab84=_0x388a31[_0x569c86(0x1a5)][_0x569c86(0x181)](_0x569c86(0x19f));if(!_0x18ab84)return;if(!_0x388a31[_0x569c86(0x198)])return;switch(_0x388a31['type']){case'dragstart':_0x388a31['dataTransfer'][_0x569c86(0x19e)](_0x569c86(0x13f),_0x18ab84[_0x569c86(0x16e)]['id']),_0x18ab84['style'][_0x569c86(0x12d)]=_0x569c86(0x12c);break;case _0x569c86(0x13c):case _0x569c86(0x159):_0x388a31[_0x569c86(0x128)](),_0x18ab84[_0x569c86(0x1a7)][_0x569c86(0x189)](_0x569c86(0x15a));break;case'dragleave':case _0x569c86(0x179):_0x18ab84['classList']['remove']('drag-over');if(_0x388a31[_0x569c86(0x15c)]===_0x569c86(0x179)){_0x388a31[_0x569c86(0x128)]();const _0x369941=_0x388a31[_0x569c86(0x198)]['getData'](_0x569c86(0x141));handleImageDrop(_0x369941,_0x18ab84);}break;case _0x569c86(0x153):_0x18ab84[_0x569c86(0x146)]['opacity']='';break;}};const handleImageDrop=(_0x2ee357,_0x4d63f1)=>{const _0x5dcb40=_0x4660,_0x4f5f1f=document[_0x5dcb40(0x127)](_0x5dcb40(0x1a8)+_0x2ee357+'\x22]');if(_0x4f5f1f&&_0x4d63f1&&_0x4f5f1f!==_0x4d63f1){const _0xf186db=document['getElementById'](_0x5dcb40(0x187)),_0x12e7aa=Array[_0x5dcb40(0x145)](_0xf186db[_0x5dcb40(0x14f)](_0x5dcb40(0x19f))),_0x186f70=_0x12e7aa['indexOf'](_0x4f5f1f),_0x226f4f=_0x12e7aa[_0x5dcb40(0x185)](_0x4d63f1),[_0x85611b]=state['selectedImages']['splice'](_0x186f70,0x1);state[_0x5dcb40(0x133)][_0x5dcb40(0x14c)](_0x226f4f,0x0,_0x85611b),_0x186f70<_0x226f4f?_0x4d63f1[_0x5dcb40(0x18f)]['insertBefore'](_0x4f5f1f,_0x4d63f1[_0x5dcb40(0x132)]):_0x4d63f1['parentNode'][_0x5dcb40(0x19d)](_0x4f5f1f,_0x4d63f1),updateImageOrder();}},updateImageOrder=()=>{const _0x208bd9=_0x4660,_0x1c26d3=document[_0x208bd9(0x131)](_0x208bd9(0x187)),_0x6ceb84=Array[_0x208bd9(0x145)](_0x1c26d3[_0x208bd9(0x14f)](_0x208bd9(0x19f)));_0x6ceb84['forEach']((_0x5a9953,_0x1e5df7)=>{const _0x9a3fc3=_0x208bd9,_0x3d647f=_0x5a9953['querySelector'](_0x9a3fc3(0x169));_0x3d647f&&(_0x3d647f[_0x9a3fc3(0x144)]=_0x1e5df7+0x1);}),state[_0x208bd9(0x18e)]=_0x6ceb84['length'],console[_0x208bd9(0x16f)](_0x208bd9(0x1a2),state['selectedImages']['map'](_0x10a44c=>_0x10a44c['name'])),console[_0x208bd9(0x16f)](_0x208bd9(0x12b),state['selectedImages'][_0x208bd9(0x170)]),updateCreateButtonState(),updateDownloadZipButtonState();};export const removeImage=_0x4ba611=>{const _0xa75308=_0x4660;console['log'](_0xa75308(0x123),_0x4ba611),state[_0xa75308(0x133)]=state[_0xa75308(0x133)][_0xa75308(0x18b)](_0x2d7ec5=>_0x2d7ec5['id']!==_0x4ba611),delete state[_0xa75308(0x176)][_0x4ba611];const _0x13fbf3=document['querySelector'](_0xa75308(0x1a8)+_0x4ba611+'\x22]');_0x13fbf3&&_0x13fbf3['remove'](),updateImageCounters(),updateCreateButtonState(),updateDownloadZipButtonState(),console[_0xa75308(0x16f)](_0xa75308(0x12a),state[_0xa75308(0x133)][_0xa75308(0x170)]),state[_0xa75308(0x133)]['length']===0x0&&showEmptyState();};const showEmptyState=()=>{const _0x155798=_0x4660,_0x436f83=document[_0x155798(0x131)](_0x155798(0x187)),_0x14433b=document[_0x155798(0x196)](_0x155798(0x155));_0x14433b['className']=_0x155798(0x15d),_0x14433b[_0x155798(0x1aa)]=EMPTY_STATE_HTML,_0x436f83['appendChild'](_0x14433b),console['log'](_0x155798(0x152));},updateImageCounters=()=>{const _0xaec84b=_0x4660,_0x155ca2=document[_0xaec84b(0x14f)](_0xaec84b(0x19f));_0x155ca2['forEach']((_0x44427a,_0x46c46b)=>{const _0x53ab57=_0xaec84b,_0x340f6f=_0x44427a[_0x53ab57(0x127)]('.image-counter');_0x340f6f&&(_0x340f6f[_0x53ab57(0x144)]=_0x46c46b+0x1);}),state['imageCounter']=_0x155ca2[_0xaec84b(0x170)],console[_0xaec84b(0x16f)](_0xaec84b(0x17f),state[_0xaec84b(0x18e)]);};function _0x4660(_0x1b3612,_0x2be11a){const _0x5abcbf=_0x5abc();return _0x4660=function(_0x4660a0,_0x28e311){_0x4660a0=_0x4660a0-0x121;let _0xd9fd12=_0x5abcbf[_0x4660a0];return _0xd9fd12;},_0x4660(_0x1b3612,_0x2be11a);}export const updateCreateButtonState=()=>{const _0x3d9c97=_0x4660,_0x386f4a=document[_0x3d9c97(0x131)](_0x3d9c97(0x161));if(!_0x386f4a){console['error'](_0x3d9c97(0x194));return;}const _0x4e8c32=state[_0x3d9c97(0x133)][_0x3d9c97(0x170)]>0x0;_0x386f4a['classList'][_0x3d9c97(0x160)](_0x3d9c97(0x13b),!_0x4e8c32),_0x386f4a[_0x3d9c97(0x1a7)][_0x3d9c97(0x160)](_0x3d9c97(0x191),_0x4e8c32),console[_0x3d9c97(0x16f)]('Create\x20button\x20state\x20updated.\x20Enabled:',_0x4e8c32),console[_0x3d9c97(0x16f)](_0x3d9c97(0x122),state['selectedImages'][_0x3d9c97(0x170)]);};export const updateDownloadZipButtonState=()=>{const _0x2f7003=_0x4660,_0x56f860=document[_0x2f7003(0x131)](_0x2f7003(0x172));state[_0x2f7003(0x133)]['length']>0x0?(_0x56f860[_0x2f7003(0x1a7)][_0x2f7003(0x1ab)](_0x2f7003(0x138)),_0x56f860[_0x2f7003(0x1a7)]['add'](_0x2f7003(0x13d))):(_0x56f860['classList'][_0x2f7003(0x189)](_0x2f7003(0x138)),_0x56f860[_0x2f7003(0x1a7)]['remove']('downzip-btn-enabled'));};
+// imageHandler.js - 圖片處理模組
+
+import { state } from "./state.js";
+import {
+  createThumbnail,
+  formatExifDate,
+  showUploadingModal,
+  hideUploadingModal,
+  showConversionModal,
+  hideConversionModal,
+  EMPTY_STATE_HTML,
+} from "./utils.js";
+
+/**
+ * 處理圖片選擇事件
+ */
+export const handleImageSelection = (event) => {
+  const files = Array.from(event.target.files);
+  showUploadingModal();
+  processFiles(files);
+  event.target.value = "";
+};
+
+/**
+ * 處理檔案陣列
+ */
+const processFiles = (files) => {
+  console.log("Processing files:", files.length);
+  const promises = files.map(
+    (file) =>
+      new Promise((resolve, reject) => {
+        const isHEIC =
+          file.type === "image/heic" ||
+          file.type === "image/heif" ||
+          file.name.toLowerCase().endsWith(".heic") ||
+          file.name.toLowerCase().endsWith(".heif");
+
+        const processImage = (blob, fileName) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const img = new Image();
+            img.onload = () => {
+              EXIF.getData(img, function () {
+                const exifDate = EXIF.getTag(this, "DateTimeOriginal");
+                const formattedDate = formatExifDate(exifDate);
+                createThumbnail(dataUrl)
+                  .then((thumbnailUrl) => {
+                    resolve({
+                      id: Date.now() + Math.random(),
+                      data: dataUrl,
+                      thumbnail: thumbnailUrl,
+                      name: fileName,
+                      size: blob.size,
+                      width: img.width,
+                      height: img.height,
+                      date: formattedDate,
+                    });
+                  })
+                  .catch(reject);
+              });
+            };
+            img.onerror = reject;
+            img.src = dataUrl;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        };
+
+        if (isHEIC) {
+          showConversionModal();
+          heic2any({
+            blob: file,
+            toType: "image/jpeg",
+            quality: 0.8,
+          })
+            .then((convertedBlob) => {
+              hideConversionModal();
+              processImage(
+                convertedBlob,
+                file.name.replace(/\.(heic|heif)$/i, ".jpg")
+              );
+            })
+            .catch((error) => {
+              hideConversionModal();
+              console.error("HEIC conversion failed:", error);
+              alert(
+                `HEIC 檔案 "${file.name}" 轉換失敗，請嘗試其他格式的圖片。`
+              );
+              reject(error);
+            });
+        } else {
+          processImage(file, file.name);
+        }
+      })
+  );
+
+  Promise.all(promises)
+    .then((imageDataArray) => {
+      console.log("Image data processed:", imageDataArray.length);
+      imageDataArray.forEach(handleImageAddition);
+      hideUploadingModal();
+    })
+    .catch((error) => {
+      hideConversionModal();
+      hideUploadingModal();
+      console.error("Error processing images:", error);
+      alert("處理圖片時發生錯誤，請重試。");
+    });
+};
+
+/**
+ * 處理圖片新增
+ */
+const handleImageAddition = (imageData) => {
+  const emptyState = document.querySelector(".empty-state");
+  if (emptyState) {
+    emptyState.remove();
+  }
+  if (isDuplicateImage(imageData)) {
+    console.log("Duplicate found:", imageData.name);
+    if (confirm(`檔案 "${imageData.name}" 已經存在。是否重複新增？`)) {
+      addImageToCollection(imageData);
+    } else {
+      console.log("User chose not to add duplicate image");
+    }
+  } else {
+    addImageToCollection(imageData);
+  }
+};
+
+/**
+ * 檢查是否為重複圖片
+ */
+const isDuplicateImage = (newImage) => {
+  return state.selectedImages.some(
+    (img) =>
+      img.name === newImage.name &&
+      img.size === newImage.size &&
+      img.width === newImage.width &&
+      img.height === newImage.height
+  );
+};
+
+/**
+ * 將圖片加入收藏
+ */
+const addImageToCollection = (imageData) => {
+  state.selectedImages.push(imageData);
+  addImageToPreview(imageData, state.selectedImages.length);
+  updateCreateButtonState();
+  updateDownloadZipButtonState();
+  console.log("Image added to collection:", imageData.name);
+  console.log("Total images in collection:", state.selectedImages.length);
+};
+
+/**
+ * 將圖片加入預覽區
+ */
+const addImageToPreview = (imageData, counter) => {
+  const preview = document.getElementById("imagePreview");
+  const imageContainer = document.createElement("div");
+  imageContainer.className = "image-container";
+  imageContainer.dataset.id = imageData.id;
+  imageContainer.draggable = true;
+
+  const counterElement = document.createElement("div");
+  counterElement.className = "image-counter";
+  counterElement.textContent = counter;
+  imageContainer.appendChild(counterElement);
+
+  const img = document.createElement("img");
+  img.src = imageData.thumbnail;
+  img.alt = imageData.name;
+  imageContainer.appendChild(img);
+
+  // 讓新照片套用目前滑桿大小
+  const slider = document.getElementById("photoSizeSlider");
+  if (slider) {
+    img.style.maxWidth = slider.value + "px";
+    img.style.maxHeight = slider.value + "px";
+  }
+
+  // 新增說明文字區
+  const descriptionDiv = document.createElement("div");
+  descriptionDiv.className = "image-description";
+
+  // 日期輸入欄位
+  const dateInput = document.createElement("input");
+  dateInput.type = "text";
+  dateInput.className = "image-date-input";
+  dateInput.placeholder = "日期 (留空則使用側邊欄資訊)";
+  dateInput.value = state.imageDates[imageData.id] || "";
+  dateInput.addEventListener("input", (e) => {
+    state.imageDates[imageData.id] = e.target.value;
+  });
+  dateInput.addEventListener("dragover", (e) => e.preventDefault());
+  dateInput.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  descriptionDiv.appendChild(dateInput);
+
+  // 地址輸入欄位
+  const addressInput = document.createElement("input");
+  addressInput.type = "text";
+  addressInput.className = "image-address-input";
+  addressInput.placeholder = "地址 (留空則使用側邊欄資訊)";
+  addressInput.value = state.imageAddresses[imageData.id] || "";
+  addressInput.addEventListener("input", (e) => {
+    state.imageAddresses[imageData.id] = e.target.value;
+  });
+  addressInput.addEventListener("dragover", (e) => e.preventDefault());
+  addressInput.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  descriptionDiv.appendChild(addressInput);
+
+  // 說明輸入欄位
+  const textarea = document.createElement("textarea");
+  textarea.placeholder = "說明 (選填，僅限刑事案件格式)";
+  textarea.value = state.imageDescriptions[imageData.id] || "";
+  textarea.addEventListener("input", (e) => {
+    state.imageDescriptions[imageData.id] = e.target.value;
+  });
+  textarea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+  });
+  textarea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  descriptionDiv.appendChild(textarea);
+  imageContainer.appendChild(descriptionDiv);
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "delete-button";
+  deleteButton.textContent = "×";
+  deleteButton.onclick = () => removeImage(imageData.id);
+  imageContainer.appendChild(deleteButton);
+
+  preview.appendChild(imageContainer);
+  console.log("Image preview added:", imageData.name);
+};
+
+/**
+ * 處理檢視模式切換
+ */
+export const handleViewModeChange = (mode) => {
+  state.viewMode = mode;
+  const preview = document.getElementById("imagePreview");
+  const gridViewBtn = document.getElementById("gridViewBtn");
+  const listViewBtn = document.getElementById("listViewBtn");
+
+  if (mode === "list") {
+    preview.classList.add("list-view");
+    gridViewBtn.classList.remove("active");
+    listViewBtn.classList.add("active");
+  } else {
+    preview.classList.remove("list-view");
+    gridViewBtn.classList.add("active");
+    listViewBtn.classList.remove("active");
+    // 切換回 grid 時重新套用滑桿大小
+    const slider = document.getElementById("photoSizeSlider");
+    if (slider) {
+      const imgs = preview.querySelectorAll(".image-container img");
+      imgs.forEach((img) => {
+        img.style.maxWidth = slider.value + "px";
+        img.style.maxHeight = slider.value + "px";
+      });
+    }
+  }
+  console.log("View mode changed to:", state.viewMode);
+};
+
+/**
+ * 處理圖片容器拖曳事件
+ */
+export const handleImageContainerEvents = (e) => {
+  // 忽略來自 textarea 的拖曳事件
+  if (e.target.tagName === "TEXTAREA") return;
+
+  const container = e.target.closest(".image-container");
+  if (!container) return;
+
+  if (!e.dataTransfer) return;
+
+  switch (e.type) {
+    case "dragstart":
+      e.dataTransfer.setData("text/plain", container.dataset.id);
+      container.style.opacity = "0.5";
+      break;
+    case "dragover":
+    case "dragenter":
+      e.preventDefault();
+      container.classList.add("drag-over");
+      break;
+    case "dragleave":
+    case "drop":
+      container.classList.remove("drag-over");
+      if (e.type === "drop") {
+        e.preventDefault();
+        const draggedId = e.dataTransfer.getData("text");
+        handleImageDrop(draggedId, container);
+      }
+      break;
+    case "dragend":
+      container.style.opacity = "";
+      break;
+  }
+};
+
+/**
+ * 處理圖片拖放
+ */
+const handleImageDrop = (draggedId, dropZone) => {
+  const draggedElement = document.querySelector(
+    `.image-container[data-id="${draggedId}"]`
+  );
+  if (draggedElement && dropZone && draggedElement !== dropZone) {
+    const preview = document.getElementById("imagePreview");
+    const allContainers = Array.from(
+      preview.querySelectorAll(".image-container")
+    );
+    const draggedIndex = allContainers.indexOf(draggedElement);
+    const dropIndex = allContainers.indexOf(dropZone);
+
+    const [movedImage] = state.selectedImages.splice(draggedIndex, 1);
+    state.selectedImages.splice(dropIndex, 0, movedImage);
+
+    if (draggedIndex < dropIndex) {
+      dropZone.parentNode.insertBefore(draggedElement, dropZone.nextSibling);
+    } else {
+      dropZone.parentNode.insertBefore(draggedElement, dropZone);
+    }
+
+    updateImageOrder();
+  }
+};
+
+/**
+ * 更新圖片順序
+ */
+const updateImageOrder = () => {
+  const preview = document.getElementById("imagePreview");
+  const containers = Array.from(preview.querySelectorAll(".image-container"));
+
+  containers.forEach((container, index) => {
+    const counter = container.querySelector(".image-counter");
+    if (counter) {
+      counter.textContent = index + 1;
+    }
+  });
+
+  state.imageCounter = containers.length;
+
+  console.log(
+    "Image order updated. New order:",
+    state.selectedImages.map((img) => img.name)
+  );
+  console.log("Total images after reorder:", state.selectedImages.length);
+
+  updateCreateButtonState();
+  updateDownloadZipButtonState();
+};
+
+/**
+ * 移除圖片
+ */
+export const removeImage = (id) => {
+  console.log("Removing image with id:", id);
+  state.selectedImages = state.selectedImages.filter((img) => img.id !== id);
+  delete state.imageDescriptions[id];
+
+  const imageElement = document.querySelector(
+    `.image-container[data-id="${id}"]`
+  );
+  if (imageElement) {
+    imageElement.remove();
+  }
+
+  updateImageCounters();
+  updateCreateButtonState();
+  updateDownloadZipButtonState();
+  console.log("Image removed. Remaining images:", state.selectedImages.length);
+
+  // 檢查是否沒有圖片，顯示空狀態
+  if (state.selectedImages.length === 0) {
+    showEmptyState();
+  }
+};
+
+/**
+ * 顯示空狀態提示
+ */
+const showEmptyState = () => {
+  const imagePreview = document.getElementById("imagePreview");
+  const emptyStateDiv = document.createElement("div");
+  emptyStateDiv.className = "empty-state";
+  emptyStateDiv.innerHTML = EMPTY_STATE_HTML;
+  imagePreview.appendChild(emptyStateDiv);
+  console.log("No images left, displaying empty state.");
+};
+
+/**
+ * 更新圖片計數器
+ */
+const updateImageCounters = () => {
+  const containers = document.querySelectorAll(".image-container");
+  containers.forEach((container, index) => {
+    const counter = container.querySelector(".image-counter");
+    if (counter) {
+      counter.textContent = index + 1;
+    }
+  });
+  state.imageCounter = containers.length;
+  console.log("Image counters updated. New count:", state.imageCounter);
+};
+
+/**
+ * 更新建立按鈕狀態
+ */
+export const updateCreateButtonState = () => {
+  const createButton = document.getElementById("generate");
+  if (!createButton) {
+    console.error("Create button not found");
+    return;
+  }
+  const isEnabled = state.selectedImages.length > 0;
+
+  createButton.classList.toggle("create-btn-disabled", !isEnabled);
+  createButton.classList.toggle("create-btn-enabled", isEnabled);
+
+  console.log("Create button state updated. Enabled:", isEnabled);
+  console.log("Selected images count:", state.selectedImages.length);
+};
+
+/**
+ * 更新下載 ZIP 按鈕狀態
+ */
+export const updateDownloadZipButtonState = () => {
+  const btn = document.getElementById("downloadZip");
+  if (state.selectedImages.length > 0) {
+    btn.classList.remove("downzip-btn-disabled");
+    btn.classList.add("downzip-btn-enabled");
+  } else {
+    btn.classList.add("downzip-btn-disabled");
+    btn.classList.remove("downzip-btn-enabled");
+  }
+};

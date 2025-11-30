@@ -1,1 +1,890 @@
-function _0xb422(){const _0x256428=['DISTRIBUTE','date','height','標示單號','caseUnit','caseDate','handleGenerate\x20called','違規法條','1312521suBFlX','攝影人','docx','plateNumber','caseNumber','imageDescriptions','編號(','length','CENTER','violationFact','markNumber','LEFT','width','違規地點','getElementById','81YRmdaD','toBlob','Normal','value','Document','553425xIASTl','舉發單號','VerticalAlign','FIXED','6qepvjA','攝影日期','251112KTMMZm','preventDefault','imageDates','15543820IKrwSE','createElement','文件生成過程中出錯，請查看控制台以獲取詳細信息。','log','right','WidthType','href','Footer','isGenerating','未知的文檔格式','照片編號','CURRENT','4zLmhWk','convertMillimetersToTwip','data','TextRun','4322199Nxdxat','TableLayoutType','selectedImages','TableRow','ImageRun','footers','checked','DFKai-SB','click','selectedFormat','交通違規逕行舉發照片黏貼表','customDate','caseUni','push','照片黏貼表_','description','刑案照片黏貼表','AlignmentType','Table','stopPropagation','ticketNumber','1150650jyycIA','□現場全景\x20□車損\x20\x20\x20\x20\x20□車體擦痕\x20\x20□機車倒地\x20\x20\x20□煞車痕\x20\x20□刮地痕\x20\x20□拖痕\x20\x20\x20\x20\x20□道路設施\x20□人倒地\x20\x20\x20\x20□人受傷部位\x20□落土\x20\x20\x20\x20□碎片\x20\x20\x20\x20□其他________________','HeightRule','Header','Packer','error','請選擇至少一張圖片。','TableCell','caseAddress','violationLaw','照片日期','Paragraph','628305aVCxOK','PageNumber','PERCENTAGE','PageBreak','違規車號','middle','EXACT','all','zipPrefix','download'];_0xb422=function(){return _0x256428;};return _0xb422();}(function(_0x51a16d,_0x5cb747){const _0x8b2a8b=_0x55f0,_0x36d31c=_0x51a16d();while(!![]){try{const _0x110834=-parseInt(_0x8b2a8b(0x102))/0x1+-parseInt(_0x8b2a8b(0xd0))/0x2+parseInt(_0x8b2a8b(0xee))/0x3*(parseInt(_0x8b2a8b(0x117))/0x4)+-parseInt(_0x8b2a8b(0xdc))/0x5*(parseInt(_0x8b2a8b(0x106))/0x6)+-parseInt(_0x8b2a8b(0x11b))/0x7+-parseInt(_0x8b2a8b(0x108))/0x8*(-parseInt(_0x8b2a8b(0xfd))/0x9)+parseInt(_0x8b2a8b(0x10b))/0xa;if(_0x110834===_0x5cb747)break;else _0x36d31c['push'](_0x36d31c['shift']());}catch(_0x27f457){_0x36d31c['push'](_0x36d31c['shift']());}}}(_0xb422,0x6245a));import{state,FORMAT_NAMES}from'./state.js';function _0x55f0(_0x555bb8,_0x511789){const _0xb42205=_0xb422();return _0x55f0=function(_0x55f0df,_0x54e41a){_0x55f0df=_0x55f0df-0xc9;let _0x1abafb=_0xb42205[_0x55f0df];return _0x1abafb;},_0x55f0(_0x555bb8,_0x511789);}import{resizeImageForDoc,getFormattedDate,showLoadingModal,hideLoadingModal}from'./utils.js';export const handleGenerateWrapper=async _0x1a7cbb=>{const _0x2c89e3=_0x55f0;_0x1a7cbb[_0x2c89e3(0x109)](),_0x1a7cbb[_0x2c89e3(0xce)]();if(state[_0x2c89e3(0x113)]){console[_0x2c89e3(0x10e)]('Generation\x20already\x20in\x20progress');return;}console[_0x2c89e3(0x10e)](_0x2c89e3(0xec)),state[_0x2c89e3(0x113)]=!![];try{await handleGenerate();}finally{setTimeout(()=>{const _0x3bd0e7=_0x2c89e3;state[_0x3bd0e7(0x113)]=![];},0x3e8);}};const handleGenerate=async()=>{const _0x66e6e1=_0x55f0;if(state[_0x66e6e1(0x11d)][_0x66e6e1(0xf5)]===0x0){alert(_0x66e6e1(0xd6));return;}showLoadingModal();try{const _0x57a87d=await Promise[_0x66e6e1(0xe3)](state[_0x66e6e1(0x11d)]['map'](async _0x4a6cf6=>{const _0x494daa=_0x66e6e1,_0x292d84=await resizeImageForDoc(_0x4a6cf6[_0x494daa(0x119)]);return{..._0x4a6cf6,'data':_0x292d84,'description':state[_0x494daa(0xf3)][_0x4a6cf6['id']]||'','customDate':state[_0x494daa(0x10a)][_0x4a6cf6['id']]||'','customAddress':state['imageAddresses'][_0x4a6cf6['id']]||''};})),_0x34e480=window[_0x66e6e1(0xf0)],_0x5786de=document[_0x66e6e1(0xfc)](_0x66e6e1(0xe4))[_0x66e6e1(0x100)],_0x41782b=document['getElementById'](_0x66e6e1(0x127))[_0x66e6e1(0x100)],_0x3c3418=document[_0x66e6e1(0xfc)](_0x66e6e1(0xd8))['value'],_0x385797=document[_0x66e6e1(0xfc)](_0x66e6e1(0xeb))[_0x66e6e1(0x100)],_0x406dbb=document[_0x66e6e1(0xfc)](_0x66e6e1(0xf2))[_0x66e6e1(0x100)],_0x1fc05e=document[_0x66e6e1(0xfc)]('markNumber')[_0x66e6e1(0x100)],_0x4ce3ad=document[_0x66e6e1(0xfc)](_0x66e6e1(0xcf))[_0x66e6e1(0x100)],_0x534ef6=document[_0x66e6e1(0xfc)](_0x66e6e1(0xf1))[_0x66e6e1(0x100)],_0x212cc4=document['getElementById'](_0x66e6e1(0xd9))[_0x66e6e1(0x100)],_0xd8a715=document['getElementById']('violationFact')[_0x66e6e1(0x100)],_0x3dc7b9=createDocument(_0x34e480,state[_0x66e6e1(0x124)],{'caseReason':_0x5786de,'caseUnit':_0x41782b,'caseAddress':_0x3c3418,'caseDate':_0x385797,'caseNumber':_0x406dbb,'markNumber':_0x1fc05e,'ticketNumber':_0x4ce3ad,'plateNumber':_0x534ef6,'violationLaw':_0x212cc4,'violationFact':_0xd8a715},_0x57a87d),_0x2b0262=await _0x34e480[_0x66e6e1(0xd4)][_0x66e6e1(0xfe)](_0x3dc7b9);hideLoadingModal();const _0x3074be=document[_0x66e6e1(0x10c)]('a');_0x3074be[_0x66e6e1(0x111)]=URL['createObjectURL'](_0x2b0262);const _0x567eb0=getFormattedDate();_0x3074be[_0x66e6e1(0xe5)]=FORMAT_NAMES[state[_0x66e6e1(0x124)]]+_0x66e6e1(0xc9)+_0x567eb0+'.docx',_0x3074be[_0x66e6e1(0x123)]();}catch(_0x3b01d5){hideLoadingModal(),console[_0x66e6e1(0xd5)]('Error\x20in\x20document\x20generation:',_0x3b01d5),alert(_0x66e6e1(0x10d));}},createDocument=(_0x431496,_0x19df7d,_0x201fbd,_0x2d46ab)=>{const _0x321863=_0x55f0,_0x59c0e7=document[_0x321863(0xfc)]('dateModeSwitch')[_0x321863(0x121)],_0x33cb22=document[_0x321863(0xfc)]('caseDate')[_0x321863(0x100)];let _0x23b7e4,_0x36579b;switch(_0x19df7d){case'left':_0x23b7e4=_0x321863(0xcb),_0x36579b=createCriminalContent;break;case _0x321863(0xe1):_0x23b7e4='非道路交通事故照片黏貼紀錄表',_0x36579b=createTrafficAccidentContent;break;case'right':_0x23b7e4=_0x321863(0x125),_0x36579b=createTrafficViolationContent;break;default:throw new Error(_0x321863(0x114));}const _0x417bbf=[{'properties':{'compatibility':{'doNotExpandShiftReturn':!![],'doNotBreakWrappedTables':!![],'doNotSnapToGridInCell':!![],'doNotWrapTextWithPunct':!![],'doNotUseEastAsianBreakRules':!![]},'page':{'margin':{'top':_0x431496[_0x321863(0x118)](0x1a),'bottom':_0x431496[_0x321863(0x118)](0xa),'left':_0x431496[_0x321863(0x118)](0x1b),'right':_0x431496[_0x321863(0x118)](0x1b)}}},'headers':{'default':new _0x431496[(_0x321863(0xd3))]({'children':[new _0x431496[(_0x321863(0xdb))]({'text':_0x23b7e4,'alignment':_0x431496[_0x321863(0xcc)][_0x321863(0xe6)],'style':_0x321863(0xd3)})]})},'children':_0x36579b(_0x431496,_0x2d46ab,_0x201fbd,_0x59c0e7,_0x33cb22)}];return _0x19df7d!==_0x321863(0x10f)&&(_0x417bbf[0x0][_0x321863(0x120)]={'default':createDefaultFooter(_0x431496)}),new _0x431496[(_0x321863(0x101))]({'sections':_0x417bbf,'styles':createDocumentStyles(_0x431496),'compatibility':{'doNotUseHTMLParagraphAutoSpacing':!![],'doNotUseIndentAsNumberingTabStop':!![]}});},createCriminalContent=(_0x2f1a4a,_0x3ab0b4,_0xe7bf4b,_0x349c81,_0x454c2a)=>{return createImageTables(_0x2f1a4a,_0x3ab0b4,_0xe7bf4b,_0x349c81,_0x454c2a);},createImageTables=(_0x4412c3,_0x148bf3,_0x4077f3,_0x42a3c1,_0x4e78ed)=>{const _0x233a55=_0x55f0,_0xdde27e=[];for(let _0x27dec2=0x0;_0x27dec2<_0x148bf3['length'];_0x27dec2+=0x2){_0xdde27e[_0x233a55(0x128)](createHeaderTable(_0x4412c3,_0x4077f3)),_0xdde27e[_0x233a55(0x128)](...createImageTable(_0x4412c3,_0x148bf3[_0x27dec2],_0x27dec2+0x1,_0x4077f3,_0x42a3c1,_0x4e78ed)),_0x27dec2+0x1<_0x148bf3[_0x233a55(0xf5)]&&_0xdde27e[_0x233a55(0x128)](...createImageTable(_0x4412c3,_0x148bf3[_0x27dec2+0x1],_0x27dec2+0x2,_0x4077f3,_0x42a3c1,_0x4e78ed)),_0x27dec2+0x2<_0x148bf3[_0x233a55(0xf5)]&&_0xdde27e['push'](new _0x4412c3[(_0x233a55(0xdb))]({'children':[new _0x4412c3[(_0x233a55(0xdf))]()]}));}return _0xdde27e;},createHeaderTable=(_0x2e701c,_0x11bbe4)=>{const _0x2f52bf=_0x55f0;return new _0x2e701c[(_0x2f52bf(0xcd))]({'layout':_0x2e701c[_0x2f52bf(0x11c)][_0x2f52bf(0x105)],'width':{'size':0x64,'type':_0x2e701c['WidthType'][_0x2f52bf(0xde)]},'rows':[new _0x2e701c[(_0x2f52bf(0x11e))]({'children':[new _0x2e701c[(_0x2f52bf(0xd7))]({'children':[new _0x2e701c[(_0x2f52bf(0xdb))]({'text':'案由','style':_0x2f52bf(0xff)})],'width':{'size':0xf,'type':_0x2e701c[_0x2f52bf(0x110)][_0x2f52bf(0xde)]}}),new _0x2e701c[(_0x2f52bf(0xd7))]({'children':[new _0x2e701c[(_0x2f52bf(0xdb))]({'text':_0x11bbe4['caseReason']||'','style':_0x2f52bf(0xff),'alignment':_0x2e701c[_0x2f52bf(0xcc)][_0x2f52bf(0xf6)]})],'width':{'size':0x23,'type':_0x2e701c[_0x2f52bf(0x110)][_0x2f52bf(0xde)]},'columnSpan':0x2}),new _0x2e701c[(_0x2f52bf(0xd7))]({'children':[new _0x2e701c[(_0x2f52bf(0xdb))]({'text':'單位','style':_0x2f52bf(0xff)})],'width':{'size':0xf,'type':_0x2e701c[_0x2f52bf(0x110)][_0x2f52bf(0xde)]}}),new _0x2e701c[(_0x2f52bf(0xd7))]({'children':[new _0x2e701c[(_0x2f52bf(0xdb))]({'text':_0x11bbe4[_0x2f52bf(0xea)]||'','style':_0x2f52bf(0xff),'alignment':_0x2e701c[_0x2f52bf(0xcc)]['CENTER']})],'width':{'size':0x23,'type':_0x2e701c[_0x2f52bf(0x110)][_0x2f52bf(0xde)]},'columnSpan':0x2})]})]});},createImageTable=(_0x19802c,_0x4bdff5,_0xad2b1,_0x1765ed,_0x523da4,_0x4aca43)=>{const _0x3a39bd=_0x55f0;let _0x24cc91;if(_0x4bdff5[_0x3a39bd(0x126)])_0x24cc91=_0x4bdff5[_0x3a39bd(0x126)];else _0x523da4?_0x24cc91=_0x4bdff5[_0x3a39bd(0xe7)]||_0x4aca43:_0x24cc91=_0x4aca43;const _0x549705=_0x4bdff5['customAddress']||_0x1765ed[_0x3a39bd(0xd8)]||'',_0x4eda20=_0x4bdff5['width']/_0x4bdff5[_0x3a39bd(0xe8)];let _0x42018d=0x15e,_0x36a092=_0x42018d*_0x4eda20;return _0x36a092>=0x244&&(_0x36a092=0x244,_0x42018d=_0x36a092/_0x4eda20),[new _0x19802c[(_0x3a39bd(0xcd))]({'layout':_0x19802c[_0x3a39bd(0x11c)]['FIXED'],'width':{'size':0x64,'type':_0x19802c[_0x3a39bd(0x110)][_0x3a39bd(0xde)]},'rows':[new _0x19802c[(_0x3a39bd(0x11e))]({'height':{'value':_0x19802c[_0x3a39bd(0x118)](0x5f),'rule':_0x19802c[_0x3a39bd(0xd2)][_0x3a39bd(0xe2)]},'children':[new _0x19802c[(_0x3a39bd(0xd7))]({'children':[new _0x19802c[(_0x3a39bd(0xdb))]({'children':[new _0x19802c[(_0x3a39bd(0x11f))]({'data':_0x4bdff5['data'],'transformation':{'width':_0x36a092,'height':_0x42018d}})],'alignment':_0x19802c[_0x3a39bd(0xcc)][_0x3a39bd(0xf6)]})],'columnSpan':0x6,'verticalAlign':_0x19802c['VerticalAlign'][_0x3a39bd(0xf6)]})]}),new _0x19802c['TableRow']({'children':[new _0x19802c[(_0x3a39bd(0xd7))]({'children':[new _0x19802c[(_0x3a39bd(0xdb))]({'text':_0x3a39bd(0xf4)+_0xad2b1+')','style':_0x3a39bd(0xff),'alignment':_0x19802c[_0x3a39bd(0xcc)][_0x3a39bd(0xf6)]})],'width':{'size':0xf,'type':_0x19802c[_0x3a39bd(0x110)][_0x3a39bd(0xde)]}}),new _0x19802c[(_0x3a39bd(0xd7))]({'children':[new _0x19802c['Paragraph']({'text':_0x3a39bd(0xda),'style':_0x3a39bd(0xff)})],'width':{'size':0xf,'type':_0x19802c[_0x3a39bd(0x110)][_0x3a39bd(0xde)]}}),new _0x19802c[(_0x3a39bd(0xd7))]({'children':[new _0x19802c[(_0x3a39bd(0xdb))]({'text':_0x24cc91,'style':_0x3a39bd(0xff),'alignment':_0x19802c[_0x3a39bd(0xcc)][_0x3a39bd(0xf9)]})],'width':{'size':0x23,'type':_0x19802c[_0x3a39bd(0x110)]['PERCENTAGE']},'columnSpan':0x2}),new _0x19802c[(_0x3a39bd(0xd7))]({'children':[new _0x19802c[(_0x3a39bd(0xdb))]({'text':_0x3a39bd(0xef),'style':_0x3a39bd(0xff)})],'width':{'size':0xf,'type':_0x19802c[_0x3a39bd(0x110)][_0x3a39bd(0xde)]}}),new _0x19802c[(_0x3a39bd(0xd7))]({'children':[new _0x19802c[(_0x3a39bd(0xdb))]({'text':_0x1765ed[_0x3a39bd(0xf2)]||'','style':_0x3a39bd(0xff),'alignment':_0x19802c['AlignmentType'][_0x3a39bd(0xf6)]})],'width':{'size':0x14,'type':_0x19802c['WidthType'][_0x3a39bd(0xde)]}})]}),new _0x19802c['TableRow']({'children':[new _0x19802c[(_0x3a39bd(0xd7))]({'children':[new _0x19802c['Paragraph']({'text':'攝影地址','style':'Normal'})],'width':{'size':0xf,'type':_0x19802c[_0x3a39bd(0x110)]['PERCENTAGE']}}),new _0x19802c['TableCell']({'children':[new _0x19802c[(_0x3a39bd(0xdb))]({'text':_0x549705,'style':_0x3a39bd(0xff),'alignment':_0x19802c[_0x3a39bd(0xcc)][_0x3a39bd(0xf9)]})],'columnSpan':0x5,'width':{'size':0x55,'type':_0x19802c[_0x3a39bd(0x110)][_0x3a39bd(0xde)]}})]}),new _0x19802c[(_0x3a39bd(0x11e))]({'children':[new _0x19802c['TableCell']({'children':[new _0x19802c['Paragraph']({'text':'說明','style':_0x3a39bd(0xff)})],'width':{'size':0xf,'type':_0x19802c[_0x3a39bd(0x110)][_0x3a39bd(0xde)]}}),new _0x19802c[(_0x3a39bd(0xd7))]({'children':[new _0x19802c[(_0x3a39bd(0xdb))]({'text':_0x4bdff5[_0x3a39bd(0xca)]||'','style':_0x3a39bd(0xff),'alignment':_0x19802c[_0x3a39bd(0xcc)][_0x3a39bd(0xf9)]})],'columnSpan':0x5,'width':{'size':0x55,'type':_0x19802c[_0x3a39bd(0x110)][_0x3a39bd(0xde)]}})]})]}),new _0x19802c[(_0x3a39bd(0xdb))]({'text':'','style':_0x3a39bd(0xff)})];},createTrafficAccidentContent=(_0x2e573f,_0x114460,_0x1b39e7,_0x3d2d34,_0x5373b1)=>{const _0xed8a52=_0x55f0,_0x3ee620=[];for(let _0x349ed7=0x0;_0x349ed7<_0x114460['length'];_0x349ed7++){_0x3ee620[_0xed8a52(0x128)](createTrafficAccidentImageTable(_0x2e573f,_0x114460[_0x349ed7],_0x349ed7+0x1,_0x1b39e7,_0x3d2d34,_0x5373b1)),_0x349ed7<_0x114460[_0xed8a52(0xf5)]-0x1&&_0x3ee620[_0xed8a52(0x128)](new _0x2e573f[(_0xed8a52(0xdb))]({'text':'','style':'Normal'})),(_0x349ed7+0x1)%0x2===0x0&&_0x349ed7+0x1<_0x114460[_0xed8a52(0xf5)]&&_0x3ee620[_0xed8a52(0x128)](new _0x2e573f[(_0xed8a52(0xdb))]({'children':[new _0x2e573f[(_0xed8a52(0xdf))]()]}));}return _0x3ee620;},createTrafficAccidentImageTable=(_0x52c946,_0x48521d,_0x21d5fa,_0x4327eb,_0x450d49,_0x36beb7)=>{const _0x42d675=_0x55f0;let _0x44d699;if(_0x48521d[_0x42d675(0x126)])_0x44d699=_0x48521d[_0x42d675(0x126)];else _0x450d49?_0x44d699=_0x48521d[_0x42d675(0xe7)]||_0x36beb7:_0x44d699=_0x36beb7;const _0x39991e=_0x48521d[_0x42d675(0xfa)]/_0x48521d[_0x42d675(0xe8)];let _0x345b9b=0x15e,_0x121481=_0x345b9b*_0x39991e;return _0x121481>=0x244&&(_0x121481=0x244,_0x345b9b=_0x121481/_0x39991e),new _0x52c946[(_0x42d675(0xcd))]({'layout':_0x52c946[_0x42d675(0x11c)][_0x42d675(0x105)],'width':{'size':0x64,'type':_0x52c946[_0x42d675(0x110)][_0x42d675(0xde)]},'rows':[new _0x52c946[(_0x42d675(0x11e))]({'height':{'value':_0x52c946[_0x42d675(0x118)](0x5f),'rule':_0x52c946['HeightRule'][_0x42d675(0xe2)]},'children':[new _0x52c946[(_0x42d675(0xd7))]({'children':[new _0x52c946[(_0x42d675(0xdb))]({'children':[new _0x52c946[(_0x42d675(0x11f))]({'data':_0x48521d[_0x42d675(0x119)],'transformation':{'width':_0x121481,'height':_0x345b9b}})],'alignment':_0x52c946[_0x42d675(0xcc)][_0x42d675(0xf6)]})],'columnSpan':0x6,'verticalAlign':_0x52c946['VerticalAlign'][_0x42d675(0xf6)]})]}),new _0x52c946['TableRow']({'children':[new _0x52c946[(_0x42d675(0xd7))]({'children':[new _0x52c946['Paragraph']({'text':_0x42d675(0x107),'style':_0x42d675(0xff)})],'width':{'size':0xf,'type':_0x52c946[_0x42d675(0x110)][_0x42d675(0xde)]}}),new _0x52c946[(_0x42d675(0xd7))]({'children':[new _0x52c946[(_0x42d675(0xdb))]({'text':_0x44d699,'alignment':_0x52c946[_0x42d675(0xcc)]['LEFT']})],'width':{'size':0x37,'type':_0x52c946[_0x42d675(0x110)][_0x42d675(0xde)]},'columnSpan':0x2}),new _0x52c946['TableCell']({'children':[new _0x52c946[(_0x42d675(0xdb))]({'text':_0x42d675(0x115),'style':_0x42d675(0xff)})],'width':{'size':0xf,'type':_0x52c946[_0x42d675(0x110)][_0x42d675(0xde)]}}),new _0x52c946['TableCell']({'children':[new _0x52c946[(_0x42d675(0xdb))]({'text':''+_0x21d5fa,'style':_0x42d675(0xff),'alignment':_0x52c946['AlignmentType']['CENTER']})],'width':{'size':0xf,'type':_0x52c946[_0x42d675(0x110)][_0x42d675(0xde)]},'columnSpan':0x2})]}),new _0x52c946[(_0x42d675(0x11e))]({'children':[new _0x52c946[(_0x42d675(0xd7))]({'children':[new _0x52c946[(_0x42d675(0xdb))]({'text':'說明','style':'Normal'})],'width':{'size':0xf,'type':_0x52c946[_0x42d675(0x110)]['PERCENTAGE']}}),new _0x52c946['TableCell']({'children':[new _0x52c946['Paragraph']({'text':_0x42d675(0xd1),'style':'Normal','alignment':_0x52c946['AlignmentType'][_0x42d675(0xf9)]})],'columnSpan':0x5,'width':{'size':0x55,'type':_0x52c946[_0x42d675(0x110)][_0x42d675(0xde)]}})]})]});},createTrafficViolationContent=(_0x4b1059,_0x5a103e,_0x25c031,_0x33022f,_0x2c611c)=>{const _0x4efbe3=_0x55f0,_0x469795=[];for(let _0x284fd8=0x0;_0x284fd8<_0x5a103e[_0x4efbe3(0xf5)];_0x284fd8+=0x2){_0x469795[_0x4efbe3(0x128)](createTrafficViolationHeaderTable(_0x4b1059,_0x25c031)),_0x469795[_0x4efbe3(0x128)](...createTrafficViolationImageTable(_0x4b1059,_0x5a103e[_0x284fd8],_0x284fd8+0x1,_0x25c031,_0x33022f,_0x2c611c)),_0x284fd8+0x1<_0x5a103e[_0x4efbe3(0xf5)]&&_0x469795['push'](...createTrafficViolationImageTable(_0x4b1059,_0x5a103e[_0x284fd8+0x1],_0x284fd8+0x2,_0x25c031,_0x33022f,_0x2c611c)),_0x284fd8+0x2<_0x5a103e[_0x4efbe3(0xf5)]&&_0x469795[_0x4efbe3(0x128)](new _0x4b1059[(_0x4efbe3(0xdb))]({'children':[new _0x4b1059[(_0x4efbe3(0xdf))]()]}));}return _0x469795;},createTrafficViolationHeaderTable=(_0x39cfc6,_0x34542d)=>{const _0x3ab8da=_0x55f0;return new _0x39cfc6[(_0x3ab8da(0xcd))]({'layout':_0x39cfc6[_0x3ab8da(0x11c)][_0x3ab8da(0x105)],'width':{'size':0x64,'type':_0x39cfc6[_0x3ab8da(0x110)]['PERCENTAGE']},'rows':[new _0x39cfc6[(_0x3ab8da(0x11e))]({'children':[new _0x39cfc6[(_0x3ab8da(0xd7))]({'children':[new _0x39cfc6[(_0x3ab8da(0xdb))]({'text':_0x3ab8da(0xe9),'style':_0x3ab8da(0xff)})],'width':{'size':0xf,'type':_0x39cfc6[_0x3ab8da(0x110)][_0x3ab8da(0xde)]}}),new _0x39cfc6[(_0x3ab8da(0xd7))]({'children':[new _0x39cfc6[(_0x3ab8da(0xdb))]({'text':_0x34542d[_0x3ab8da(0xf8)]||'','style':_0x3ab8da(0xff),'alignment':_0x39cfc6['AlignmentType'][_0x3ab8da(0xf6)]})],'width':{'size':0x23,'type':_0x39cfc6[_0x3ab8da(0x110)][_0x3ab8da(0xde)]}}),new _0x39cfc6[(_0x3ab8da(0xd7))]({'children':[new _0x39cfc6[(_0x3ab8da(0xdb))]({'text':_0x3ab8da(0x103),'style':_0x3ab8da(0xff)})],'width':{'size':0xf,'type':_0x39cfc6[_0x3ab8da(0x110)][_0x3ab8da(0xde)]}}),new _0x39cfc6['TableCell']({'children':[new _0x39cfc6[(_0x3ab8da(0xdb))]({'text':_0x34542d[_0x3ab8da(0xcf)]||'','style':'Normal','alignment':_0x39cfc6[_0x3ab8da(0xcc)][_0x3ab8da(0xf6)]})],'width':{'size':0x23,'type':_0x39cfc6[_0x3ab8da(0x110)][_0x3ab8da(0xde)]}})]})]});},createTrafficViolationImageTable=(_0x3d8fa0,_0x33795e,_0x3b9d5f,_0x5e6933,_0x35bab0,_0x164ca9)=>{const _0x211c0f=_0x55f0;let _0x2a22d0;if(_0x33795e[_0x211c0f(0x126)])_0x2a22d0=_0x33795e[_0x211c0f(0x126)];else _0x35bab0?_0x2a22d0=_0x33795e[_0x211c0f(0xe7)]||_0x164ca9:_0x2a22d0=_0x164ca9;const _0x21dd1a=_0x33795e['customAddress']||_0x5e6933[_0x211c0f(0xd8)]||'',_0x5579e7=_0x33795e[_0x211c0f(0xfa)]/_0x33795e[_0x211c0f(0xe8)];let _0x1d23b8=0x15e,_0x534bce=_0x1d23b8*_0x5579e7;return _0x534bce>=0x244&&(_0x534bce=0x244,_0x1d23b8=_0x534bce/_0x5579e7),[new _0x3d8fa0[(_0x211c0f(0xcd))]({'layout':_0x3d8fa0[_0x211c0f(0x11c)]['FIXED'],'width':{'size':0x64,'type':_0x3d8fa0['WidthType']['PERCENTAGE']},'rows':[new _0x3d8fa0[(_0x211c0f(0x11e))]({'height':{'value':_0x3d8fa0[_0x211c0f(0x118)](0x5f),'rule':_0x3d8fa0[_0x211c0f(0xd2)]['EXACT']},'children':[new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'children':[new _0x3d8fa0[(_0x211c0f(0x11f))]({'data':_0x33795e[_0x211c0f(0x119)],'transformation':{'width':_0x534bce,'height':_0x1d23b8}})],'alignment':_0x3d8fa0['AlignmentType'][_0x211c0f(0xf6)]})],'columnSpan':0x6,'verticalAlign':_0x3d8fa0[_0x211c0f(0x104)][_0x211c0f(0xf6)]})]}),new _0x3d8fa0['TableRow']({'children':[new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':'違規時間','style':_0x211c0f(0xff),'alignment':_0x3d8fa0[_0x211c0f(0xcc)]['CENTER']})],'width':{'size':0xf,'type':_0x3d8fa0[_0x211c0f(0x110)]['PERCENTAGE']}}),new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':_0x2a22d0,'alignment':_0x3d8fa0['AlignmentType'][_0x211c0f(0xf9)]})],'width':{'size':0x23,'type':_0x3d8fa0[_0x211c0f(0x110)][_0x211c0f(0xde)]}}),new _0x3d8fa0['TableCell']({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':_0x211c0f(0xfb),'style':'Normal','alignment':_0x3d8fa0[_0x211c0f(0xcc)][_0x211c0f(0xf6)]})],'width':{'size':0xf,'type':_0x3d8fa0[_0x211c0f(0x110)][_0x211c0f(0xde)]}}),new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':_0x21dd1a,'style':_0x211c0f(0xff),'alignment':_0x3d8fa0[_0x211c0f(0xcc)][_0x211c0f(0xf9)]})],'width':{'size':0x23,'type':_0x3d8fa0[_0x211c0f(0x110)]['PERCENTAGE']}})]}),new _0x3d8fa0[(_0x211c0f(0x11e))]({'children':[new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':_0x211c0f(0xe0),'style':_0x211c0f(0xff),'alignment':_0x3d8fa0[_0x211c0f(0xcc)][_0x211c0f(0xf6)]})],'width':{'size':0xf,'type':_0x3d8fa0[_0x211c0f(0x110)][_0x211c0f(0xde)]}}),new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0['Paragraph']({'text':_0x5e6933[_0x211c0f(0xf1)]||'','style':_0x211c0f(0xff),'alignment':_0x3d8fa0[_0x211c0f(0xcc)][_0x211c0f(0xf9)]})],'width':{'size':0x23,'type':_0x3d8fa0[_0x211c0f(0x110)][_0x211c0f(0xde)]}}),new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':_0x211c0f(0xed),'style':_0x211c0f(0xff),'alignment':_0x3d8fa0['AlignmentType'][_0x211c0f(0xf6)]})],'width':{'size':0xf,'type':_0x3d8fa0['WidthType'][_0x211c0f(0xde)]}}),new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':_0x5e6933[_0x211c0f(0xd9)]||'','style':'Normal','alignment':_0x3d8fa0[_0x211c0f(0xcc)]['LEFT']})],'width':{'size':0x23,'type':_0x3d8fa0[_0x211c0f(0x110)]['PERCENTAGE']}})]}),new _0x3d8fa0[(_0x211c0f(0x11e))]({'children':[new _0x3d8fa0['TableCell']({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':'違規事實','style':'Normal','alignment':_0x3d8fa0[_0x211c0f(0xcc)]['CENTER']})],'width':{'size':0xf,'type':_0x3d8fa0['WidthType'][_0x211c0f(0xde)]}}),new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':_0x5e6933[_0x211c0f(0xf7)]||'','style':_0x211c0f(0xff),'alignment':_0x3d8fa0['AlignmentType'][_0x211c0f(0xf9)]})],'width':{'size':0x23,'type':_0x3d8fa0[_0x211c0f(0x110)][_0x211c0f(0xde)]}}),new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':'舉發人員','style':'Normal','alignment':_0x3d8fa0[_0x211c0f(0xcc)][_0x211c0f(0xf6)]})],'width':{'size':0xf,'type':_0x3d8fa0['WidthType'][_0x211c0f(0xde)]}}),new _0x3d8fa0[(_0x211c0f(0xd7))]({'children':[new _0x3d8fa0['Paragraph']({'text':_0x5e6933[_0x211c0f(0xf2)]||'','style':_0x211c0f(0xff),'alignment':_0x3d8fa0[_0x211c0f(0xcc)][_0x211c0f(0xf9)]})],'width':{'size':0x23,'type':_0x3d8fa0[_0x211c0f(0x110)][_0x211c0f(0xde)]}})]})]}),new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':'','style':'Normal'}),new _0x3d8fa0[(_0x211c0f(0xdb))]({'text':'','style':'Normal'})];},createDefaultFooter=_0x1eae60=>{const _0x15ec0e=_0x55f0;return new _0x1eae60['Footer']({'children':[new _0x1eae60['Paragraph']({'children':[new _0x1eae60[(_0x15ec0e(0x11a))]({'text':'第\x20','size':0x14,'font':_0x15ec0e(0x122)}),new _0x1eae60['TextRun']({'children':[_0x1eae60[_0x15ec0e(0xdd)][_0x15ec0e(0x116)]],'size':0x14,'font':_0x15ec0e(0x122)}),new _0x1eae60['TextRun']({'text':'\x20頁','size':0x14,'font':_0x15ec0e(0x122)})],'alignment':_0x1eae60[_0x15ec0e(0xcc)][_0x15ec0e(0xf6)],'style':_0x15ec0e(0x112)})]});},createDocumentStyles=_0x486c6d=>{const _0x4618f1=_0x55f0;return{'paragraphStyles':[{'id':_0x4618f1(0xff),'name':'Normal','basedOn':_0x4618f1(0xff),'next':_0x4618f1(0xff),'quickFormat':!![],'run':{'size':0x17,'font':_0x4618f1(0x122)},'paragraph':{'alignment':_0x486c6d[_0x4618f1(0xcc)][_0x4618f1(0xe6)]}},{'id':_0x4618f1(0xd3),'name':_0x4618f1(0xd3),'basedOn':_0x4618f1(0xff),'next':'Normal','quickFormat':!![],'run':{'size':0x2c,'font':'DFKai-SB'}}]};};
+// docxGenerator.js
+
+import { state, FORMAT_NAMES } from "./state.js";
+import {
+  resizeImageForDoc,
+  getFormattedDate,
+  showLoadingModal,
+  hideLoadingModal,
+} from "./utils.js";
+
+export const handleGenerateWrapper = async (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (state.isGenerating) {
+    console.log("Generation already in progress");
+    return;
+  }
+
+  console.log("handleGenerate called");
+  state.isGenerating = true;
+
+  try {
+    await handleGenerate();
+  } finally {
+    setTimeout(() => {
+      state.isGenerating = false;
+    }, 1000);
+  }
+};
+
+const handleGenerate = async () => {
+  if (state.selectedImages.length === 0) {
+    alert("請選擇至少一張圖片。");
+    return;
+  }
+  showLoadingModal();
+
+  try {
+    const resizedImages = await Promise.all(
+      state.selectedImages.map(async (image) => {
+        const resizedData = await resizeImageForDoc(image.data);
+        return {
+          ...image,
+          data: resizedData,
+          description: state.imageDescriptions[image.id] || "",
+          customDate: state.imageDates[image.id] || "",
+          customAddress: state.imageAddresses[image.id] || "",
+        };
+      })
+    );
+
+    const docx = window.docx;
+    const caseReason = document.getElementById("zipPrefix").value;
+    const caseUnit = document.getElementById("caseUni").value;
+    const caseAddress = document.getElementById("caseAddress").value;
+    const caseDate = document.getElementById("caseDate").value;
+    const caseNumber = document.getElementById("caseNumber").value;
+
+    const markNumber = document.getElementById("markNumber").value;
+    const ticketNumber = document.getElementById("ticketNumber").value;
+    const plateNumber = document.getElementById("plateNumber").value;
+    const violationLaw = document.getElementById("violationLaw").value;
+    const violationFact = document.getElementById("violationFact").value;
+
+    const doc = createDocument(
+      docx,
+      state.selectedFormat,
+      {
+        caseReason,
+        caseUnit,
+        caseAddress,
+        caseDate,
+        caseNumber,
+        markNumber,
+        ticketNumber,
+        plateNumber,
+        violationLaw,
+        violationFact,
+      },
+      resizedImages
+    );
+
+    const blob = await docx.Packer.toBlob(doc);
+    hideLoadingModal();
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    const dateString = getFormattedDate();
+    link.download = `${FORMAT_NAMES[state.selectedFormat]}照片黏貼表_${dateString}.docx`;
+    link.click();
+  } catch (error) {
+    hideLoadingModal();
+    console.error("Error in document generation:", error);
+    alert("文件生成過程中出錯，請查看控制台以獲取詳細信息。");
+  }
+};
+
+const createDocument = (docx, format, formData, images) => {
+  const isAutoDate = document.getElementById("dateModeSwitch").checked;
+  const manualDate = document.getElementById("caseDate").value;
+  let title, createContent;
+
+  switch (format) {
+    case "left":
+      title = "刑案照片黏貼表";
+      createContent = createCriminalContent;
+      break;
+    case "middle":
+      title = "非道路交通事故照片黏貼紀錄表";
+      createContent = createTrafficAccidentContent;
+      break;
+    case "right":
+      title = "交通違規逕行舉發照片黏貼表";
+      createContent = createTrafficViolationContent;
+      break;
+    default:
+      throw new Error("未知的文檔格式");
+  }
+
+  const sections = [
+    {
+      properties: {
+        compatibility: {
+          doNotExpandShiftReturn: true,
+          doNotBreakWrappedTables: true,
+          doNotSnapToGridInCell: true,
+          doNotWrapTextWithPunct: true,
+          doNotUseEastAsianBreakRules: true,
+        },
+        page: {
+          margin: {
+            top: docx.convertMillimetersToTwip(26),
+            bottom: docx.convertMillimetersToTwip(10),
+            left: docx.convertMillimetersToTwip(27),
+            right: docx.convertMillimetersToTwip(27),
+          },
+        },
+      },
+      headers: {
+        default: new docx.Header({
+          children: [
+            new docx.Paragraph({
+              text: title,
+              alignment: docx.AlignmentType.DISTRIBUTE,
+              style: "Header",
+            }),
+          ],
+        }),
+      },
+      children: createContent(docx, images, formData, isAutoDate, manualDate),
+    },
+  ];
+
+  if (format !== "right") {
+    sections[0].footers = {
+      default: createDefaultFooter(docx),
+    };
+  }
+
+  return new docx.Document({
+    sections: sections,
+    styles: createDocumentStyles(docx),
+    compatibility: {
+      doNotUseHTMLParagraphAutoSpacing: true,
+      doNotUseIndentAsNumberingTabStop: true,
+    },
+  });
+};
+
+// ============ 刑事案件 ============
+
+const createCriminalContent = (
+  docx,
+  images,
+  formData,
+  isAutoDate,
+  manualDate
+) => {
+  return createImageTables(docx, images, formData, isAutoDate, manualDate);
+};
+
+const createImageTables = (docx, images, formData, isAutoDate, manualDate) => {
+  const tables = [];
+  for (let i = 0; i < images.length; i += 2) {
+    tables.push(createHeaderTable(docx, formData));
+    tables.push(
+      ...createImageTable(
+        docx,
+        images[i],
+        i + 1,
+        formData,
+        isAutoDate,
+        manualDate
+      )
+    );
+    if (i + 1 < images.length) {
+      tables.push(
+        ...createImageTable(
+          docx,
+          images[i + 1],
+          i + 2,
+          formData,
+          isAutoDate,
+          manualDate
+        )
+      );
+    }
+    if (i + 2 < images.length) {
+      tables.push(
+        new docx.Paragraph({
+          children: [new docx.PageBreak()],
+        })
+      );
+    }
+  }
+  return tables;
+};
+
+const createHeaderTable = (docx, formData) => {
+  return new docx.Table({
+    layout: docx.TableLayoutType.FIXED,
+    width: { size: 100, type: docx.WidthType.PERCENTAGE },
+    rows: [
+      new docx.TableRow({
+        children: [
+          new docx.TableCell({
+            children: [new docx.Paragraph({ text: "案由", style: "Normal" })],
+            width: { size: 15, type: docx.WidthType.PERCENTAGE },
+          }),
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({
+                text: formData.caseReason || "",
+                style: "Normal",
+                alignment: docx.AlignmentType.CENTER,
+              }),
+            ],
+            width: { size: 35, type: docx.WidthType.PERCENTAGE },
+            columnSpan: 2,
+          }),
+          new docx.TableCell({
+            children: [new docx.Paragraph({ text: "單位", style: "Normal" })],
+            width: { size: 15, type: docx.WidthType.PERCENTAGE },
+          }),
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({
+                text: formData.caseUnit || "",
+                style: "Normal",
+                alignment: docx.AlignmentType.CENTER,
+              }),
+            ],
+            width: { size: 35, type: docx.WidthType.PERCENTAGE },
+            columnSpan: 2,
+          }),
+        ],
+      }),
+    ],
+  });
+};
+
+const createImageTable = (
+  docx,
+  image,
+  index,
+  formData,
+  isAutoDate,
+  manualDate
+) => {
+  let dateToShow;
+  if (image.customDate) {
+    dateToShow = image.customDate;
+  } else if (isAutoDate) {
+    dateToShow = image.date || manualDate;
+  } else {
+    dateToShow = manualDate;
+  }
+
+  const addressToShow = image.customAddress || formData.caseAddress || "";
+
+  const imageRatio = image.width / image.height;
+  let imageHeight = 350;
+  let imageWidth = imageHeight * imageRatio;
+
+  if (imageWidth >= 580) {
+    imageWidth = 580;
+    imageHeight = imageWidth / imageRatio;
+  }
+
+  return [
+    new docx.Table({
+      layout: docx.TableLayoutType.FIXED,
+      width: { size: 100, type: docx.WidthType.PERCENTAGE },
+      rows: [
+        new docx.TableRow({
+          height: {
+            value: docx.convertMillimetersToTwip(95),
+            rule: docx.HeightRule.EXACT,
+          },
+          children: [
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  children: [
+                    new docx.ImageRun({
+                      data: image.data,
+                      transformation: {
+                        width: imageWidth,
+                        height: imageHeight,
+                      },
+                    }),
+                  ],
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              columnSpan: 6,
+              verticalAlign: docx.VerticalAlign.CENTER,
+            }),
+          ],
+        }),
+        new docx.TableRow({
+          children: [
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: `編號(${index})`,
+                  style: "Normal",
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({ text: "照片日期", style: "Normal" }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: dateToShow,
+                  style: "Normal",
+                  alignment: docx.AlignmentType.LEFT,
+                }),
+              ],
+              width: { size: 35, type: docx.WidthType.PERCENTAGE },
+              columnSpan: 2,
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({ text: "攝影人", style: "Normal" }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: formData.caseNumber || "",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              width: { size: 20, type: docx.WidthType.PERCENTAGE },
+            }),
+          ],
+        }),
+        new docx.TableRow({
+          children: [
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({ text: "攝影地址", style: "Normal" }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: addressToShow,
+                  style: "Normal",
+                  alignment: docx.AlignmentType.LEFT,
+                }),
+              ],
+              columnSpan: 5,
+              width: { size: 85, type: docx.WidthType.PERCENTAGE },
+            }),
+          ],
+        }),
+        new docx.TableRow({
+          children: [
+            new docx.TableCell({
+              children: [new docx.Paragraph({ text: "說明", style: "Normal" })],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: image.description || "",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.LEFT,
+                }),
+              ],
+              columnSpan: 5,
+              width: { size: 85, type: docx.WidthType.PERCENTAGE },
+            }),
+          ],
+        }),
+      ],
+    }),
+    new docx.Paragraph({ text: "", style: "Normal" }),
+  ];
+};
+
+// ============ 交通事故 ============
+
+const createTrafficAccidentContent = (
+  docx,
+  images,
+  formData,
+  isAutoDate,
+  manualDate
+) => {
+  const tables = [];
+  for (let i = 0; i < images.length; i++) {
+    tables.push(
+      createTrafficAccidentImageTable(
+        docx,
+        images[i],
+        i + 1,
+        formData,
+        isAutoDate,
+        manualDate
+      )
+    );
+
+    if (i < images.length - 1) {
+      tables.push(new docx.Paragraph({ text: "", style: "Normal" }));
+    }
+
+    if ((i + 1) % 2 === 0 && i + 1 < images.length) {
+      tables.push(new docx.Paragraph({ children: [new docx.PageBreak()] }));
+    }
+  }
+  return tables;
+};
+
+const createTrafficAccidentImageTable = (
+  docx,
+  image,
+  index,
+  formData,
+  isAutoDate,
+  manualDate
+) => {
+  let dateToShow;
+  if (image.customDate) {
+    dateToShow = image.customDate;
+  } else if (isAutoDate) {
+    dateToShow = image.date || manualDate;
+  } else {
+    dateToShow = manualDate;
+  }
+
+  const imageRatio = image.width / image.height;
+  let imageHeight = 350;
+  let imageWidth = imageHeight * imageRatio;
+
+  if (imageWidth >= 580) {
+    imageWidth = 580;
+    imageHeight = imageWidth / imageRatio;
+  }
+
+  return new docx.Table({
+    layout: docx.TableLayoutType.FIXED,
+    width: { size: 100, type: docx.WidthType.PERCENTAGE },
+    rows: [
+      new docx.TableRow({
+        height: {
+          value: docx.convertMillimetersToTwip(95),
+          rule: docx.HeightRule.EXACT,
+        },
+        children: [
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({
+                children: [
+                  new docx.ImageRun({
+                    data: image.data,
+                    transformation: { width: imageWidth, height: imageHeight },
+                  }),
+                ],
+                alignment: docx.AlignmentType.CENTER,
+              }),
+            ],
+            columnSpan: 6,
+            verticalAlign: docx.VerticalAlign.CENTER,
+          }),
+        ],
+      }),
+      new docx.TableRow({
+        children: [
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({ text: "攝影日期", style: "Normal" }),
+            ],
+            width: { size: 15, type: docx.WidthType.PERCENTAGE },
+          }),
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({
+                text: dateToShow,
+                alignment: docx.AlignmentType.LEFT,
+              }),
+            ],
+            width: { size: 55, type: docx.WidthType.PERCENTAGE },
+            columnSpan: 2,
+          }),
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({ text: "照片編號", style: "Normal" }),
+            ],
+            width: { size: 15, type: docx.WidthType.PERCENTAGE },
+          }),
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({
+                text: `${index}`,
+                style: "Normal",
+                alignment: docx.AlignmentType.CENTER,
+              }),
+            ],
+            width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            columnSpan: 2,
+          }),
+        ],
+      }),
+      new docx.TableRow({
+        children: [
+          new docx.TableCell({
+            children: [new docx.Paragraph({ text: "說明", style: "Normal" })],
+            width: { size: 15, type: docx.WidthType.PERCENTAGE },
+          }),
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({
+                text: "□現場全景 □車損     □車體擦痕  □機車倒地   □煞車痕  □刮地痕  □拖痕     □道路設施 □人倒地    □人受傷部位 □落土    □碎片    □其他________________",
+                style: "Normal",
+                alignment: docx.AlignmentType.LEFT,
+              }),
+            ],
+            columnSpan: 5,
+            width: { size: 85, type: docx.WidthType.PERCENTAGE },
+          }),
+        ],
+      }),
+    ],
+  });
+};
+
+// ============ 交通違規 ============
+
+const createTrafficViolationContent = (
+  docx,
+  images,
+  formData,
+  isAutoDate,
+  manualDate
+) => {
+  const tables = [];
+  for (let i = 0; i < images.length; i += 2) {
+    tables.push(createTrafficViolationHeaderTable(docx, formData));
+    tables.push(
+      ...createTrafficViolationImageTable(
+        docx,
+        images[i],
+        i + 1,
+        formData,
+        isAutoDate,
+        manualDate
+      )
+    );
+
+    if (i + 1 < images.length) {
+      tables.push(
+        ...createTrafficViolationImageTable(
+          docx,
+          images[i + 1],
+          i + 2,
+          formData,
+          isAutoDate,
+          manualDate
+        )
+      );
+    }
+
+    if (i + 2 < images.length) {
+      tables.push(new docx.Paragraph({ children: [new docx.PageBreak()] }));
+    }
+  }
+  return tables;
+};
+
+const createTrafficViolationHeaderTable = (docx, formData) => {
+  return new docx.Table({
+    layout: docx.TableLayoutType.FIXED,
+    width: { size: 100, type: docx.WidthType.PERCENTAGE },
+    rows: [
+      new docx.TableRow({
+        children: [
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({ text: "標示單號", style: "Normal" }),
+            ],
+            width: { size: 15, type: docx.WidthType.PERCENTAGE },
+          }),
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({
+                text: formData.markNumber || "",
+                style: "Normal",
+                alignment: docx.AlignmentType.CENTER,
+              }),
+            ],
+            width: { size: 35, type: docx.WidthType.PERCENTAGE },
+          }),
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({ text: "舉發單號", style: "Normal" }),
+            ],
+            width: { size: 15, type: docx.WidthType.PERCENTAGE },
+          }),
+          new docx.TableCell({
+            children: [
+              new docx.Paragraph({
+                text: formData.ticketNumber || "",
+                style: "Normal",
+                alignment: docx.AlignmentType.CENTER,
+              }),
+            ],
+            width: { size: 35, type: docx.WidthType.PERCENTAGE },
+          }),
+        ],
+      }),
+    ],
+  });
+};
+
+const createTrafficViolationImageTable = (
+  docx,
+  image,
+  index,
+  formData,
+  isAutoDate,
+  manualDate
+) => {
+  let dateToShow;
+  if (image.customDate) {
+    dateToShow = image.customDate;
+  } else if (isAutoDate) {
+    dateToShow = image.date || manualDate;
+  } else {
+    dateToShow = manualDate;
+  }
+
+  const addressToShow = image.customAddress || formData.caseAddress || "";
+
+  const imageRatio = image.width / image.height;
+  let imageHeight = 350;
+  let imageWidth = imageHeight * imageRatio;
+
+  if (imageWidth >= 580) {
+    imageWidth = 580;
+    imageHeight = imageWidth / imageRatio;
+  }
+
+  return [
+    new docx.Table({
+      layout: docx.TableLayoutType.FIXED,
+      width: { size: 100, type: docx.WidthType.PERCENTAGE },
+      rows: [
+        new docx.TableRow({
+          height: {
+            value: docx.convertMillimetersToTwip(95),
+            rule: docx.HeightRule.EXACT,
+          },
+          children: [
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  children: [
+                    new docx.ImageRun({
+                      data: image.data,
+                      transformation: {
+                        width: imageWidth,
+                        height: imageHeight,
+                      },
+                    }),
+                  ],
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              columnSpan: 6,
+              verticalAlign: docx.VerticalAlign.CENTER,
+            }),
+          ],
+        }),
+        new docx.TableRow({
+          children: [
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: "違規時間",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: dateToShow,
+                  alignment: docx.AlignmentType.LEFT,
+                }),
+              ],
+              width: { size: 35, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: "違規地點",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: addressToShow,
+                  style: "Normal",
+                  alignment: docx.AlignmentType.LEFT,
+                }),
+              ],
+              width: { size: 35, type: docx.WidthType.PERCENTAGE },
+            }),
+          ],
+        }),
+        new docx.TableRow({
+          children: [
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: "違規車號",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: formData.plateNumber || "",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.LEFT,
+                }),
+              ],
+              width: { size: 35, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: "違規法條",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: formData.violationLaw || "",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.LEFT,
+                }),
+              ],
+              width: { size: 35, type: docx.WidthType.PERCENTAGE },
+            }),
+          ],
+        }),
+        new docx.TableRow({
+          children: [
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: "違規事實",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: formData.violationFact || "",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.LEFT,
+                }),
+              ],
+              width: { size: 35, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: "舉發人員",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.CENTER,
+                }),
+              ],
+              width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            }),
+            new docx.TableCell({
+              children: [
+                new docx.Paragraph({
+                  text: formData.caseNumber || "",
+                  style: "Normal",
+                  alignment: docx.AlignmentType.LEFT,
+                }),
+              ],
+              width: { size: 35, type: docx.WidthType.PERCENTAGE },
+            }),
+          ],
+        }),
+      ],
+    }),
+    new docx.Paragraph({ text: "", style: "Normal" }),
+    new docx.Paragraph({ text: "", style: "Normal" }),
+  ];
+};
+
+// ============ 共用 ============
+
+const createDefaultFooter = (docx) => {
+  return new docx.Footer({
+    children: [
+      new docx.Paragraph({
+        children: [
+          new docx.TextRun({ text: "第 ", size: 20, font: "DFKai-SB" }),
+          new docx.TextRun({
+            children: [docx.PageNumber.CURRENT],
+            size: 20,
+            font: "DFKai-SB",
+          }),
+          new docx.TextRun({ text: " 頁", size: 20, font: "DFKai-SB" }),
+        ],
+        alignment: docx.AlignmentType.CENTER,
+        style: "Footer",
+      }),
+    ],
+  });
+};
+
+const createDocumentStyles = (docx) => {
+  return {
+    paragraphStyles: [
+      {
+        id: "Normal",
+        name: "Normal",
+        basedOn: "Normal",
+        next: "Normal",
+        quickFormat: true,
+        run: { size: 23, font: "DFKai-SB" },
+        paragraph: { alignment: docx.AlignmentType.DISTRIBUTE },
+      },
+      {
+        id: "Header",
+        name: "Header",
+        basedOn: "Normal",
+        next: "Normal",
+        quickFormat: true,
+        run: { size: 44, font: "DFKai-SB" },
+      },
+    ],
+  };
+};
