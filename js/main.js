@@ -331,7 +331,7 @@ const setupResizeWarning = () => {
   }
 
   const checkWindowSize = () => {
-    if (window.innerWidth < 1100 || window.innerHeight < 870) {
+    if (window.innerWidth < 1100 || window.innerHeight < 830) {
       resizeWarningModal.style.display = "flex";
     } else {
       resizeWarningModal.style.display = "none";
@@ -363,3 +363,4 @@ document.addEventListener("DOMContentLoaded", () => {
   setupBeforeUnload();
   setupResizeWarning();
 });
+
