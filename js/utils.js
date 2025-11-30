@@ -8,7 +8,6 @@
 export const EMPTY_STATE_HTML = `
     <h3 class="disclaimer-primary" style="color: #e81a1aff;">免責聲明</h3>
     <p >本網頁為個人開發之輔助工具，僅供參考使用<br>
-                                  使用者應自行負責驗證文件所有信息的正確性<br>
                                   開發者對此不擔保任何法律責任</p>
     <h3 class="disclaimer-primary">【 <span style="color: #ff9800;">Auto-fill EXIF</span> 】</h3>
     <p >本功能為自動讀取照片檔案內嵌之 EXIF 拍攝日期資訊</br>
@@ -159,4 +158,5 @@ export const showConversionModal = () => {
 export const hideConversionModal = () => {
   document.getElementById("conversionModal").style.display = "none";
 };
+
 
