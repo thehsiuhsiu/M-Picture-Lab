@@ -219,10 +219,10 @@ const buildCriminalContent = (
     content += `
             <table>
                 <tr>
-                    <td class="label-cell" style="width:15%;">案由</td>
-                    <td class="value-cell" style="width:35%; text-align:center;" colspan="2">${caseReason}</td>
-                    <td class="label-cell" style="width:15%;">單位</td>
-                    <td class="value-cell" style="width:35%; text-align:center;" colspan="2">${caseUnit}</td>
+                    <td class="label-cell" style="width:16.5%;">案由</td>
+                    <td class="value-cell" style="width:34.5%; text-align:center;" colspan="2">${caseReason}</td>
+                    <td class="label-cell" style="width:16.5%;">單位</td>
+                    <td class="value-cell" style="width:34.5%; text-align:center;" colspan="2">${caseUnit}</td>
                 </tr>
                 <tr><td class="photo-cell" colspan="6"><img src="${img1.data}"></td></tr>
                 <tr>
@@ -457,4 +457,5 @@ const buildTrafficViolationContent = (
 
   return content;
 };
+
 
