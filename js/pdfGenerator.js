@@ -100,7 +100,7 @@ const buildPrintHTML = (title) => {
             <style>
                 @page { 
                     size: A4; 
-                    margin: 7mm 20mm 1mm 20mm;
+                    margin: 12mm 20mm 1mm 20mm;
                 }
                 * {
                     margin: 0;
@@ -277,7 +277,7 @@ const buildCriminalContent = (
             `;
     }
 
-    content += `<div class="footer">第 ${page + 1} 頁</div>`;
+    //content += `<div class="footer">第 ${page + 1} 頁</div>`;
     content += `</div>`;
   }
 
@@ -343,7 +343,7 @@ const buildTrafficAccidentContent = (title, isAutoDate, manualDate) => {
             `;
     }
 
-    content += `<div class="footer">第 ${page + 1} 頁</div>`;
+    //content += `<div class="footer">第 ${page + 1} 頁</div>`;
     content += `</div>`;
   }
 
@@ -457,3 +457,4 @@ const buildTrafficViolationContent = (
 
   return content;
 };
+
