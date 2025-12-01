@@ -265,7 +265,7 @@ const setupDateModeSwitch = () => {
 const setupZipDownload = () => {
   document.getElementById("downloadZip").addEventListener("click", async () => {
     if (!state.selectedImages.length) {
-      alert("😱我等這顆鏡頭等了一輩子...記憶卡呢?照片呢?");
+      alert("打包照片的紙箱準備好了…但沒有看到照片\n只看到小貓在裡面睡了一整個下午💤");
       return;
     }
 
@@ -363,4 +363,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupBeforeUnload();
   setupResizeWarning();
 });
+
 
