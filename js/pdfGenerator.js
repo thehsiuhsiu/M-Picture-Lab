@@ -137,11 +137,11 @@ const buildPrintHTML = (title) => {
                     text-align: center; 
                     height: 100mm;
                     vertical-align: middle;
-                    padding: 2px;
+                    padding: 1px;
                 }
                 .photo-cell img { 
                     max-width: 100%; 
-                    max-height: 95mm;
+                    max-height: 97mm;
                     object-fit: contain;
                 }
                 .label-cell { 
@@ -457,5 +457,6 @@ const buildTrafficViolationContent = (
 
   return content;
 };
+
 
 
