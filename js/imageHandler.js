@@ -172,6 +172,7 @@ const addImageToPreview = (imageData, counter) => {
   const img = document.createElement("img");
   img.src = imageData.thumbnail;
   img.alt = imageData.name;
+  img.title = imageData.name;
   imageContainer.appendChild(img);
 
   // 讓新照片套用目前滑桿大小
@@ -449,3 +450,4 @@ export const updateDownloadZipButtonState = () => {
     btn.classList.remove("downzip-btn-enabled");
   }
 };
+
