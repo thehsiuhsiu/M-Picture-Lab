@@ -265,7 +265,9 @@ const setupDateModeSwitch = () => {
 const setupZipDownload = () => {
   document.getElementById("downloadZip").addEventListener("click", async () => {
     if (!state.selectedImages.length) {
-      alert("打包照片的紙箱準備好了…但沒有看到照片\n只看到小貓在裡面睡了一整個下午💤");
+      alert(
+        "打包照片的紙箱準備好了…但沒有看到照片\n只看到小貓在裡面睡了一整個下午💤"
+      );
       return;
     }
 
@@ -331,7 +333,7 @@ const setupResizeWarning = () => {
   }
 
   const checkWindowSize = () => {
-    if (window.innerWidth < 1100 || window.innerHeight < 830) {
+    if (window.innerWidth < 1100 || window.innerHeight < 800) {
       resizeWarningModal.style.display = "flex";
     } else {
       resizeWarningModal.style.display = "none";
@@ -363,5 +365,3 @@ document.addEventListener("DOMContentLoaded", () => {
   setupBeforeUnload();
   setupResizeWarning();
 });
-
-

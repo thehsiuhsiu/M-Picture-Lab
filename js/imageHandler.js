@@ -35,15 +35,15 @@ const processFiles = (files) => {
           file.name.toLowerCase().endsWith(".heic") ||
           file.name.toLowerCase().endsWith(".heif");
 
-        const processImage = (blob, fileName) => {
+        // 處理圖片並解析 EXIF (可傳入預先讀取的 EXIF 日期)
+        const processImage = (blob, fileName, preExtractedDate = null) => {
           const reader = new FileReader();
           reader.onload = (e) => {
             const dataUrl = e.target.result;
             const img = new Image();
             img.onload = () => {
-              EXIF.getData(img, function () {
-                const exifDate = EXIF.getTag(this, "DateTimeOriginal");
-                const formattedDate = formatExifDate(exifDate);
+              // 如果有預先提取的日期（來自 HEIC），直接使用
+              if (preExtractedDate !== null) {
                 createThumbnail(dataUrl)
                   .then((thumbnailUrl) => {
                     resolve({
@@ -54,11 +54,31 @@ const processFiles = (files) => {
                       size: blob.size,
                       width: img.width,
                       height: img.height,
-                      date: formattedDate,
+                      date: preExtractedDate,
                     });
                   })
                   .catch(reject);
-              });
+              } else {
+                // 一般圖片：從轉換後的圖片讀取 EXIF
+                EXIF.getData(img, function () {
+                  const exifDate = EXIF.getTag(this, "DateTimeOriginal");
+                  const formattedDate = formatExifDate(exifDate);
+                  createThumbnail(dataUrl)
+                    .then((thumbnailUrl) => {
+                      resolve({
+                        id: Date.now() + Math.random(),
+                        data: dataUrl,
+                        thumbnail: thumbnailUrl,
+                        name: fileName,
+                        size: blob.size,
+                        width: img.width,
+                        height: img.height,
+                        date: formattedDate,
+                      });
+                    })
+                    .catch(reject);
+                });
+              }
             };
             img.onerror = reject;
             img.src = dataUrl;
@@ -69,17 +89,41 @@ const processFiles = (files) => {
 
         if (isHEIC) {
           showConversionModal();
-          heic2any({
-            blob: file,
-            toType: "image/jpeg",
-            quality: 0.8,
-          })
-            .then((convertedBlob) => {
-              hideConversionModal();
-              processImage(
-                convertedBlob,
-                file.name.replace(/\.(heic|heif)$/i, ".jpg")
-              );
+
+          // 使用 exifr 從原始 HEIC 檔案讀取 EXIF 日期
+          exifr
+            .parse(file, {
+              pick: ["DateTimeOriginal", "CreateDate", "ModifyDate"],
+            })
+            .then((exifData) => {
+              let heicExifDate = null;
+              if (exifData) {
+                // 優先使用 DateTimeOriginal，其次 CreateDate
+                const dateValue =
+                  exifData.DateTimeOriginal ||
+                  exifData.CreateDate ||
+                  exifData.ModifyDate;
+                if (dateValue) {
+                  // exifr 回傳的是 Date 物件，轉換成我們需要的格式
+                  heicExifDate = formatExifDate(dateValue);
+                  console.log("HEIC EXIF 日期讀取成功:", heicExifDate);
+                }
+              }
+
+              // 轉換 HEIC 為 JPEG
+              return heic2any({
+                blob: file,
+                toType: "image/jpeg",
+                quality: 0.8,
+              }).then((convertedBlob) => {
+                hideConversionModal();
+                // 傳入預先讀取的 EXIF 日期
+                processImage(
+                  convertedBlob,
+                  file.name.replace(/\.(heic|heif)$/i, ".jpg"),
+                  heicExifDate
+                );
+              });
             })
             .catch((error) => {
               hideConversionModal();
@@ -172,7 +216,7 @@ const addImageToPreview = (imageData, counter) => {
   const img = document.createElement("img");
   img.src = imageData.thumbnail;
   img.alt = imageData.name;
-  img.title = imageData.name;
+  img.title = imageData.name; // 滑鼠懸停時顯示檔名
   imageContainer.appendChild(img);
 
   // 讓新照片套用目前滑桿大小
@@ -450,4 +494,3 @@ export const updateDownloadZipButtonState = () => {
     btn.classList.remove("downzip-btn-enabled");
   }
 };
-

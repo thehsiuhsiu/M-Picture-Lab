@@ -94,11 +94,25 @@ export const resizeImageForDoc = (dataUrl, maxDimension = 1200) => {
 
 /**
  * 格式化 EXIF 日期
- * @param {string} exifDate - EXIF 日期格式，例：2024:06:11 14:23:45
+ * @param {string|Date} exifDate - EXIF 日期格式，例：2024:06:11 14:23:45 或 Date 物件
  * @returns {string} 民國年格式日期
  */
 export const formatExifDate = (exifDate) => {
   if (!exifDate) return "";
+
+  // 如果是 Date 物件（來自 exifr），直接處理
+  if (exifDate instanceof Date) {
+    const year = exifDate.getFullYear() - 1911;
+    const m = String(exifDate.getMonth() + 1).padStart(2, "0");
+    const d = String(exifDate.getDate()).padStart(2, "0");
+    const hh = String(exifDate.getHours()).padStart(2, "0");
+    const mm = String(exifDate.getMinutes()).padStart(2, "0");
+    return `${year}/${m}/${d} ${hh}:${mm}`;
+  }
+
+  // 如果是字串（來自 EXIF.js），使用原來的邏輯
+  if (typeof exifDate !== "string") return "";
+
   const [datePart, timePart] = exifDate.split(" ");
   if (!datePart || !timePart) return "";
   const [y, m, d] = datePart.split(":");
@@ -159,6 +173,3 @@ export const showConversionModal = () => {
 export const hideConversionModal = () => {
   document.getElementById("conversionModal").style.display = "none";
 };
-
-
-
