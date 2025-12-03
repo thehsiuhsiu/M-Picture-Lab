@@ -180,8 +180,8 @@ h1 {
 
 .sidebar {
   position: fixed;
-  top: 90px;
-  left: 0;
+  top: 85px;
+  left: 0px;
   width: 285px;
   height: 570px;
   background: var(--sidebar-bg);
@@ -194,7 +194,7 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-height: calc(100vh - 185px);
+  min-height: calc(100vh - 170px);
   overflow-y: auto;
   box-shadow: 0 3px 5px var(--shadow-primary);
   scrollbar-width: none;
@@ -232,12 +232,9 @@ h1 {
   font-size: 1rem;
   color: var(--input-text);
   font-weight: bold;
-  transition:
-    border 0.2s,
-    box-shadow 0.2s;
+  transition: border 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
-  box-shadow:
-    rgba(52, 52, 52, 0.2) 0px 2px 4px -2px inset,
+  box-shadow: rgba(52, 52, 52, 0.2) 0px 2px 4px -2px inset,
     rgba(52, 52, 52, 0.2) 0px -2px 4px -2px inset;
 }
 
@@ -258,8 +255,9 @@ h1 {
 
 .main-content {
   flex: 1;
-  margin-top: 90px;
+  margin-top: 85px;
   margin-left: 320px;
+  margin-right: 0px;
 }
 
 .field-info-list {
@@ -314,9 +312,7 @@ h1 {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition:
-    color 0.3s,
-    text-shadow 0.3s;
+  transition: color 0.3s, text-shadow 0.3s;
   font-size: 18px;
   color: var(--toggle-text);
   /*font-weight: bold;*/
@@ -372,11 +368,11 @@ h1 {
 }
 
 .container {
-  margin: 0 20px 20px 20px;
+  margin: 0 15px 15px 20px;
   padding: 10px;
   background: var(--container-bg);
   border-radius: 0 0 20px 20px;
-  height: calc(100vh - 228px);
+  height: calc(100vh - 215px);
   overflow-y: auto;
   overflow-x: hidden;
   box-shadow: 0 3px 5px var(--shadow-primary);
@@ -419,7 +415,7 @@ h1 {
   background: var(--container-bg);
   padding: 10px 15px;
   border-radius: 20px 20px 0 0;
-  margin: 20px 20px 0 20px;
+  margin: 20px 15px 0 20px;
   box-shadow: 0 3px 5px var(--shadow-primary);
 }
 
@@ -442,9 +438,7 @@ h1 {
   background: var(--input-bg);
   color: var(--sidebar-label);
   cursor: pointer;
-  transition:
-    background 0.2s,
-    color 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .size-btn:hover {
@@ -502,10 +496,7 @@ h1 {
   background: var(--input-bg);
   color: var(--sidebar-label);
   cursor: pointer;
-  transition:
-    background 0.2s,
-    color 0.2s,
-    box-shadow 0.2s;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 4px var(--shadow-secondary);
 }
 
@@ -597,12 +588,9 @@ h1 {
   color: var(--input-text);
   font-family: "Noto Sans TC", sans-serif;
   box-sizing: border-box;
-  box-shadow:
-    rgba(52, 52, 52, 0.2) 0px 2px 4px -2px inset,
+  box-shadow: rgba(52, 52, 52, 0.2) 0px 2px 4px -2px inset,
     rgba(52, 52, 52, 0.2) 0px -2px 4px -2px inset;
-  transition:
-    background 0.2s,
-    box-shadow 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 #imagePreview.list-view .image-description .image-date-input::placeholder,
@@ -630,12 +618,9 @@ h1 {
   font-family: "Noto Sans TC", sans-serif;
   resize: vertical;
   box-sizing: border-box;
-  box-shadow:
-    rgba(52, 52, 52, 0.2) 0px 2px 4px -2px inset,
+  box-shadow: rgba(52, 52, 52, 0.2) 0px 2px 4px -2px inset,
     rgba(52, 52, 52, 0.2) 0px -2px 4px -2px inset;
-  transition:
-    background 0.2s,
-    box-shadow 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 #imagePreview.list-view .image-description textarea::placeholder {
@@ -696,7 +681,7 @@ h1 {
 .fab-add-photo {
   position: fixed;
   left: 140px;
-  bottom: 32px;
+  bottom: 23px;
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -710,9 +695,7 @@ h1 {
 
   cursor: pointer;
   z-index: 999;
-  transition:
-    background 0.2s,
-    box-shadow 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .fab-add-photo:hover {
@@ -733,10 +716,7 @@ h1 {
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
-  transition:
-    background-color 0.3s,
-    color 0.3s,
-    box-shadow 0.3s;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
   white-space: nowrap;
   flex-shrink: 0;
   box-shadow: 0 4px 8px var(--shadow-secondary);
@@ -819,10 +799,7 @@ h1 {
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
-  transition:
-    background-color 0.3s,
-    color 0.3s,
-    box-shadow 0.3s;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
   white-space: nowrap;
   flex-shrink: 0;
   box-shadow: 0 4px 8px var(--shadow-secondary);
