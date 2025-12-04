@@ -245,7 +245,6 @@ const setupDateModeSwitch = () => {
 
   function setDateInputMode() {
     if (dateSwitch.checked) {
-      dateInput.disabled = true;
       dateModeLabel.textContent = "Auto-fill EXIF";
       dateModeLabel.classList.remove("disabled");
     } else {
@@ -365,4 +364,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupBeforeUnload();
   setupResizeWarning();
 });
+
 
