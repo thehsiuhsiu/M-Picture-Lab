@@ -1067,8 +1067,14 @@ h1 {
   }
 
   .toggle-container::before {
+    top: 2px;
+    left: 2px;
     height: 30px;
-    width: calc(33.33% - 2px);
+    width: calc((100% - 4px) / 3);
+  }
+
+  .toggle-container[data-state="left"]::before {
+    transform: translateX(0);
   }
 
   .toggle-container[data-state="middle"]::before {
@@ -1358,7 +1364,10 @@ h1 {
   }
 
   .toggle-container::before {
+    top: 2px;
+    left: 2px;
     height: 28px;
+    width: calc((100% - 4px) / 3);
   }
 
   .label {
