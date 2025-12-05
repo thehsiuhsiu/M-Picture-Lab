@@ -54,10 +54,17 @@
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.5);
 }
 
+/* 觸控優化 */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   font-family: "Noto Sans TC", sans-serif;
   margin: 0;
   padding: 0;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -1005,51 +1012,470 @@ h1 {
   }
 }
 
+/* ========== 平板響應式設計 (768px - 1024px) ========== */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+    padding: 12px 10px;
+    margin-left: 10px;
+  }
+
+  .main-content {
+    margin-left: 270px;
+  }
+
+  .fab-add-photo {
+    left: 115px;
+  }
+}
+
+/* ========== 手機響應式設計 (768px 以下) ========== */
 @media (max-width: 768px) {
+  /* Header 樣式 */
   header {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     height: auto;
-    padding: 10px;
+    padding: 10px 15px;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    gap: 8px;
   }
 
   h1 {
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 24px;
+    text-align: left;
+    margin-bottom: 0;
+    font-size: 20px;
+    flex-shrink: 0;
   }
 
   .header-controls {
-    width: 100%;
+    flex: 1;
     justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 5px;
-    gap: 5px;
+    flex-wrap: nowrap;
+    margin-bottom: 0;
+    gap: 8px;
   }
 
   .toggle-container {
-    width: 100%;
-    max-width: 300px;
+    width: auto;
+    min-width: 200px;
+    max-width: 240px;
     margin-left: 0px;
     flex-basis: auto;
+    height: 34px;
+  }
+
+  .toggle-container::before {
+    height: 30px;
+    width: calc(33.33% - 2px);
+  }
+
+  .toggle-container[data-state="middle"]::before {
+    transform: translateX(100%);
+  }
+
+  .toggle-container[data-state="right"]::before {
+    transform: translateX(200%);
+  }
+
+  .label {
+    font-size: 13px;
+  }
+
+  .zip-controls {
+    gap: 8px;
+    padding: 0;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .create-btn,
+  .downzip-btn {
+    height: 34px;
+    width: 50px;
+    padding: 6px;
+  }
+
+  /* Sidebar 樣式 - 手機版改為可收合的底部面板 */
+  .sidebar {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    max-height: 60vh;
+    min-height: auto;
+    margin-left: 0;
+    padding: 16px 20px;
+    border-radius: 24px 24px 0 0;
+    z-index: 100;
+    transform: translateY(calc(100% - 50px));
+    transition: transform 0.3s ease-in-out;
+    box-shadow: 0 -4px 20px var(--shadow-primary);
+    overflow-y: auto;
+  }
+
+  .sidebar::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: var(--input-placeholder);
+    border-radius: 2px;
+    opacity: 0.5;
+  }
+
+  .sidebar.expanded {
+    transform: translateY(0);
+  }
+
+  .sidebar .form-group {
+    margin-bottom: 12px;
+  }
+
+  .sidebar label {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .sidebar-input {
+    padding: 10px 14px;
+    font-size: 16px; /* 防止 iOS 縮放 */
+    border-radius: 10px;
+  }
+
+  /* Main Content 樣式 */
+  .main-content {
+    margin-left: 0;
+    margin-top: 75px;
+    margin-right: 0;
+    padding: 0 10px;
+    padding-bottom: 70px; /* 為底部 sidebar 留空間 */
+  }
+
+  .view-switch-container {
+    margin: 10px 0 0 0;
+    padding: 8px 12px;
+    border-radius: 16px 16px 0 0;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .size-slider-container {
+    margin-right: 4px;
+  }
+
+  #photoSizeSlider {
+    width: 50px;
+  }
+
+  .view-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .view-btn .material-symbols-outlined {
+    font-size: 20px;
   }
 
   .container {
-    margin: 180px 30px 20px;
+    margin: 0;
     padding: 10px;
-    background: #e7edf4;
-    border-radius: 20px;
-    min-height: calc(100vh - 180px);
-    box-shadow: 0 4px 8px var(--shadow-primary);
+    border-radius: 0 0 16px 16px;
+    height: calc(100vh - 130px);
+    min-height: 300px;
   }
 
-  .create-btn {
-    margin-top: 5px;
-    padding: 8px 15px;
+  /* 圖片預覽樣式 */
+  #imagePreview img {
+    max-width: 120px;
+    max-height: 120px;
+    margin: 6px;
+  }
+
+  .image-container {
+    margin: 6px;
+    border-radius: 14px;
+  }
+
+  .image-container img {
+    max-width: 120px;
+    max-height: 120px;
+    border-radius: 14px;
+  }
+
+  .image-counter {
+    min-width: 36px;
+    height: 24px;
+    padding: 0 8px;
     font-size: 14px;
+  }
+
+  .delete-button {
+    width: 22px;
+    height: 22px;
+    font-size: 18px;
+  }
+
+  /* List View 手機版調整 */
+  #imagePreview.list-view .image-container {
+    flex-direction: column;
+    align-items: flex-start;
+    width: calc(100% - 20px);
+    margin: 8px 0;
+    padding: 10px;
+  }
+
+  #imagePreview.list-view .image-container img {
+    max-width: 100% !important;
+    max-height: 200px !important;
+    margin: 0 0 12px 0;
+    align-self: center;
+  }
+
+  #imagePreview.list-view .image-counter {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    margin-right: 0;
+  }
+
+  #imagePreview.list-view .delete-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    margin-left: 0;
+  }
+
+  #imagePreview.list-view .image-description {
     width: 100%;
-    max-width: 60px;
+    margin-right: 0;
+  }
+
+  #imagePreview.list-view .image-description textarea {
+    min-height: 60px;
+    font-size: 14px;
+  }
+
+  /* FAB 按鈕位置調整 */
+  .fab-add-photo {
+    left: auto;
+    right: 20px;
+    bottom: 80px; /* 在收合的 sidebar 上方 */
+    width: 56px;
+    height: 56px;
+  }
+
+  .fab-add-photo .material-symbols-outlined {
+    font-size: 48px !important;
+  }
+
+  /* Modal 樣式 */
+  .modal-content {
+    width: 85%;
+    max-width: 300px;
+    margin: 30% auto;
+    padding: 16px;
+  }
+
+  .modal-content p {
+    font-size: 16px;
+  }
+
+  /* Download Menu 位置調整 */
+  .download-menu {
+    right: -10px;
+    min-width: 110px;
+  }
+
+  .download-option {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  /* Footer 樣式 - 手機版隱藏 footer */
+  footer {
+    display: none;
+  }
+
+  /* Tooltip 在手機上隱藏 */
+  .tooltip-text {
+    display: none !important;
+  }
+
+  /* Resize Warning 在手機上隱藏 */
+  #resize-warning {
+    display: none !important;
+  }
+
+  /* Form Group Row 調整 */
+  .form-group-row {
+    gap: 8px;
+  }
+
+  #dateModeLabel {
+    font-size: 12px;
+  }
+
+  .switch {
+    width: 28px;
+    height: 14px;
+  }
+
+  .slider:before {
+    height: 10px;
+    width: 10px;
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(14px);
+  }
+}
+
+/* ========== 小型手機響應式設計 (480px 以下) ========== */
+@media (max-width: 480px) {
+  header {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  h1 {
+    font-size: 18px;
+  }
+
+  .toggle-container {
+    min-width: 160px;
+    max-width: 180px;
+    height: 32px;
+  }
+
+  .toggle-container::before {
+    height: 28px;
+  }
+
+  .label {
+    font-size: 11px;
+  }
+
+  .zip-controls {
+    gap: 6px;
+  }
+
+  .create-btn,
+  .downzip-btn {
+    height: 32px;
+    width: 44px;
+    padding: 5px;
+  }
+
+  .main-content {
+    margin-top: 70px;
+  }
+
+  .container {
+    height: calc(100vh - 120px);
+  }
+
+  #imagePreview img,
+  .image-container img {
+    max-width: 100px;
+    max-height: 100px;
+  }
+
+  .image-counter {
+    min-width: 30px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+
+  .sidebar {
+    padding: 14px 16px;
+    max-height: 55vh;
+  }
+
+  .sidebar-input {
+    padding: 8px 12px;
+    font-size: 16px;
+  }
+
+  .fab-add-photo {
+    width: 50px;
+    height: 50px;
+    right: 16px;
+    bottom: 75px;
+  }
+
+  .fab-add-photo .material-symbols-outlined {
+    font-size: 40px !important;
+  }
+}
+
+/* ========== 橫向手機支援 ========== */
+@media (max-width: 900px) and (orientation: landscape) {
+  header {
+    flex-direction: row;
+    height: 50px;
+    padding: 8px 15px;
+  }
+
+  h1 {
+    font-size: 18px;
+    margin-bottom: 0;
+  }
+
+  .toggle-container {
+    max-width: 240px;
+    height: 32px;
+  }
+
+  .toggle-container::before {
+    height: 28px;
+    width: 78px;
+  }
+
+  .toggle-container[data-state="middle"]::before {
+    transform: translateX(79px);
+  }
+
+  .toggle-container[data-state="right"]::before {
+    transform: translateX(158px);
+  }
+
+  .label {
+    font-size: 13px;
+  }
+
+  .main-content {
+    margin-top: 70px;
+    padding-bottom: 50px;
+  }
+
+  .sidebar {
+    max-height: 50vh;
+    transform: translateY(calc(100% - 40px));
+  }
+
+  .container {
+    height: calc(100vh - 150px);
+  }
+
+  .fab-add-photo {
+    bottom: 60px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .fab-add-photo .material-symbols-outlined {
+    font-size: 36px !important;
   }
 }
 
