@@ -1114,7 +1114,7 @@ h1 {
     height: auto;
     max-height: 60vh;
     min-height: auto;
-    margin-left: 0;
+    margin: 0;
     padding: 16px 20px;
     border-radius: 24px 24px 0 0;
     z-index: 100;
@@ -1122,6 +1122,8 @@ h1 {
     transition: transform 0.3s ease-in-out;
     box-shadow: 0 -4px 20px var(--shadow-primary);
     overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .sidebar::before {
@@ -1170,16 +1172,26 @@ h1 {
     padding: 8px 12px;
     border-radius: 16px 16px 0 0;
     gap: 6px;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
   }
 
   .size-slider-container {
-    margin-right: 4px;
+    margin-left: auto;
+    margin-right: 0px;
+    order: 3;
   }
 
   #photoSizeSlider {
     width: 50px;
+  }
+
+  #gridViewBtn {
+    order: 1;
+  }
+
+  #listViewBtn {
+    order: 2;
   }
 
   .view-btn {
