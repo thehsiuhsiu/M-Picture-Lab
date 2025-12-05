@@ -265,7 +265,7 @@ const setupZipDownload = () => {
   document.getElementById("downloadZip").addEventListener("click", async () => {
     if (!state.selectedImages.length) {
       alert(
-        "打包照片的紙箱準備好了~但還沒有看到照片...\n只看到一隻小貓在紙箱裡面睡了一整個下午🐈💤"
+        "打包照片的紙箱準備好了…但沒有看到照片\n只看到小貓在裡面睡了一整個下午💤"
       );
       return;
     }
@@ -332,6 +332,12 @@ const setupResizeWarning = () => {
   }
 
   const checkWindowSize = () => {
+    // 在手機版（768px 以下）不顯示警告
+    if (window.innerWidth <= 768) {
+      resizeWarningModal.style.display = "none";
+      return;
+    }
+    
     if (window.innerWidth < 1100 || window.innerHeight < 800) {
       resizeWarningModal.style.display = "flex";
     } else {
@@ -341,6 +347,77 @@ const setupResizeWarning = () => {
 
   window.addEventListener("resize", checkWindowSize);
   checkWindowSize(); // Initial check
+};
+
+/**
+ * 設置手機版 Sidebar 可展開/收合
+ */
+const setupMobileSidebar = () => {
+  const sidebar = document.querySelector(".sidebar");
+  if (!sidebar) return;
+
+  let touchStartY = 0;
+  let touchEndY = 0;
+
+  // 點擊切換展開狀態
+  sidebar.addEventListener("click", (e) => {
+    // 只在收合狀態時，點擊頂部區域才展開
+    if (!sidebar.classList.contains("expanded")) {
+      const rect = sidebar.getBoundingClientRect();
+      const clickY = e.clientY - rect.top;
+      // 點擊頂部 50px 區域才展開
+      if (clickY < 50) {
+        sidebar.classList.add("expanded");
+      }
+    }
+  });
+
+  // 處理 input 聚焦時展開 sidebar
+  const inputs = sidebar.querySelectorAll("input");
+  inputs.forEach(input => {
+    input.addEventListener("focus", () => {
+      sidebar.classList.add("expanded");
+    });
+  });
+
+  // 觸控滑動手勢
+  sidebar.addEventListener("touchstart", (e) => {
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+
+  sidebar.addEventListener("touchend", (e) => {
+    touchEndY = e.changedTouches[0].screenY;
+    handleSwipeGesture();
+  }, { passive: true });
+
+  const handleSwipeGesture = () => {
+    const swipeDistance = touchStartY - touchEndY;
+    const threshold = 50; // 最小滑動距離
+
+    if (swipeDistance > threshold) {
+      // 向上滑動，展開
+      sidebar.classList.add("expanded");
+    } else if (swipeDistance < -threshold) {
+      // 向下滑動，收合
+      sidebar.classList.remove("expanded");
+    }
+  };
+
+  // 點擊 sidebar 外部時收合
+  document.addEventListener("click", (e) => {
+    if (window.innerWidth <= 768) {
+      if (!sidebar.contains(e.target) && sidebar.classList.contains("expanded")) {
+        sidebar.classList.remove("expanded");
+      }
+    }
+  });
+
+  // 視窗大小改變時重置狀態
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 768) {
+      sidebar.classList.remove("expanded");
+    }
+  });
 };
 
 // ============ DOM 載入後初始化 ============
@@ -363,6 +440,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupZipDownload();
   setupBeforeUnload();
   setupResizeWarning();
+  setupMobileSidebar(); // 手機版 Sidebar 功能
 });
-
-
