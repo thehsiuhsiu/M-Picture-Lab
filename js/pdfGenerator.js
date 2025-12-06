@@ -119,7 +119,7 @@ const buildPrintHTML = (title) => {
                     font-size: 22pt;
                     font-weight: normal;
                     margin-bottom: 0.5em;
-                    padding: 0 3%;
+                    padding: 0;
                 }
                 table { 
                     width: 100%; 
@@ -457,6 +457,7 @@ const buildTrafficViolationContent = (
 
   return content;
 };
+
 
 
 
