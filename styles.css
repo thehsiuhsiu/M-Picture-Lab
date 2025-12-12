@@ -670,6 +670,107 @@ h1 {
   display: none;
 }
 
+/* 交通事故勾選框樣式 */
+.accident-tags-container {
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  border-radius: 10px;
+  background: var(--input-text-area-bg);
+  box-shadow: rgba(52, 52, 52, 0.2) 0px 2px 4px -2px inset,
+    rgba(52, 52, 52, 0.2) 0px -2px 4px -2px inset;
+}
+
+/* 僅在交通事故格式下顯示勾選框 */
+body.format-middle .accident-tags-container {
+  display: flex;
+}
+
+/* 說明欄位預設隱藏，僅在刑事案件格式下顯示 */
+.image-description-textarea {
+  display: none;
+}
+
+body.format-left .image-description-textarea {
+  display: block;
+}
+
+/* 地址欄位在交通事故格式下隱藏 */
+body.format-middle .image-address-input {
+  display: none;
+}
+
+.accident-tag-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--input-placeholder);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: transparent;
+  transition: background-color 0.2s, box-shadow 0.2s, color 0.2s;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* 選項被勾選時的標籤樣式 */
+.accident-tag-label:has(.accident-tag-checkbox:checked) {
+  color: var(--link-primary);
+  font-weight: 600;
+  background: var(--input-bg);
+}
+
+.accident-tag-label:hover {
+  background: var(--input-bg-focus);
+  box-shadow: 0 1px 4px var(--shadow-secondary);
+}
+
+.accident-tag-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--link-primary);
+}
+
+.accident-tag-checkbox:checked + span {
+  color: var(--link-primary);
+  font-weight: 600;
+}
+
+.accident-tag-other-input {
+  width: 80px;
+  padding: 2px 6px;
+  margin-left: 4px;
+  font-size: 12px;
+  border: 1px solid var(--input-bg);
+  border-radius: 4px;
+  background: var(--input-bg-focus);
+  color: var(--input-text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.accident-tag-other-input:focus {
+  border-color: var(--link-primary);
+  box-shadow: 0 0 0 2px var(--input-focus-shadow);
+}
+
+.accident-tag-other-input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.accident-tag-other-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--input-bg);
+}
+
 #imagePreview img {
   max-width: 200px;
   max-height: 200px;
