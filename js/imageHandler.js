@@ -1,6 +1,6 @@
 // imageHandler.js - 圖片處理模組
 
-import { state } from "./state.js";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js";
 import {
   createThumbnail,
   formatExifDate,
@@ -262,9 +262,10 @@ const addImageToPreview = (imageData, counter) => {
   });
   descriptionDiv.appendChild(addressInput);
 
-  // 說明輸入欄位
+  // 說明輸入欄位 (僅限刑事案件)
   const textarea = document.createElement("textarea");
-  textarea.placeholder = "說明 (選填，僅限刑事案件格式)";
+  textarea.className = "image-description-textarea";
+  textarea.placeholder = "說明 (選填)";
   textarea.value = state.imageDescriptions[imageData.id] || "";
   textarea.addEventListener("input", (e) => {
     state.imageDescriptions[imageData.id] = e.target.value;
@@ -277,6 +278,70 @@ const addImageToPreview = (imageData, counter) => {
     e.stopPropagation();
   });
   descriptionDiv.appendChild(textarea);
+
+  // 交通事故勾選框 UI
+  const accidentTagsContainer = document.createElement("div");
+  accidentTagsContainer.className = "accident-tags-container";
+  accidentTagsContainer.dataset.format = "middle";
+
+  // 初始化勾選狀態
+  if (!state.imageAccidentTags[imageData.id]) {
+    state.imageAccidentTags[imageData.id] = {};
+  }
+
+  ACCIDENT_TAG_OPTIONS.forEach((option) => {
+    const tagLabel = document.createElement("label");
+    tagLabel.className = "accident-tag-label";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "accident-tag-checkbox";
+    checkbox.checked =
+      state.imageAccidentTags[imageData.id][option.id] || false;
+
+    tagLabel.appendChild(checkbox);
+
+    const labelText = document.createElement("span");
+    labelText.textContent = option.label;
+    tagLabel.appendChild(labelText);
+
+    // 如果是"其他"選項，添加文字輸入框
+    if (option.id === "other") {
+      const otherInput = document.createElement("input");
+      otherInput.type = "text";
+      otherInput.className = "accident-tag-other-input";
+      otherInput.placeholder = "________________";
+      otherInput.value = state.imageAccidentTags[imageData.id].otherText || "";
+      // 根據勾選狀態設定是否可輸入
+      otherInput.disabled = !checkbox.checked;
+      otherInput.addEventListener("input", (e) => {
+        state.imageAccidentTags[imageData.id].otherText = e.target.value;
+      });
+      otherInput.addEventListener("dragover", (e) => e.preventDefault());
+      otherInput.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      tagLabel.appendChild(otherInput);
+
+      // 勾選時啟用輸入框，取消勾選時禁用
+      checkbox.addEventListener("change", (e) => {
+        state.imageAccidentTags[imageData.id][option.id] = e.target.checked;
+        otherInput.disabled = !e.target.checked;
+        if (e.target.checked) {
+          otherInput.focus();
+        }
+      });
+    } else {
+      checkbox.addEventListener("change", (e) => {
+        state.imageAccidentTags[imageData.id][option.id] = e.target.checked;
+      });
+    }
+
+    accidentTagsContainer.appendChild(tagLabel);
+  });
+
+  descriptionDiv.appendChild(accidentTagsContainer);
   imageContainer.appendChild(descriptionDiv);
 
   const deleteButton = document.createElement("button");
@@ -417,6 +482,9 @@ export const removeImage = (id) => {
   console.log("Removing image with id:", id);
   state.selectedImages = state.selectedImages.filter((img) => img.id !== id);
   delete state.imageDescriptions[id];
+  delete state.imageDates[id];
+  delete state.imageAddresses[id];
+  delete state.imageAccidentTags[id];
 
   const imageElement = document.querySelector(
     `.image-container[data-id="${id}"]`

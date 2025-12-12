@@ -1,7 +1,27 @@
 // pdfGenerator.js - PDF 生成模組（使用瀏覽器列印）
 
-import { state, FORMAT_TITLES } from "./state.js";
+import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js";
 import { showLoadingModal, hideLoadingModal } from "./utils.js";
+
+/**
+ * 生成交通事故勾選說明文字
+ * @param {Object} tags - 勾選狀態物件
+ * @returns {string} 格式化的說明文字
+ */
+const generateAccidentTagsText = (tags) => {
+  const tagTexts = ACCIDENT_TAG_OPTIONS.map((option) => {
+    const isChecked = tags && tags[option.id];
+    const checkbox = isChecked ? "▓" : "□";
+    if (option.id === "other") {
+      // 僅在勾選「其他」時才顯示輸入的內容
+      const otherText =
+        isChecked && tags.otherText ? tags.otherText : "___________";
+      return `${checkbox}其他:${otherText}`;
+    }
+    return `${checkbox}${option.label}`;
+  });
+  return tagTexts.join(" ");
+};
 
 /**
  * 處理 PDF 生成
@@ -224,7 +244,9 @@ const buildCriminalContent = (
                     <td class="label-cell" style="width:16.5%;">單位</td>
                     <td class="value-cell" style="width:34.5%; text-align:center;" colspan="2">${caseUnit}</td>
                 </tr>
-                <tr><td class="photo-cell" colspan="6"><img src="${img1.data}"></td></tr>
+                <tr><td class="photo-cell" colspan="6"><img src="${
+                  img1.data
+                }"></td></tr>
                 <tr>
                     <td class="label-cell">編號(${startIdx + 1})</td>
                     <td class="label-cell">照片日期</td>
@@ -257,9 +279,13 @@ const buildCriminalContent = (
                 <div class="spacer"></div>
                 <table>
                 
-                    <tr><td class="photo-cell" colspan="6"><img src="${img2.data}"></td></tr>
+                    <tr><td class="photo-cell" colspan="6"><img src="${
+                      img2.data
+                    }"></td></tr>
                     <tr>
-                        <td class="label-cell" style="width:15%;">編號(${startIdx + 2})</td>
+                        <td class="label-cell" style="width:15%;">編號(${
+                          startIdx + 2
+                        })</td>
                         <td class="label-cell" style="width:15%;">照片日期</td>
                         <td class="value-cell" style="width:35%;" colspan="2">${date2}</td>
                         <td class="label-cell" style="width:15%;">攝影人</td>
@@ -302,18 +328,24 @@ const buildTrafficAccidentContent = (title, isAutoDate, manualDate) => {
     const customDate1 = state.imageDates[img1.id] || "";
     const date1 =
       customDate1 || (isAutoDate ? img1.date || manualDate : manualDate);
+    const tags1 = state.imageAccidentTags[img1.id] || {};
+    const tagsText1 = generateAccidentTagsText(tags1);
     content += `
             <table>
-                <tr><td class="photo-cell" colspan="6"><img src="${img1.data}"></td></tr>
+                <tr><td class="photo-cell" colspan="6"><img src="${
+                  img1.data
+                }"></td></tr>
                 <tr>
                     <td class="label-cell" style="width:15%;">攝影日期</td>
                     <td class="value-cell" style="width:40%;" colspan="2">${date1}</td>
                     <td class="label-cell" style="width:15%;">照片編號</td>
-                    <td class="value-cell" style="width:30%; text-align:center;" colspan="2">${startIdx + 1}</td>
+                    <td class="value-cell" style="width:30%; text-align:center;" colspan="2">${
+                      startIdx + 1
+                    }</td>
                 </tr>
                 <tr>
                     <td class="label-cell">說明</td>
-                    <td class="value-cell" colspan="5">□現場全景 □車損 □車體擦痕 □機車倒地 □煞車痕 □刮地痕 □拖痕 <br> □道路設施 □人倒地 □人受傷部位 □落土 □碎片 □其他</td>
+                    <td class="value-cell" colspan="5">${tagsText1}</td>
                 </tr>
             </table>
         `;
@@ -325,19 +357,25 @@ const buildTrafficAccidentContent = (title, isAutoDate, manualDate) => {
       const customDate2 = state.imageDates[img2.id] || "";
       const date2 =
         customDate2 || (isAutoDate ? img2.date || manualDate : manualDate);
+      const tags2 = state.imageAccidentTags[img2.id] || {};
+      const tagsText2 = generateAccidentTagsText(tags2);
       content += `
                 <div class="spacer"></div>
                 <table>
-                    <tr><td class="photo-cell" colspan="6"><img src="${img2.data}"></td></tr>
+                    <tr><td class="photo-cell" colspan="6"><img src="${
+                      img2.data
+                    }"></td></tr>
                     <tr>
                         <td class="label-cell" style="width:15%;">攝影日期</td>
                         <td class="value-cell" style="width:40%;" colspan="2">${date2}</td>
                         <td class="label-cell" style="width:15%;">照片編號</td>
-                        <td class="value-cell" style="width:30%; text-align:center;" colspan="2">${startIdx + 2}</td>
+                        <td class="value-cell" style="width:30%; text-align:center;" colspan="2">${
+                          startIdx + 2
+                        }</td>
                     </tr>
                     <tr>
                         <td class="label-cell">說明</td>
-                        <td class="value-cell" colspan="5">□現場全景 □車損 □車體擦痕 □機車倒地 □煞車痕 □刮地痕 □拖痕 <br> □道路設施 □人倒地 □人受傷部位 □落土 □碎片 □其他</td>
+                        <td class="value-cell" colspan="5">${tagsText2}</td>
                     </tr>
                 </table>
             `;
@@ -457,7 +495,3 @@ const buildTrafficViolationContent = (
 
   return content;
 };
-
-
-
-

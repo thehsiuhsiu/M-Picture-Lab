@@ -1,6 +1,6 @@
 // docxGenerator.js
 
-import { state, FORMAT_NAMES } from "./state.js";
+import { state, FORMAT_NAMES, ACCIDENT_TAG_OPTIONS } from "./state.js";
 import {
   resizeImageForDoc,
   getFormattedDate,
@@ -46,6 +46,7 @@ const handleGenerate = async () => {
           description: state.imageDescriptions[image.id] || "",
           customDate: state.imageDates[image.id] || "",
           customAddress: state.imageAddresses[image.id] || "",
+          accidentTags: state.imageAccidentTags[image.id] || {},
         };
       })
     );
@@ -87,13 +88,37 @@ const handleGenerate = async () => {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     const dateString = getFormattedDate();
-    link.download = `${FORMAT_NAMES[state.selectedFormat]}照片黏貼表_${dateString}.docx`;
+    link.download = `${
+      FORMAT_NAMES[state.selectedFormat]
+    }照片黏貼表_${dateString}.docx`;
     link.click();
   } catch (error) {
     hideLoadingModal();
     console.error("Error in document generation:", error);
     alert("文件生成過程中出錯，請查看控制台以獲取詳細信息。");
   }
+};
+
+/**
+ * 生成交通事故勾選說明文字
+ * @param {Object} tags - 勾選狀態物件，key 為選項 id，value 為 boolean
+ * @returns {string} 格式化的說明文字
+ */
+const generateAccidentTagsText = (tags) => {
+  const tagTexts = ACCIDENT_TAG_OPTIONS.map((option) => {
+    const isChecked = tags && tags[option.id];
+    const checkbox = isChecked ? "▓" : "□";
+    if (option.id === "other") {
+      // 僅在勾選「其他」時才顯示輸入的內容
+      const otherText =
+        isChecked && tags.otherText ? tags.otherText : "___________";
+      return `${checkbox}其他:${otherText}`;
+    }
+    return `${checkbox}${option.label}`;
+  });
+
+  // 每行顯示 5 個選項，使用空格分隔
+  return tagTexts.join(" ");
 };
 
 const createDocument = (docx, format, formData, images) => {
@@ -107,7 +132,7 @@ const createDocument = (docx, format, formData, images) => {
       createContent = createCriminalContent;
       break;
     case "middle":
-      title = "非道路交通事故照片黏貼紀錄表";
+      title = "(非)道路交通事故照片黏貼紀錄表";
       createContent = createTrafficAccidentContent;
       break;
     case "right":
@@ -544,7 +569,7 @@ const createTrafficAccidentImageTable = (
           new docx.TableCell({
             children: [
               new docx.Paragraph({
-                text: "□現場全景 □車損     □車體擦痕  □機車倒地   □煞車痕  □刮地痕  □拖痕     □道路設施 □人倒地    □人受傷部位 □落土    □碎片    □其他________________",
+                text: generateAccidentTagsText(image.accidentTags),
                 style: "Normal",
                 alignment: docx.AlignmentType.LEFT,
               }),

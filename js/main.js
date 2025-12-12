@@ -41,6 +41,14 @@ const updateToggleState = (value) => {
     );
   });
 
+  // 更新 body 的格式 class，用於控制勾選框顯示
+  document.body.classList.remove(
+    "format-left",
+    "format-middle",
+    "format-right"
+  );
+  document.body.classList.add(`format-${value}`);
+
   // 更新側邊欄欄位顯示
   updateSidebarFields(value);
 };
@@ -175,7 +183,7 @@ const setupEventListeners = () => {
   window.addEventListener("error", (event) => {
     console.error("Uncaught error:", event.error);
     alert(
-      "發生了意外錯誤。請重新加載頁面並重試。如果問題持續存在，請聯繫支持團隊。"
+      "發生了意外錯誤。請重新加載頁面並重試。如果問題持續存在，請不要聯繫支持團隊。"
     );
   });
 };
@@ -337,7 +345,7 @@ const setupResizeWarning = () => {
       resizeWarningModal.style.display = "none";
       return;
     }
-    
+
     if (window.innerWidth < 1100 || window.innerHeight < 800) {
       resizeWarningModal.style.display = "flex";
     } else {
@@ -374,21 +382,29 @@ const setupMobileSidebar = () => {
 
   // 處理 input 聚焦時展開 sidebar
   const inputs = sidebar.querySelectorAll("input");
-  inputs.forEach(input => {
+  inputs.forEach((input) => {
     input.addEventListener("focus", () => {
       sidebar.classList.add("expanded");
     });
   });
 
   // 觸控滑動手勢
-  sidebar.addEventListener("touchstart", (e) => {
-    touchStartY = e.changedTouches[0].screenY;
-  }, { passive: true });
+  sidebar.addEventListener(
+    "touchstart",
+    (e) => {
+      touchStartY = e.changedTouches[0].screenY;
+    },
+    { passive: true }
+  );
 
-  sidebar.addEventListener("touchend", (e) => {
-    touchEndY = e.changedTouches[0].screenY;
-    handleSwipeGesture();
-  }, { passive: true });
+  sidebar.addEventListener(
+    "touchend",
+    (e) => {
+      touchEndY = e.changedTouches[0].screenY;
+      handleSwipeGesture();
+    },
+    { passive: true }
+  );
 
   const handleSwipeGesture = () => {
     const swipeDistance = touchStartY - touchEndY;
@@ -406,7 +422,10 @@ const setupMobileSidebar = () => {
   // 點擊 sidebar 外部時收合
   document.addEventListener("click", (e) => {
     if (window.innerWidth <= 768) {
-      if (!sidebar.contains(e.target) && sidebar.classList.contains("expanded")) {
+      if (
+        !sidebar.contains(e.target) &&
+        sidebar.classList.contains("expanded")
+      ) {
         sidebar.classList.remove("expanded");
       }
     }
