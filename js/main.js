@@ -7,6 +7,9 @@ import {
   handleImageContainerEvents,
   updateCreateButtonState,
   updateDownloadZipButtonState,
+  handleImageClick,
+  rotateImage,
+  cancelEditing,
 } from "./imageHandler.js";
 import { handleGenerateWrapper } from "./docxGenerator.js";
 import { handleGeneratePDF } from "./pdfGenerator.js";
@@ -179,6 +182,9 @@ const setupEventListeners = () => {
     imagePreview.addEventListener(eventName, handleImageContainerEvents);
   });
 
+  // 圖片點擊事件（進入編輯模式）
+  imagePreview.addEventListener("click", handleImageClick);
+
   // 全局錯誤處理
   window.addEventListener("error", (event) => {
     console.error("Uncaught error:", event.error);
@@ -186,6 +192,33 @@ const setupEventListeners = () => {
       "發生了意外錯誤。請重新加載頁面並重試。如果問題持續存在，請不要聯繫支持團隊。"
     );
   });
+};
+
+/**
+ * 設置編輯工具按鈕
+ */
+const setupEditTools = () => {
+  const rotateLeftBtn = document.getElementById("rotateLeftBtn");
+  const rotateRightBtn = document.getElementById("rotateRightBtn");
+  const cancelEditBtn = document.getElementById("cancelEditBtn");
+
+  if (rotateLeftBtn) {
+    rotateLeftBtn.addEventListener("click", () => {
+      rotateImage(-90);
+    });
+  }
+
+  if (rotateRightBtn) {
+    rotateRightBtn.addEventListener("click", () => {
+      rotateImage(90);
+    });
+  }
+
+  if (cancelEditBtn) {
+    cancelEditBtn.addEventListener("click", () => {
+      cancelEditing();
+    });
+  }
 };
 
 /**
@@ -460,4 +493,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupBeforeUnload();
   setupResizeWarning();
   setupMobileSidebar(); // 手機版 Sidebar 功能
+  setupEditTools(); // 編輯工具按鈕
 });

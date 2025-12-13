@@ -394,10 +394,21 @@ export const handleImageContainerEvents = (e) => {
   const container = e.target.closest(".image-container");
   if (!container) return;
 
+  // 如果圖片處於編輯模式，不允許拖曳
+  if (container.classList.contains("editing")) {
+    e.preventDefault();
+    return;
+  }
+
   if (!e.dataTransfer) return;
 
   switch (e.type) {
     case "dragstart":
+      // 如果任何圖片正在編輯中，阻止拖曳
+      if (state.editingImageId) {
+        e.preventDefault();
+        return;
+      }
       e.dataTransfer.setData("text/plain", container.dataset.id);
       container.style.opacity = "0.5";
       break;
@@ -476,15 +487,44 @@ const updateImageOrder = () => {
 };
 
 /**
+ * 更新編輯工具按鈕狀態
+ */
+const updateEditToolsState = (enabled) => {
+  const rotateLeftBtn = document.getElementById("rotateLeftBtn");
+  const rotateRightBtn = document.getElementById("rotateRightBtn");
+  const cancelEditBtn = document.getElementById("cancelEditBtn");
+  const editHint = document.getElementById("editHint");
+
+  if (rotateLeftBtn) rotateLeftBtn.disabled = !enabled;
+  if (rotateRightBtn) rotateRightBtn.disabled = !enabled;
+  if (cancelEditBtn) cancelEditBtn.disabled = !enabled;
+
+  if (editHint) {
+    editHint.textContent = enabled
+      ? "照片編輯中，無法拖曳排序"
+      : "點擊照片以進入編輯模式";
+    editHint.classList.toggle("editing-active", enabled);
+  }
+};
+
+/**
  * 移除圖片
  */
 export const removeImage = (id) => {
   console.log("Removing image with id:", id);
+
+  // 如果正在編輯的圖片被刪除，取消編輯模式
+  if (state.editingImageId === id) {
+    state.editingImageId = null;
+    updateEditToolsState(false);
+  }
+
   state.selectedImages = state.selectedImages.filter((img) => img.id !== id);
   delete state.imageDescriptions[id];
   delete state.imageDates[id];
   delete state.imageAddresses[id];
   delete state.imageAccidentTags[id];
+  delete state.imageRotations[id];
 
   const imageElement = document.querySelector(
     `.image-container[data-id="${id}"]`
@@ -560,5 +600,167 @@ export const updateDownloadZipButtonState = () => {
   } else {
     btn.classList.add("downzip-btn-disabled");
     btn.classList.remove("downzip-btn-enabled");
+  }
+};
+
+/**
+ * 設定編輯中的圖片
+ */
+export const setEditingImage = (imageId) => {
+  // 移除之前編輯中的狀態
+  const previousEditing = document.querySelector(".image-container.editing");
+  if (previousEditing) {
+    previousEditing.classList.remove("editing");
+    previousEditing.draggable = true;
+  }
+
+  // 設定新的編輯狀態
+  if (imageId) {
+    state.editingImageId = imageId;
+    const container = document.querySelector(
+      `.image-container[data-id="${imageId}"]`
+    );
+    if (container) {
+      container.classList.add("editing");
+      container.draggable = false;
+    }
+    updateEditToolsState(true);
+  } else {
+    state.editingImageId = null;
+    updateEditToolsState(false);
+  }
+};
+
+/**
+ * 取消編輯模式
+ */
+export const cancelEditing = () => {
+  setEditingImage(null);
+};
+
+/**
+ * 旋轉圖片
+ * @param {number} degrees - 旋轉角度 (90 或 -90)
+ */
+export const rotateImage = async (degrees) => {
+  if (!state.editingImageId) return;
+
+  const imageData = state.selectedImages.find(
+    (img) => img.id === state.editingImageId
+  );
+  if (!imageData) return;
+
+  // 取得目前旋轉角度
+  const currentRotation = state.imageRotations[state.editingImageId] || 0;
+  const newRotation = (currentRotation + degrees + 360) % 360;
+  state.imageRotations[state.editingImageId] = newRotation;
+
+  // 建立旋轉後的圖片
+  const rotatedData = await rotateImageData(imageData.data, degrees);
+
+  // 更新圖片資料
+  imageData.data = rotatedData.data;
+  imageData.thumbnail = rotatedData.thumbnail;
+
+  // 交換寬高（90度旋轉後寬高互換）
+  const tempWidth = imageData.width;
+  imageData.width = imageData.height;
+  imageData.height = tempWidth;
+
+  // 更新 DOM
+  const container = document.querySelector(
+    `.image-container[data-id="${state.editingImageId}"]`
+  );
+  if (container) {
+    const img = container.querySelector("img");
+    if (img) {
+      img.src = rotatedData.thumbnail;
+    }
+  }
+
+  console.log(
+    `Image rotated by ${degrees} degrees. New rotation: ${newRotation}`
+  );
+};
+
+/**
+ * 旋轉圖片資料
+ * @param {string} dataUrl - 圖片的 data URL
+ * @param {number} degrees - 旋轉角度
+ * @returns {Promise<{data: string, thumbnail: string}>} - 旋轉後的圖片資料
+ */
+const rotateImageData = (dataUrl, degrees) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      // 建立 canvas 進行旋轉
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // 90度或270度時需要交換寬高
+      if (Math.abs(degrees) === 90 || Math.abs(degrees) === 270) {
+        canvas.width = img.height;
+        canvas.height = img.width;
+      } else {
+        canvas.width = img.width;
+        canvas.height = img.height;
+      }
+
+      // 移動到中心點進行旋轉
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((degrees * Math.PI) / 180);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+      // 取得旋轉後的資料
+      const rotatedDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+      // 建立縮圖
+      const thumbCanvas = document.createElement("canvas");
+      const thumbCtx = thumbCanvas.getContext("2d");
+      const maxThumbSize = 400;
+      const scale = Math.min(
+        maxThumbSize / canvas.width,
+        maxThumbSize / canvas.height,
+        1
+      );
+      thumbCanvas.width = canvas.width * scale;
+      thumbCanvas.height = canvas.height * scale;
+      thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+      const thumbnailUrl = thumbCanvas.toDataURL("image/jpeg", 0.8);
+
+      resolve({
+        data: rotatedDataUrl,
+        thumbnail: thumbnailUrl,
+      });
+    };
+    img.src = dataUrl;
+  });
+};
+
+/**
+ * 處理圖片點擊事件（進入編輯模式）
+ */
+export const handleImageClick = (e) => {
+  // 忽略來自按鈕、輸入框的點擊
+  if (
+    e.target.tagName === "BUTTON" ||
+    e.target.tagName === "INPUT" ||
+    e.target.tagName === "TEXTAREA" ||
+    e.target.closest(".delete-button") ||
+    e.target.closest(".accident-tag-label")
+  ) {
+    return;
+  }
+
+  const container = e.target.closest(".image-container");
+  if (!container) return;
+
+  const imageId = parseFloat(container.dataset.id);
+
+  // 如果點擊的是已經在編輯的圖片，則取消編輯
+  if (state.editingImageId === imageId) {
+    cancelEditing();
+  } else {
+    setEditingImage(imageId);
   }
 };

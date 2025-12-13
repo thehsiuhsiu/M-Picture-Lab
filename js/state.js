@@ -11,6 +11,8 @@ export const state = {
   imageDates: {}, // 儲存圖片日期，以 image id 為 key
   imageAddresses: {}, // 儲存圖片地址，以 image id 為 key
   imageAccidentTags: {}, // 儲存交通事故勾選項，以 image id 為 key
+  editingImageId: null, // 正在編輯的圖片 ID
+  imageRotations: {}, // 儲存圖片旋轉角度，以 image id 為 key
 };
 
 // 交通事故說明選項
