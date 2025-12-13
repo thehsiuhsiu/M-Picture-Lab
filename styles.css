@@ -426,6 +426,14 @@ h1 {
   box-shadow: 0 3px 5px var(--shadow-primary);
 }
 
+/* 工具列分隔符 */
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--shadow-secondary);
+  margin: 0 8px;
+}
+
 /* 預覽大小滑條容器 */
 .size-slider-container {
   display: flex;
@@ -1734,4 +1742,76 @@ input:checked + .slider:before {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+/* 編輯工具容器 - 位於圖片顯示區右上角 */
+.edit-tools-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 16px;
+  border-left: 1px solid var(--shadow-secondary);
+}
+
+.edit-tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--sidebar-label);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 4px var(--shadow-secondary);
+}
+
+.edit-tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.edit-tool-btn:not(:disabled):hover {
+  background: var(--switch-bg-checked);
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 4px 8px var(--shadow-secondary);
+}
+
+.edit-tool-btn .material-symbols-outlined {
+  font-size: 22px;
+}
+
+.cancel-edit-btn:not(:disabled):hover {
+  background: var(--delete-btn-hover-bg);
+}
+
+.edit-hint {
+  font-size: 12px;
+  color: var(--input-placeholder);
+  margin: 0;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.edit-hint.editing-active {
+  color: var(--danger-text);
+}
+
+/* 編輯中的圖片樣式 - 黃色框框 */
+.image-container.editing {
+  cursor: default;
+}
+
+.image-container.editing img {
+  outline: 3px dashed #ffc107;
+  outline-offset: 3px;
+  box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+}
+
+.image-container.editing img:hover {
+  transform: none;
 }

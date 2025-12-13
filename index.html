@@ -1,14 +1,25 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
     <title>M-Picture</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#121212"
+      media="(prefers-color-scheme: dark)"
+    />
     <link
       rel="apple-touch-icon"
       sizes="180x180"
@@ -198,22 +209,6 @@
     </aside>
     <main class="main-content">
       <div class="view-switch-container">
-        <div class="size-slider-container">
-          <button type="button" id="sizeDecBtn" class="size-btn" title="縮小">
-            <span class="material-symbols-outlined">remove</span>
-          </button>
-          <input
-            type="range"
-            id="photoSizeSlider"
-            min="120"
-            max="600"
-            value="250"
-            step="20"
-          />
-          <button type="button" id="sizeIncBtn" class="size-btn" title="放大">
-            <span class="material-symbols-outlined">add</span>
-          </button>
-        </div>
         <button
           type="button"
           id="gridViewBtn"
@@ -230,6 +225,53 @@
         >
           <span class="material-symbols-outlined">view_list</span>
         </button>
+        <span class="toolbar-divider"></span>
+        <div class="size-slider-container">
+          <button type="button" id="sizeDecBtn" class="size-btn" title="縮小">
+            <span class="material-symbols-outlined">remove</span>
+          </button>
+          <input
+            type="range"
+            id="photoSizeSlider"
+            min="120"
+            max="600"
+            value="250"
+            step="20"
+          />
+          <button type="button" id="sizeIncBtn" class="size-btn" title="放大">
+            <span class="material-symbols-outlined">add</span>
+          </button>
+        </div>
+        <div class="edit-tools-container">
+          <span class="edit-hint" id="editHint">點擊照片進入編輯</span>
+          <button
+            type="button"
+            id="rotateLeftBtn"
+            class="edit-tool-btn"
+            title="向左旋轉90°"
+            disabled
+          >
+            <span class="material-symbols-outlined">rotate_left</span>
+          </button>
+          <button
+            type="button"
+            id="rotateRightBtn"
+            class="edit-tool-btn"
+            title="向右旋轉90°"
+            disabled
+          >
+            <span class="material-symbols-outlined">rotate_right</span>
+          </button>
+          <button
+            type="button"
+            id="cancelEditBtn"
+            class="edit-tool-btn cancel-edit-btn"
+            title="離開編輯模式"
+            disabled
+          >
+            <span class="material-symbols-outlined">logout</span>
+          </button>
+        </div>
       </div>
       <div class="container">
         <div id="imagePreview"></div>
