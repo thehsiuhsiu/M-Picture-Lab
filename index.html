@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-theme-mode="system">
   <head>
     <meta charset="UTF-8" />
     <title>M-Picture</title>
@@ -320,6 +320,38 @@
     <footer>
       <h3>🚧 Copyright© 2024 thehsiuhsiu. All rights reserved.🚧</h3>
       <p>本網頁內容與ChatGPT、Claude、Gemini及GitHub Copilot共同協作開發。</p>
+      <div class="theme-selector">
+        <button
+          type="button"
+          id="themeToggleBtn"
+          class="theme-toggle-icon"
+          title="切換主題"
+        >
+          <span class="material-symbols-outlined theme-icon-light"
+            >light_mode</span
+          >
+          <span class="material-symbols-outlined theme-icon-dark"
+            >dark_mode</span
+          >
+          <span class="material-symbols-outlined theme-icon-system"
+            >contrast</span
+          >
+        </button>
+        <div class="theme-menu" id="themeMenu">
+          <button type="button" class="theme-option" data-theme="light">
+            <span class="material-symbols-outlined">light_mode</span>
+            <span>淺色模式</span>
+          </button>
+          <button type="button" class="theme-option" data-theme="dark">
+            <span class="material-symbols-outlined">dark_mode</span>
+            <span>深色模式</span>
+          </button>
+          <button type="button" class="theme-option" data-theme="system">
+            <span class="material-symbols-outlined">contrast</span>
+            <span>依系統設置</span>
+          </button>
+        </div>
+      </div>
     </footer>
 
     <div id="resize-warning" class="modal">

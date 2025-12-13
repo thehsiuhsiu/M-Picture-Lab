@@ -110,64 +110,62 @@ h1 {
   color: var(--disclaimer-text-secondary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #121212;
-    --text-primary: #e0e0e0;
-    --header-bg: rgba(25, 25, 25, 0.8);
-    --header-title: #ffffff;
-    --sidebar-bg: #1e1e1e;
-    --sidebar-label: #e5e5e5;
-    --input-bg: #2c2c2c;
-    --input-bg-focus: #383838;
-    --input-text: #e0e0e0;
-    --input-text-area-bg: #292929;
-    --input-placeholder: #777777;
-    --input-focus-shadow: rgba(0, 0, 0, 0.3);
-    --container-bg: #1e1e1e;
-    --toggle-bg: #2c2c2c;
-    --toggle-slider: #3d87e9;
-    --toggle-text: #a0a0a0;
-    --toggle-text-active: #ffffff;
-    --btn-enabled-bg: #ffbe32;
-    --btn-enabled-text: #ffffff;
-    --btn-hover-bg: #eba103;
-    --btn-disabled-bg: #2c2c2c;
-    --btn-disabled-text: #6b6b6b;
-    --downzip-btn-text: #2179fd;
-    --downzip-btn-hover-bg: #2c2c2c;
-    --downzip-btn-enabled-bg: #474747;
-
-    --link-primary: #177fe6;
-    --image-shadow: rgba(0, 0, 0, 0.7);
-    --shadow-primary: rgba(0, 0, 0, 0.5);
-    --shadow-secondary: rgba(0, 0, 0, 0.3);
-    --modal-backdrop: rgba(0, 0, 0, 0.6);
-    --modal-content-bg: #2c2c2c;
-    --modal-content-text: #e0e0e0;
-    --loader-track: #424242;
-    --loader-fill: #5a9bff;
-    --danger-text: #ff6b6b;
-    --tooltip-bg: #424242;
-    --tooltip-text: #e0e0e0;
-    --image-counter-bg: rgba(18, 18, 18, 0.7);
-    --image-counter-text: #e0e0e0;
-    --delete-btn-bg: rgba(44, 44, 44, 0.5);
-    --delete-btn-text: #a0a0a0;
-    --delete-btn-hover-bg: rgba(255, 23, 23, 0.6);
-    --delete-btn-hover-text: #ffffff;
-    --switch-bg: #424242;
-    --switch-bg-checked: #5a9bff;
-    --slider-thumb: #e0e0e0;
-    --date-mode-label: #fda400;
-    --resize-warning-backdrop: rgba(0, 0, 0, 0.7);
-    --resize-warning-bg: rgba(44, 44, 44, 0.8);
-    --resize-warning-text: #e0e0e0;
-    --disclaimer-text-primary: #ebebeb;
-    --disclaimer-text-secondary: #ff3737;
-    --scrollbar-thumb: rgba(255, 255, 255, 0.2);
-    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.4);
-  }
+/* 暗色主題 - 使用 data-theme 屬性控制 */
+html[data-theme="dark"] {
+  --bg-primary: #121212;
+  --text-primary: #e0e0e0;
+  --header-bg: rgba(25, 25, 25, 0.8);
+  --header-title: #ffffff;
+  --sidebar-bg: #1e1e1e;
+  --sidebar-label: #e5e5e5;
+  --input-bg: #2c2c2c;
+  --input-bg-focus: #383838;
+  --input-text: #e0e0e0;
+  --input-text-area-bg: #292929;
+  --input-placeholder: #777777;
+  --input-focus-shadow: rgba(0, 0, 0, 0.3);
+  --container-bg: #1e1e1e;
+  --toggle-bg: #2c2c2c;
+  --toggle-slider: #3d87e9;
+  --toggle-text: #a0a0a0;
+  --toggle-text-active: #ffffff;
+  --btn-enabled-bg: #ffbe32;
+  --btn-enabled-text: #ffffff;
+  --btn-hover-bg: #eba103;
+  --btn-disabled-bg: #2c2c2c;
+  --btn-disabled-text: #6b6b6b;
+  --downzip-btn-text: #2179fd;
+  --downzip-btn-hover-bg: #2c2c2c;
+  --downzip-btn-enabled-bg: #474747;
+  --link-primary: #177fe6;
+  --image-shadow: rgba(0, 0, 0, 0.7);
+  --shadow-primary: rgba(0, 0, 0, 0.5);
+  --shadow-secondary: rgba(0, 0, 0, 0.3);
+  --modal-backdrop: rgba(0, 0, 0, 0.6);
+  --modal-content-bg: #2c2c2c;
+  --modal-content-text: #e0e0e0;
+  --loader-track: #424242;
+  --loader-fill: #5a9bff;
+  --danger-text: #ff6b6b;
+  --tooltip-bg: #424242;
+  --tooltip-text: #e0e0e0;
+  --image-counter-bg: rgba(18, 18, 18, 0.7);
+  --image-counter-text: #e0e0e0;
+  --delete-btn-bg: rgba(44, 44, 44, 0.5);
+  --delete-btn-text: #a0a0a0;
+  --delete-btn-hover-bg: rgba(255, 23, 23, 0.6);
+  --delete-btn-hover-text: #ffffff;
+  --switch-bg: #424242;
+  --switch-bg-checked: #5a9bff;
+  --slider-thumb: #e0e0e0;
+  --date-mode-label: #fda400;
+  --resize-warning-backdrop: rgba(0, 0, 0, 0.7);
+  --resize-warning-bg: rgba(44, 44, 44, 0.8);
+  --resize-warning-text: #e0e0e0;
+  --disclaimer-text-primary: #ebebeb;
+  --disclaimer-text-secondary: #ff3737;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.4);
 }
 
 .header-controls {
@@ -1613,9 +1611,143 @@ footer {
   color: #747474;
   text-align: center;
   font-size: 11px;
-  line-height: 6px;
-  /*行高*/
-  position: static;
+  line-height: 1.5;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 20px;
+  background: var(--main-background);
+  z-index: 10;
+}
+
+footer h3,
+footer p {
+  margin: 0;
+}
+
+/* 主題選擇器 - 固定在 footer 最右邊 */
+.theme-selector {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.theme-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--sidebar-label);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+  opacity: 0.6;
+}
+
+.theme-toggle-icon:hover {
+  background: var(--input-bg);
+  opacity: 1;
+}
+
+.theme-toggle-icon .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* 主題圖示顯示控制 - 預設全部隱藏 */
+.theme-toggle-icon .theme-icon-light,
+.theme-toggle-icon .theme-icon-dark,
+.theme-toggle-icon .theme-icon-system {
+  display: none !important;
+}
+
+/* 系統模式 */
+html[data-theme-mode="system"] .theme-toggle-icon .theme-icon-system {
+  display: block !important;
+}
+
+/* 明亮模式 */
+html[data-theme-mode="light"] .theme-toggle-icon .theme-icon-light {
+  display: block !important;
+  color: #ffa726;
+}
+
+/* 黑暗模式 */
+html[data-theme-mode="dark"] .theme-toggle-icon .theme-icon-dark {
+  display: block !important;
+  color: #b388ff;
+}
+
+/* 主題選單 */
+.theme-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  padding: 6px 0;
+  min-width: 140px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  z-index: 1000;
+}
+
+html[data-theme="dark"] .theme-menu {
+  background: #2d2d2d;
+  border-color: #444;
+}
+
+.theme-selector.open .theme-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-6px);
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  color: var(--sidebar-label);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.theme-option:hover {
+  background: var(--input-bg);
+}
+
+.theme-option .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.theme-option[data-theme="light"] .material-symbols-outlined {
+  color: #ffa726;
+}
+
+.theme-option[data-theme="dark"] .material-symbols-outlined {
+  color: #b388ff;
+}
+
+.theme-option[data-theme="system"] .material-symbols-outlined {
+  color: #78909c;
+}
+
+.theme-option.active {
+  background: var(--input-bg-focus);
+  font-weight: 500;
 }
 
 #photoSizeSlider {
