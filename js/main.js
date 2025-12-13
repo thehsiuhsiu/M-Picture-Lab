@@ -494,4 +494,86 @@ document.addEventListener("DOMContentLoaded", () => {
   setupResizeWarning();
   setupMobileSidebar(); // 手機版 Sidebar 功能
   setupEditTools(); // 編輯工具按鈕
+  setupThemeToggle(); // 主題切換按鈕
 });
+
+/**
+ * 設置主題切換功能
+ */
+const setupThemeToggle = () => {
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  const themeMenu = document.getElementById("themeMenu");
+  const themeSelector = themeToggleBtn?.closest(".theme-selector");
+
+  if (!themeToggleBtn || !themeMenu) return;
+
+  const html = document.documentElement;
+
+  // 主題標籤對應
+  const themeLabels = {
+    light: "淺色模式",
+    dark: "深色模式",
+    system: "依系統設置",
+  };
+
+  // 根據系統偏好取得實際主題
+  const getSystemTheme = () => {
+    return window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  };
+
+  // 套用主題
+  const applyTheme = (mode) => {
+    html.setAttribute("data-theme-mode", mode);
+    // 設定實際的主題色
+    if (mode === "system") {
+      html.setAttribute("data-theme", getSystemTheme());
+    } else {
+      html.setAttribute("data-theme", mode);
+    }
+    // 更新選項的 active 狀態
+    themeMenu.querySelectorAll(".theme-option").forEach((opt) => {
+      opt.classList.toggle("active", opt.dataset.theme === mode);
+    });
+  };
+
+  // 初始化：檢查 localStorage，預設為 system
+  const savedMode = localStorage.getItem("themeMode") || "system";
+  applyTheme(savedMode);
+
+  // 監聽系統主題變化
+  if (window.matchMedia) {
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", () => {
+        const currentMode = html.getAttribute("data-theme-mode");
+        if (currentMode === "system") {
+          html.setAttribute("data-theme", getSystemTheme());
+        }
+      });
+  }
+
+  // 點擊切換按鈕展開/收起選單
+  themeToggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    themeSelector?.classList.toggle("open");
+  });
+
+  // 點擊選項
+  themeMenu.querySelectorAll(".theme-option").forEach((option) => {
+    option.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const mode = option.dataset.theme;
+      applyTheme(mode);
+      localStorage.setItem("themeMode", mode);
+      themeSelector?.classList.remove("open");
+    });
+  });
+
+  // 點擊外部關閉選單
+  document.addEventListener("click", () => {
+    themeSelector?.classList.remove("open");
+  });
+};
