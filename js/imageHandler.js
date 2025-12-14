@@ -193,7 +193,6 @@ const addImageToCollection = (imageData) => {
   state.selectedImages.push(imageData);
   addImageToPreview(imageData, state.selectedImages.length);
   updateCreateButtonState();
-  updateDownloadZipButtonState();
   console.log("Image added to collection:", imageData.name);
   console.log("Total images in collection:", state.selectedImages.length);
 };
@@ -483,7 +482,6 @@ const updateImageOrder = () => {
   console.log("Total images after reorder:", state.selectedImages.length);
 
   updateCreateButtonState();
-  updateDownloadZipButtonState();
 };
 
 /**
@@ -535,7 +533,6 @@ export const removeImage = (id) => {
 
   updateImageCounters();
   updateCreateButtonState();
-  updateDownloadZipButtonState();
   console.log("Image removed. Remaining images:", state.selectedImages.length);
 
   // 檢查是否沒有圖片，顯示空狀態
@@ -587,20 +584,6 @@ export const updateCreateButtonState = () => {
 
   console.log("Create button state updated. Enabled:", isEnabled);
   console.log("Selected images count:", state.selectedImages.length);
-};
-
-/**
- * 更新下載 ZIP 按鈕狀態
- */
-export const updateDownloadZipButtonState = () => {
-  const btn = document.getElementById("downloadZip");
-  if (state.selectedImages.length > 0) {
-    btn.classList.remove("downzip-btn-disabled");
-    btn.classList.add("downzip-btn-enabled");
-  } else {
-    btn.classList.add("downzip-btn-disabled");
-    btn.classList.remove("downzip-btn-enabled");
-  }
 };
 
 /**

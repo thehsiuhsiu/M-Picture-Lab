@@ -6,14 +6,13 @@ import {
   handleViewModeChange,
   handleImageContainerEvents,
   updateCreateButtonState,
-  updateDownloadZipButtonState,
   handleImageClick,
   rotateImage,
   cancelEditing,
 } from "./imageHandler.js";
 import { handleGenerateWrapper } from "./docxGenerator.js";
 import { handleGeneratePDF } from "./pdfGenerator.js";
-import { EMPTY_STATE_HTML } from "./utils.js";
+import { EMPTY_STATE_HTML, showToast } from "./utils.js";
 
 /**
  * 初始化空狀態提示
@@ -114,13 +113,14 @@ const init = () => {
   const downloadMenu = document.getElementById("downloadMenu");
   const downloadDocx = document.getElementById("downloadDocx");
   const downloadPdf = document.getElementById("downloadPdf");
+  const downloadZip = document.getElementById("downloadZip");
 
   elements.generateButton.addEventListener("click", (e) => {
     e.stopPropagation();
     if (state.selectedImages.length > 0) {
       downloadMenu.classList.toggle("show");
     } else {
-      alert("😵尚未新增照片可建立文件...");
+      showToast("😵 尚未新增照片可建立文件...", "error");
     }
   });
 
@@ -134,6 +134,46 @@ const init = () => {
     e.stopPropagation();
     downloadMenu.classList.remove("show");
     handleGeneratePDF();
+  });
+
+  downloadZip.addEventListener("click", (e) => {
+    e.stopPropagation();
+    downloadMenu.classList.remove("show");
+    // Trigger zip download
+    if (!state.selectedImages.length) {
+      showToast(
+        "打包照片的紙箱準備好了…但沒有看到照片，只看到小貓在裡面睡了一整個下午💤",
+        "error"
+      );
+      return;
+    }
+
+    // 顯示「照片打包中」modal
+    document.getElementById("zippingModal").style.display = "block";
+
+    setTimeout(async () => {
+      try {
+        const zip = new JSZip();
+        const prefixInput = document.getElementById("zipPrefix");
+        const prefix = prefixInput ? prefixInput.value.trim() : "";
+        for (let i = 0; i < state.selectedImages.length; i++) {
+          const img = state.selectedImages[i];
+          const ext = img.name.split(".").pop();
+          const newName = `${prefix}照片黏貼表-編號${i + 1}.${ext}`;
+          const data = img.data.split(",")[1];
+          zip.file(newName, data, { base64: true });
+        }
+        const content = await zip.generateAsync({ type: "blob" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(content);
+        a.download = `${prefix}照片打包下載.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } finally {
+        document.getElementById("zippingModal").style.display = "none";
+      }
+    }, 0);
   });
 
   // 點擊其他地方關閉選單
@@ -300,47 +340,6 @@ const setupDateModeSwitch = () => {
 };
 
 /**
- * 設置 ZIP 下載功能
- */
-const setupZipDownload = () => {
-  document.getElementById("downloadZip").addEventListener("click", async () => {
-    if (!state.selectedImages.length) {
-      alert(
-        "打包照片的紙箱準備好了…但沒有看到照片\n只看到小貓在裡面睡了一整個下午💤"
-      );
-      return;
-    }
-
-    // 顯示「照片打包中」modal
-    document.getElementById("zippingModal").style.display = "block";
-
-    setTimeout(async () => {
-      try {
-        const zip = new JSZip();
-        const prefixInput = document.getElementById("zipPrefix");
-        const prefix = prefixInput ? prefixInput.value.trim() : "";
-        for (let i = 0; i < state.selectedImages.length; i++) {
-          const img = state.selectedImages[i];
-          const ext = img.name.split(".").pop();
-          const newName = `${prefix}照片黏貼表-編號${i + 1}.${ext}`;
-          const data = img.data.split(",")[1];
-          zip.file(newName, data, { base64: true });
-        }
-        const content = await zip.generateAsync({ type: "blob" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(content);
-        a.download = `${prefix}照片打包下載.zip`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } finally {
-        document.getElementById("zippingModal").style.display = "none";
-      }
-    }, 0);
-  });
-};
-
-/**
  * 設置離開網頁提醒
  */
 const setupBeforeUnload = () => {
@@ -489,7 +488,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupPhotoSizeSlider();
   setupSidebarInputs();
   setupDateModeSwitch();
-  setupZipDownload();
   setupBeforeUnload();
   setupResizeWarning();
   setupMobileSidebar(); // 手機版 Sidebar 功能

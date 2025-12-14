@@ -1,5 +1,51 @@
 // utils.js - 工具函數模組
 
+// ============ Toast 通知函數 ============
+
+/**
+ * 顯示 toast 通知
+ * @param {string} message - 通知訊息
+ * @param {string} type - 通知類型 ('success', 'error', 'warning', 'info')
+ * @param {number} duration - 顯示持續時間 (毫秒)，預設 3000ms
+ */
+export const showToast = (message, type = "info", duration = 3000) => {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+
+  // 添加圖標
+  const iconMap = {
+    success: "check_circle",
+    error: "error",
+    warning: "warning",
+    info: "info",
+  };
+
+  toast.innerHTML = `
+    <span class="material-symbols-outlined">${iconMap[type] || "info"}</span>
+    <span>${message}</span>
+  `;
+
+  container.appendChild(toast);
+
+  // 觸發顯示動畫
+  setTimeout(() => {
+    toast.classList.add("show");
+  }, 10);
+
+  // 自動移除
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }, duration);
+};
+
 // ============ 共用 HTML 內容 ============
 
 /**
@@ -19,7 +65,7 @@ export const EMPTY_STATE_HTML = `
        切換至 「列表版面」可輸入照片說明文字<br>
         點擊下載文件按鈕即可下載DOCX、PDF文件<br>
        提醒：Word 2007或更舊版本不支援本網頁生成之DOCX文件</p>
-    <p style="font-size: 0.85em; color: #888;">💡 可拖曳照片調整順序 ｜ 支援部分 HEIC 格式自動轉換</p>
+    <p style="font-size: 0.85em; color: #888;">💡 可拖曳照片調整順序 ｜ 可點選照片進行旋轉編輯 ｜支援部分 HEIC 格式自動轉換</p>
 `;
 
 // ============ 圖片處理函數 ============
