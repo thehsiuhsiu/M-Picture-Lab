@@ -75,20 +75,9 @@
       </div>
 
       <div class="zip-controls">
-        <button
-          id="downloadZip"
-          class="downzip-btn downzip-btn-disabled tooltip-bottom"
-        >
-          <span class="material-symbols-outlined">deployed_code_update</span>
-          <span class="tooltip-text">打包照片</span>
-        </button>
         <div class="download-dropdown">
-          <button
-            id="generate"
-            class="create-btn create-btn-disabled tooltip-bottom"
-          >
+          <button id="generate" class="create-btn create-btn-disabled">
             <span class="material-symbols-outlined">file_save</span>
-            <span class="tooltip-text">下載文件</span>
           </button>
           <div class="download-menu" id="downloadMenu">
             <button type="button" class="download-option" id="downloadDocx">
@@ -98,6 +87,12 @@
             <button type="button" class="download-option" id="downloadPdf">
               <span class="material-symbols-outlined">picture_as_pdf</span>
               <span>PDF</span>
+            </button>
+            <button type="button" class="download-option" id="downloadZip">
+              <span class="material-symbols-outlined"
+                >deployed_code_update</span
+              >
+              <span>打包照片</span>
             </button>
           </div>
         </div>
@@ -360,5 +355,8 @@
         <p>請放大視窗或縮小比例以確保獲得最佳體驗。</p>
       </div>
     </div>
+
+    <!-- Toast notification -->
+    <div id="toast-container" class="toast-container"></div>
   </body>
 </html>
