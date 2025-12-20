@@ -65,7 +65,7 @@ export const EMPTY_STATE_HTML = `
        點擊左欄下方 " + " 按鈕開始新增照片<br>
        切換至 「列表版面」可輸入照片說明文字<br>
         點擊下載文件按鈕即可下載DOCX、PDF文件<br>
-       提醒：Word 2007或更舊版本不支援本網頁生成之DOCX文件</p>
+       提醒：Word 2010或更舊版本不支援本網頁生成之DOCX文件</p>
     <p style="font-size: 0.85em; color: #888;">💡 可拖曳照片調整順序 ｜ 可點選照片進行旋轉編輯 ｜支援部分 HEIC 格式自動轉換</p>
 `;
 
@@ -220,4 +220,5 @@ export const showConversionModal = () => {
 export const hideConversionModal = () => {
   document.getElementById("conversionModal").style.display = "none";
 };
+
 
