@@ -57,8 +57,9 @@ export const EMPTY_STATE_HTML = `
                                   使用者應自行負責文件中所有資料的正確性<br>
                                   開發者對此不擔保任何法律責任</p>
     <h3 class="disclaimer-primary">【 <span style="color: #ff9800;">Auto-fill EXIF</span> 】</h3>
-    <p >本功能為自動讀取照片檔案內嵌之 EXIF 拍攝日期資訊</br>
-                                  使用者仍需自行確認文件內所有資訊之正確性</p>   
+    <p >本功能為自動讀取照片檔案內 EXIF 拍攝日期資訊</br>
+                                  使用者仍需自行確認文件內所有資訊之正確性</br>
+                                  提醒：請注意照片來源，非所有照片都附帶拍攝日期資訊!</p>   
     <h3 class="disclaimer-primary">🚀 快速開始</h3>
    <p >選擇文件類型「刑事案件」「交通事故」「交通違規」<br>
        點擊左欄下方 " + " 按鈕開始新增照片<br>
@@ -219,3 +220,4 @@ export const showConversionModal = () => {
 export const hideConversionModal = () => {
   document.getElementById("conversionModal").style.display = "none";
 };
+
