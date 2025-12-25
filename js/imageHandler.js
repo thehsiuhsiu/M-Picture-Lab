@@ -657,7 +657,15 @@ export const rotateImage = async (degrees) => {
   if (container) {
     const img = container.querySelector("img");
     if (img) {
-      img.src = rotatedData.thumbnail;
+      // 使用完整數據而非縮圖，以支持無限放大
+      img.src = rotatedData.data;
+
+      // 確保旋轉後的圖片保持滑桿設定的大小
+      const slider = document.getElementById("photoSizeSlider");
+      if (slider) {
+        img.style.maxWidth = slider.value + "px";
+        img.style.maxHeight = slider.value + "px";
+      }
     }
   }
 
