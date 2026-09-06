@@ -5,14 +5,22 @@ export const state = {
   imageCounter: 0,
   isGenerating: false,
   isInitialized: false,
-  selectedFormat: "left", // 'left': 刑事案件, 'middle': 交通事故, 'right': 交通違規
-  viewMode: "grid", // 'grid' or 'list'
+  selectedFormat: "left", // 'left': 刑事案件, 'middle': 交通事故, 'right': 多格照片
+  viewMode: "grid", // 'grid', 'list' or 'preview'
+  photoStartNumber: 1, // 本次第一張照片的顯示編號
+  pdfPageNumberEnabled: false, // PDF 是否顯示頁碼
+  pdfPageStartNumber: 1, // PDF 第一頁的顯示頁碼
   imageDescriptions: {}, // 儲存圖片說明，以 image id 為 key
   imageDates: {}, // 儲存圖片日期，以 image id 為 key
   imageAddresses: {}, // 儲存圖片地址，以 image id 為 key
   imageAccidentTags: {}, // 儲存交通事故勾選項，以 image id 為 key
   editingImageId: null, // 正在編輯的圖片 ID
   imageRotations: {}, // 儲存圖片旋轉角度，以 image id 為 key
+  customDocTitles: {
+    left: "刑案照片黏貼表",
+    middle: "非道路交通事故照片黏貼紀錄表",
+    right: "照片黏貼表",
+  }, // 儲存自定義文檔標題
 };
 
 // 交通事故說明選項
@@ -36,12 +44,12 @@ export const ACCIDENT_TAG_OPTIONS = [
 export const FORMAT_NAMES = {
   left: "刑案",
   middle: "交通事故",
-  right: "交通違規",
+  right: "多格照片",
 };
 
 // 格式標題對應
 export const FORMAT_TITLES = {
   left: "刑案照片黏貼表",
   middle: "(非)道路交通事故照片黏貼紀錄表",
-  right: "交通違規逕行舉發照片黏貼表",
+  right: "照片黏貼表",
 };

@@ -1,16 +1,46 @@
-// docxGenerator.js
+﻿// docxGenerator.js
 
-import { state, FORMAT_NAMES, ACCIDENT_TAG_OPTIONS } from "./state.js";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js";
 import {
   resizeImageForDoc,
   getFormattedDate,
   showLoadingModal,
   hideLoadingModal,
+  blobToArrayBuffer,
 } from "./utils.js";
+import {
+  getMultiPhotoPageEntries,
+  getMultiPhotoSettings,
+} from "./multiPhotoLayout.js";
+import { getPhotoNumber } from "./photoNumbering.js";
+
+const platformName =
+  globalThis.navigator?.userAgentData?.platform ||
+  globalThis.navigator?.platform ||
+  globalThis.navigator?.userAgent ||
+  "";
+const DOCX_KAI_FONT = /Mac|iPhone|iPad|iPod/i.test(platformName)
+  ? "BiauKaiTC"
+  : "DFKai-SB";
+
+const sanitizeDownloadFileName = (fileName) => {
+  const cleanedName = String(fileName ?? "")
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/[. ]+$/g, "");
+
+  return cleanedName || "照片黏貼表";
+};
 
 export const handleGenerateWrapper = async (event) => {
   event.preventDefault();
   event.stopPropagation();
+
+  if (state.selectedFormat === "right") {
+    alert("多格照片檔案限定列印/PDF");
+    return;
+  }
 
   if (state.isGenerating) {
     console.log("Generation already in progress");
@@ -39,16 +69,17 @@ const handleGenerate = async () => {
   try {
     const resizedImages = await Promise.all(
       state.selectedImages.map(async (image) => {
-        const resizedData = await resizeImageForDoc(image.data);
+        const resizedBlob = await resizeImageForDoc(image.blob);
         return {
           ...image,
-          data: resizedData,
+          docBlob: resizedBlob,
+          docData: await blobToArrayBuffer(resizedBlob),
           description: state.imageDescriptions[image.id] || "",
           customDate: state.imageDates[image.id] || "",
           customAddress: state.imageAddresses[image.id] || "",
           accidentTags: state.imageAccidentTags[image.id] || {},
         };
-      })
+      }),
     );
 
     const docx = window.docx;
@@ -57,12 +88,6 @@ const handleGenerate = async () => {
     const caseAddress = document.getElementById("caseAddress").value;
     const caseDate = document.getElementById("caseDate").value;
     const caseNumber = document.getElementById("caseNumber").value;
-
-    const markNumber = document.getElementById("markNumber").value;
-    const ticketNumber = document.getElementById("ticketNumber").value;
-    const plateNumber = document.getElementById("plateNumber").value;
-    const violationLaw = document.getElementById("violationLaw").value;
-    const violationFact = document.getElementById("violationFact").value;
 
     const doc = createDocument(
       docx,
@@ -73,25 +98,23 @@ const handleGenerate = async () => {
         caseAddress,
         caseDate,
         caseNumber,
-        markNumber,
-        ticketNumber,
-        plateNumber,
-        violationLaw,
-        violationFact,
       },
-      resizedImages
+      resizedImages,
     );
 
     const blob = await docx.Packer.toBlob(doc);
     hideLoadingModal();
 
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
+    const downloadUrl = URL.createObjectURL(blob);
+    link.href = downloadUrl;
     const dateString = getFormattedDate();
-    link.download = `${
-      FORMAT_NAMES[state.selectedFormat]
-    }照片黏貼表_${dateString}.docx`;
+    const downloadTitle = sanitizeDownloadFileName(
+      state.customDocTitles[state.selectedFormat],
+    );
+    link.download = `${downloadTitle}_${dateString}.docx`;
     link.click();
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
   } catch (error) {
     hideLoadingModal();
     console.error("Error in document generation:", error);
@@ -99,17 +122,11 @@ const handleGenerate = async () => {
   }
 };
 
-/**
- * 生成交通事故勾選說明文字
- * @param {Object} tags - 勾選狀態物件，key 為選項 id，value 為 boolean
- * @returns {string} 格式化的說明文字
- */
 const generateAccidentTagsText = (tags) => {
   const tagTexts = ACCIDENT_TAG_OPTIONS.map((option) => {
     const isChecked = tags && tags[option.id];
-    const checkbox = isChecked ? "▓" : "□";
+    const checkbox = isChecked ? "■" : "□";
     if (option.id === "other") {
-      // 僅在勾選「其他」時才顯示輸入的內容
       const otherText =
         isChecked && tags.otherText ? tags.otherText : "___________";
       return `${checkbox}其他:${otherText}`;
@@ -117,7 +134,6 @@ const generateAccidentTagsText = (tags) => {
     return `${checkbox}${option.label}`;
   });
 
-  // 每行顯示 5 個選項，使用空格分隔
   return tagTexts.join(" ");
 };
 
@@ -128,16 +144,16 @@ const createDocument = (docx, format, formData, images) => {
 
   switch (format) {
     case "left":
-      title = "刑案照片黏貼表";
+      title = state.customDocTitles.left ?? "刑案照片黏貼表";
       createContent = createCriminalContent;
       break;
     case "middle":
-      title = "(非)道路交通事故照片黏貼紀錄表";
+      title = state.customDocTitles.middle ?? "非道路交通事故照片黏貼紀錄表";
       createContent = createTrafficAccidentContent;
       break;
     case "right":
-      title = "交通違規逕行舉發照片黏貼表";
-      createContent = createTrafficViolationContent;
+      title = state.customDocTitles.right ?? "照片黏貼表";
+      createContent = createMultiPhotoContent;
       break;
     default:
       throw new Error("未知的文檔格式");
@@ -174,17 +190,14 @@ const createDocument = (docx, format, formData, images) => {
         }),
       },
       children: createContent(docx, images, formData, isAutoDate, manualDate),
+      footers: {
+        default: createDefaultFooter(docx),
+      },
     },
   ];
 
-  if (format !== "right") {
-    sections[0].footers = {
-      default: createDefaultFooter(docx),
-    };
-  }
-
   return new docx.Document({
-    sections: sections,
+    sections,
     styles: createDocumentStyles(docx),
     compatibility: {
       doNotUseHTMLParagraphAutoSpacing: true,
@@ -193,14 +206,12 @@ const createDocument = (docx, format, formData, images) => {
   });
 };
 
-// ============ 刑事案件 ============
-
 const createCriminalContent = (
   docx,
   images,
   formData,
   isAutoDate,
-  manualDate
+  manualDate,
 ) => {
   return createImageTables(docx, images, formData, isAutoDate, manualDate);
 };
@@ -213,29 +224,29 @@ const createImageTables = (docx, images, formData, isAutoDate, manualDate) => {
       ...createImageTable(
         docx,
         images[i],
-        i + 1,
+        getPhotoNumber(i),
         formData,
         isAutoDate,
-        manualDate
-      )
+        manualDate,
+      ),
     );
     if (i + 1 < images.length) {
       tables.push(
         ...createImageTable(
           docx,
           images[i + 1],
-          i + 2,
+          getPhotoNumber(i + 1),
           formData,
           isAutoDate,
-          manualDate
-        )
+          manualDate,
+        ),
       );
     }
     if (i + 2 < images.length) {
       tables.push(
         new docx.Paragraph({
           children: [new docx.PageBreak()],
-        })
+        }),
       );
     }
   }
@@ -291,7 +302,7 @@ const createImageTable = (
   index,
   formData,
   isAutoDate,
-  manualDate
+  manualDate,
 ) => {
   let dateToShow;
   if (image.customDate) {
@@ -329,7 +340,7 @@ const createImageTable = (
                 new docx.Paragraph({
                   children: [
                     new docx.ImageRun({
-                      data: image.data,
+                      data: image.docData,
                       transformation: {
                         width: imageWidth,
                         height: imageHeight,
@@ -437,14 +448,12 @@ const createImageTable = (
   ];
 };
 
-// ============ 交通事故 ============
-
 const createTrafficAccidentContent = (
   docx,
   images,
   formData,
   isAutoDate,
-  manualDate
+  manualDate,
 ) => {
   const tables = [];
   for (let i = 0; i < images.length; i++) {
@@ -452,11 +461,11 @@ const createTrafficAccidentContent = (
       createTrafficAccidentImageTable(
         docx,
         images[i],
-        i + 1,
+        getPhotoNumber(i),
         formData,
         isAutoDate,
-        manualDate
-      )
+        manualDate,
+      ),
     );
 
     if (i < images.length - 1) {
@@ -476,7 +485,7 @@ const createTrafficAccidentImageTable = (
   index,
   formData,
   isAutoDate,
-  manualDate
+  manualDate,
 ) => {
   let dateToShow;
   if (image.customDate) {
@@ -511,7 +520,7 @@ const createTrafficAccidentImageTable = (
               new docx.Paragraph({
                 children: [
                   new docx.ImageRun({
-                    data: image.data,
+                    data: image.docData,
                     transformation: { width: imageWidth, height: imageHeight },
                   }),
                 ],
@@ -583,305 +592,143 @@ const createTrafficAccidentImageTable = (
   });
 };
 
-// ============ 交通違規 ============
-
-const createTrafficViolationContent = (
-  docx,
-  images,
-  formData,
-  isAutoDate,
-  manualDate
-) => {
-  const tables = [];
-  for (let i = 0; i < images.length; i += 2) {
-    tables.push(createTrafficViolationHeaderTable(docx, formData));
-    tables.push(
-      ...createTrafficViolationImageTable(
-        docx,
-        images[i],
-        i + 1,
-        formData,
-        isAutoDate,
-        manualDate
-      )
-    );
-
-    if (i + 1 < images.length) {
-      tables.push(
-        ...createTrafficViolationImageTable(
-          docx,
-          images[i + 1],
-          i + 2,
-          formData,
-          isAutoDate,
-          manualDate
-        )
-      );
-    }
-
-    if (i + 2 < images.length) {
-      tables.push(new docx.Paragraph({ children: [new docx.PageBreak()] }));
-    }
-  }
-  return tables;
+const fitMultiPhotoImage = (image, count) => {
+  const maxWidth = 250;
+  const maxHeight = count === 2 ? 610 : 300;
+  const width = Math.max(1, Number(image.width) || 1);
+  const height = Math.max(1, Number(image.height) || 1);
+  const scale = Math.min(maxWidth / width, maxHeight / height, 1);
+  return {
+    width: Math.max(1, Math.round(width * scale)),
+    height: Math.max(1, Math.round(height * scale)),
+  };
 };
 
-const createTrafficViolationHeaderTable = (docx, formData) => {
-  return new docx.Table({
+const createMultiPhotoCell = (docx, entry, count) => {
+  if (!entry) {
+    return new docx.TableCell({
+      children: [new docx.Paragraph({ text: "" })],
+      width: { size: 50, type: docx.WidthType.PERCENTAGE },
+      verticalAlign: docx.VerticalAlign.CENTER,
+    });
+  }
+
+  const imageSize = fitMultiPhotoImage(entry.image, count);
+  const description = entry.image.description || "";
+  const captionTable = new docx.Table({
     layout: docx.TableLayoutType.FIXED,
     width: { size: 100, type: docx.WidthType.PERCENTAGE },
     rows: [
       new docx.TableRow({
+        height: {
+          value: docx.convertMillimetersToTwip(7),
+          rule: docx.HeightRule.EXACT,
+        },
         children: [
           new docx.TableCell({
             children: [
-              new docx.Paragraph({ text: "標示單號", style: "Normal" }),
+              new docx.Paragraph({
+                text: `編號(${entry.number})`,
+                alignment: docx.AlignmentType.CENTER,
+                spacing: { before: 0, after: 0 },
+              }),
             ],
-            width: { size: 15, type: docx.WidthType.PERCENTAGE },
+            width: { size: 22, type: docx.WidthType.PERCENTAGE },
+            verticalAlign: docx.VerticalAlign.CENTER,
           }),
           new docx.TableCell({
             children: [
               new docx.Paragraph({
-                text: formData.markNumber || "",
-                style: "Normal",
-                alignment: docx.AlignmentType.CENTER,
+                text: description,
+                alignment: docx.AlignmentType.LEFT,
+                spacing: { before: 0, after: 0 },
               }),
             ],
-            width: { size: 35, type: docx.WidthType.PERCENTAGE },
-          }),
-          new docx.TableCell({
-            children: [
-              new docx.Paragraph({ text: "舉發單號", style: "Normal" }),
-            ],
-            width: { size: 15, type: docx.WidthType.PERCENTAGE },
-          }),
-          new docx.TableCell({
-            children: [
-              new docx.Paragraph({
-                text: formData.ticketNumber || "",
-                style: "Normal",
-                alignment: docx.AlignmentType.CENTER,
-              }),
-            ],
-            width: { size: 35, type: docx.WidthType.PERCENTAGE },
+            width: { size: 78, type: docx.WidthType.PERCENTAGE },
+            verticalAlign: docx.VerticalAlign.CENTER,
           }),
         ],
       }),
     ],
   });
+  return new docx.TableCell({
+    children: [
+      new docx.Paragraph({
+        children: [
+          new docx.ImageRun({
+            data: entry.image.docData,
+            transformation: imageSize,
+          }),
+        ],
+        alignment: docx.AlignmentType.CENTER,
+        spacing: { after: 100 },
+      }),
+      captionTable,
+      new docx.Paragraph({
+        children: [new docx.TextRun({ text: "", size: 2 })],
+        spacing: { before: 0, after: 0, line: 1 },
+      }),
+    ],
+    width: { size: 50, type: docx.WidthType.PERCENTAGE },
+    verticalAlign: docx.VerticalAlign.CENTER,
+  });
 };
 
-const createTrafficViolationImageTable = (
-  docx,
-  image,
-  index,
-  formData,
-  isAutoDate,
-  manualDate
-) => {
-  let dateToShow;
-  if (image.customDate) {
-    dateToShow = image.customDate;
-  } else if (isAutoDate) {
-    dateToShow = image.date || manualDate;
-  } else {
-    dateToShow = manualDate;
-  }
+const createMultiPhotoContent = (docx, images) => {
+  const { count, order } = getMultiPhotoSettings();
+  const content = [];
+  const pageCount = Math.ceil(images.length / count);
+  const rowHeight = count === 2 ? 225 : 112;
 
-  const addressToShow = image.customAddress || formData.caseAddress || "";
-
-  const imageRatio = image.width / image.height;
-  let imageHeight = 350;
-  let imageWidth = imageHeight * imageRatio;
-
-  if (imageWidth >= 580) {
-    imageWidth = 580;
-    imageHeight = imageWidth / imageRatio;
-  }
-
-  return [
-    new docx.Table({
-      layout: docx.TableLayoutType.FIXED,
-      width: { size: 100, type: docx.WidthType.PERCENTAGE },
-      rows: [
+  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+    const firstIndex = pageIndex * count;
+    const visualEntries = getMultiPhotoPageEntries(
+      images,
+      firstIndex,
+      count,
+      order,
+    );
+    const rows = [];
+    for (let index = 0; index < visualEntries.length; index += 2) {
+      rows.push(
         new docx.TableRow({
           height: {
-            value: docx.convertMillimetersToTwip(95),
+            value: docx.convertMillimetersToTwip(rowHeight),
             rule: docx.HeightRule.EXACT,
           },
           children: [
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  children: [
-                    new docx.ImageRun({
-                      data: image.data,
-                      transformation: {
-                        width: imageWidth,
-                        height: imageHeight,
-                      },
-                    }),
-                  ],
-                  alignment: docx.AlignmentType.CENTER,
-                }),
-              ],
-              columnSpan: 6,
-              verticalAlign: docx.VerticalAlign.CENTER,
-            }),
+            createMultiPhotoCell(docx, visualEntries[index], count),
+            createMultiPhotoCell(docx, visualEntries[index + 1], count),
           ],
         }),
-        new docx.TableRow({
-          children: [
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: "違規時間",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.CENTER,
-                }),
-              ],
-              width: { size: 15, type: docx.WidthType.PERCENTAGE },
-            }),
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: dateToShow,
-                  alignment: docx.AlignmentType.LEFT,
-                }),
-              ],
-              width: { size: 35, type: docx.WidthType.PERCENTAGE },
-            }),
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: "違規地點",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.CENTER,
-                }),
-              ],
-              width: { size: 15, type: docx.WidthType.PERCENTAGE },
-            }),
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: addressToShow,
-                  style: "Normal",
-                  alignment: docx.AlignmentType.LEFT,
-                }),
-              ],
-              width: { size: 35, type: docx.WidthType.PERCENTAGE },
-            }),
-          ],
-        }),
-        new docx.TableRow({
-          children: [
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: "違規車號",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.CENTER,
-                }),
-              ],
-              width: { size: 15, type: docx.WidthType.PERCENTAGE },
-            }),
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: formData.plateNumber || "",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.LEFT,
-                }),
-              ],
-              width: { size: 35, type: docx.WidthType.PERCENTAGE },
-            }),
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: "違規法條",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.CENTER,
-                }),
-              ],
-              width: { size: 15, type: docx.WidthType.PERCENTAGE },
-            }),
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: formData.violationLaw || "",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.LEFT,
-                }),
-              ],
-              width: { size: 35, type: docx.WidthType.PERCENTAGE },
-            }),
-          ],
-        }),
-        new docx.TableRow({
-          children: [
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: "違規事實",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.CENTER,
-                }),
-              ],
-              width: { size: 15, type: docx.WidthType.PERCENTAGE },
-            }),
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: formData.violationFact || "",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.LEFT,
-                }),
-              ],
-              width: { size: 35, type: docx.WidthType.PERCENTAGE },
-            }),
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: "舉發人員",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.CENTER,
-                }),
-              ],
-              width: { size: 15, type: docx.WidthType.PERCENTAGE },
-            }),
-            new docx.TableCell({
-              children: [
-                new docx.Paragraph({
-                  text: formData.caseNumber || "",
-                  style: "Normal",
-                  alignment: docx.AlignmentType.LEFT,
-                }),
-              ],
-              width: { size: 35, type: docx.WidthType.PERCENTAGE },
-            }),
-          ],
-        }),
-      ],
-    }),
-    new docx.Paragraph({ text: "", style: "Normal" }),
-    new docx.Paragraph({ text: "", style: "Normal" }),
-  ];
+      );
+    }
+    content.push(
+      new docx.Table({
+        layout: docx.TableLayoutType.FIXED,
+        width: { size: 100, type: docx.WidthType.PERCENTAGE },
+        rows,
+      }),
+    );
+    if (pageIndex < pageCount - 1) {
+      content.push(new docx.Paragraph({ children: [new docx.PageBreak()] }));
+    }
+  }
+  return content;
 };
-
-// ============ 共用 ============
 
 const createDefaultFooter = (docx) => {
   return new docx.Footer({
     children: [
       new docx.Paragraph({
         children: [
-          new docx.TextRun({ text: "第 ", size: 20, font: "DFKai-SB" }),
+          new docx.TextRun({ text: "第 ", size: 20, font: DOCX_KAI_FONT }),
           new docx.TextRun({
             children: [docx.PageNumber.CURRENT],
             size: 20,
-            font: "DFKai-SB",
+            font: DOCX_KAI_FONT,
           }),
-          new docx.TextRun({ text: " 頁", size: 20, font: "DFKai-SB" }),
+          new docx.TextRun({ text: " 頁", size: 20, font: DOCX_KAI_FONT }),
         ],
         alignment: docx.AlignmentType.CENTER,
         style: "Footer",
@@ -899,7 +746,7 @@ const createDocumentStyles = (docx) => {
         basedOn: "Normal",
         next: "Normal",
         quickFormat: true,
-        run: { size: 23, font: "DFKai-SB" },
+        run: { size: 23, font: DOCX_KAI_FONT },
         paragraph: { alignment: docx.AlignmentType.DISTRIBUTE },
       },
       {
@@ -908,7 +755,7 @@ const createDocumentStyles = (docx) => {
         basedOn: "Normal",
         next: "Normal",
         quickFormat: true,
-        run: { size: 44, font: "DFKai-SB" },
+        run: { size: 44, font: DOCX_KAI_FONT },
       },
     ],
   };

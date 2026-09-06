@@ -1,4 +1,4 @@
-// imageHandler.js - 圖片處理模組
+﻿// imageHandler.js - 圖片處理模組
 
 import { state, ACCIDENT_TAG_OPTIONS } from "./state.js";
 import {
@@ -9,14 +9,326 @@ import {
   showConversionModal,
   hideConversionModal,
   EMPTY_STATE_HTML,
-} from "./utils.js";
+  createObjectUrl,
+  revokeObjectUrl,
+} from "./utils.js?v=20260906-1";
+import { notifyProjectChanged } from "./projectEvents.js";
+import { updateSplitOrderWarning } from "./splitOrderManager.js";
+import {
+  getPhotoNumber,
+  updatePhotoNumberingWarning,
+} from "./photoNumbering.js";
+import {
+  acceptCurrentSplitGroupForImages,
+  flattenSplitGroupReplacement,
+} from "./splitGroupLogic.js";
+import { getMissingOutputDateEntries } from "./dateValidation.js";
+
+export const IMAGE_SECURITY_LIMITS = Object.freeze({
+  maxCount: 500,
+  maxFileBytes: 64 * 1024 * 1024,
+  maxTotalBytes: 1024 * 1024 * 1024,
+  maxDimension: 20000,
+  maxPixels: 100_000_000,
+});
+
+const SAFE_IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/bmp",
+  "image/tiff",
+  "image/avif",
+]);
+
+export const INTERNAL_IMAGE_DRAG_TYPE =
+  "application/x-mpicture-image-id";
+
+const DEFAULT_DATE_PLACEHOLDER = "日期 (留空則使用側邊欄資訊)";
+const MISSING_EXIF_DATE_PLACEHOLDER = "未找到 EXIF 日期，請手動輸入";
+
+const detectSafeImageType = async (blob) => {
+  const bytes = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
+  const ascii = String.fromCharCode(...bytes);
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+  if (
+    bytes.length >= 8 &&
+    [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every(
+      (value, index) => bytes[index] === value,
+    )
+  ) {
+    return "image/png";
+  }
+  if (ascii.startsWith("GIF87a") || ascii.startsWith("GIF89a")) {
+    return "image/gif";
+  }
+  if (ascii.startsWith("RIFF") && ascii.slice(8, 12) === "WEBP") {
+    return "image/webp";
+  }
+  if (ascii.startsWith("BM")) return "image/bmp";
+  if (
+    (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0) ||
+    (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0 && bytes[3] === 0x2a)
+  ) {
+    return "image/tiff";
+  }
+  if (
+    ascii.slice(4, 8) === "ftyp" &&
+    ["avif", "avis"].includes(ascii.slice(8, 12))
+  ) {
+    return "image/avif";
+  }
+  return null;
+};
+
+const getImageDimensions = (sourceUrl) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      resolve({ width: img.width, height: img.height });
+    };
+    img.onerror = reject;
+    img.src = sourceUrl;
+  });
+};
+
+const normalizeFileNameForCompare = (fileName) =>
+  String(fileName || "")
+    .trim()
+    .toLowerCase();
+
+const createDuplicateSignature = ({ name, size, width = "", height = "" }) =>
+  [
+    normalizeFileNameForCompare(name),
+    Number.isFinite(size) ? size : "",
+    Number.isFinite(width) ? width : "",
+    Number.isFinite(height) ? height : "",
+  ].join("|");
+
+export const buildImageRecord = async (
+  blob,
+  fileName,
+  date = "",
+  sourceFile = null,
+) => {
+  if (!blob.size || blob.size > IMAGE_SECURITY_LIMITS.maxFileBytes) {
+    throw new Error("圖片大小超過安全限制");
+  }
+  const sourceUrl = createObjectUrl(blob);
+
+  try {
+    const { width, height } = await getImageDimensions(sourceUrl);
+    if (
+      !width ||
+      !height ||
+      width > IMAGE_SECURITY_LIMITS.maxDimension ||
+      height > IMAGE_SECURITY_LIMITS.maxDimension ||
+      width * height > IMAGE_SECURITY_LIMITS.maxPixels
+    ) {
+      throw new Error("圖片尺寸超過安全限制");
+    }
+    const thumbnailUrl = await createThumbnail(sourceUrl);
+    const duplicateSignature = createDuplicateSignature({
+      name: sourceFile?.name || fileName,
+      size: sourceFile?.size ?? blob.size,
+      width,
+      height,
+    });
+
+    return {
+      id: Date.now() + Math.random(),
+      blob,
+      previewUrl: thumbnailUrl,
+      name: fileName,
+      size: blob.size,
+      width,
+      height,
+      date,
+      duplicateSignature,
+    };
+  } finally {
+    revokeObjectUrl(sourceUrl);
+  }
+};
+
+const isHeicFile = (file) => {
+  const fileName = file.name.toLowerCase();
+  return (
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    fileName.endsWith(".heic") ||
+    fileName.endsWith(".heif")
+  );
+};
+
+const isSupportedImageFile = (file) => {
+  const fileName = file.name.toLowerCase();
+  const mimeType = file.type.toLowerCase();
+  return (
+    SAFE_IMAGE_MIME_TYPES.has(mimeType) ||
+    isHeicFile(file) ||
+    ((!mimeType || mimeType === "application/octet-stream") &&
+      /\.(jpe?g|png|gif|webp|bmp|tiff?|avif)$/i.test(fileName))
+  );
+};
+
+const getJpegName = (fileName) => fileName.replace(/\.(heic|heif)$/i, ".jpg");
+
+const extractHeicExifDate = async (file) => {
+  try {
+    const exifData = await exifr.parse(file, {
+      pick: ["DateTimeOriginal", "CreateDate", "ModifyDate"],
+    });
+    const dateValue =
+      exifData?.DateTimeOriginal ||
+      exifData?.CreateDate ||
+      exifData?.ModifyDate;
+
+    return dateValue ? formatExifDate(dateValue) : null;
+  } catch (error) {
+    console.warn("HEIC EXIF 日期讀取失敗，繼續轉換:", file.name, error);
+    return null;
+  }
+};
+
+const normalizeConvertedBlob = (result) => {
+  const blob = Array.isArray(result) ? result[0] : result;
+  if (!(blob instanceof Blob)) {
+    throw new Error("HEIC 轉換結果不是有效圖片");
+  }
+
+  return blob.type ? blob : new Blob([blob], { type: "image/jpeg" });
+};
+
+const convertHeicWithHeic2any = async (file) => {
+  if (typeof heic2any !== "function") {
+    throw new Error("HEIC 轉換程式尚未載入");
+  }
+
+  const result = await heic2any({
+    blob: file,
+    toType: "image/jpeg",
+    quality: 0.88,
+  });
+
+  return normalizeConvertedBlob(result);
+};
+
+const convertNativelyDecodedImageToJpeg = async (file) => {
+  const sourceUrl = createObjectUrl(file);
+
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("瀏覽器無法直接讀取此 HEIC"));
+      image.src = sourceUrl;
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+
+    if (!canvas.width || !canvas.height) {
+      throw new Error("HEIC 圖片尺寸無效");
+    }
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) =>
+          blob ? resolve(blob) : reject(new Error("HEIC 原生轉 JPEG 失敗")),
+        "image/jpeg",
+        0.9,
+      );
+    });
+  } finally {
+    revokeObjectUrl(sourceUrl);
+  }
+};
+
+const convertHeicToJpeg = async (file) => {
+  try {
+    return await convertHeicWithHeic2any(file);
+  } catch (heic2anyError) {
+    console.warn(
+      "heic2any 轉換失敗，嘗試瀏覽器原生解碼:",
+      file.name,
+      heic2anyError,
+    );
+    return await convertNativelyDecodedImageToJpeg(file);
+  }
+};
+
+export const prepareImageFile = async (file) => {
+  if (!isHeicFile(file)) {
+    const detectedType = await detectSafeImageType(file);
+    if (!detectedType) throw new Error("圖片內容不是允許的安全格式");
+    if (file.type && file.type !== "application/octet-stream" && file.type !== detectedType) {
+      throw new Error("圖片內容與宣告格式不一致");
+    }
+    const safeBlob =
+      file.type === detectedType ? file : new Blob([file], { type: detectedType });
+    return await buildImageRecordWithExif(safeBlob, file.name);
+  }
+
+  const heicExifDate = await extractHeicExifDate(file);
+  const convertedBlob = await convertHeicToJpeg(file);
+
+  return await buildImageRecord(
+    convertedBlob,
+    getJpegName(file.name),
+    heicExifDate || "",
+    file,
+  );
+};
+
+const buildImageRecordWithExif = async (blob, fileName) => {
+  const tempUrl = createObjectUrl(blob);
+
+  try {
+    const img = new Image();
+
+    return await new Promise((resolve, reject) => {
+      img.onload = async () => {
+        EXIF.getData(img, async function () {
+          try {
+            const exifDate = EXIF.getTag(this, "DateTimeOriginal");
+            const formattedDate = formatExifDate(exifDate);
+            resolve(
+              await buildImageRecord(blob, fileName, formattedDate, blob),
+            );
+          } catch (error) {
+            reject(error);
+          } finally {
+            revokeObjectUrl(tempUrl);
+          }
+        });
+      };
+
+      img.onerror = (error) => {
+        revokeObjectUrl(tempUrl);
+        reject(error);
+      };
+
+      img.src = tempUrl;
+    });
+  } catch (error) {
+    revokeObjectUrl(tempUrl);
+    throw error;
+  }
+};
 
 /**
  * 處理圖片選擇事件
  */
 export const handleImageSelection = (event) => {
   const files = Array.from(event.target.files);
-  showUploadingModal();
   processFiles(files);
   event.target.value = "";
 };
@@ -24,139 +336,128 @@ export const handleImageSelection = (event) => {
 /**
  * 處理檔案陣列
  */
-const processFiles = (files) => {
-  console.log("Processing files:", files.length);
-  const promises = files.map(
-    (file) =>
-      new Promise((resolve, reject) => {
-        const isHEIC =
-          file.type === "image/heic" ||
-          file.type === "image/heif" ||
-          file.name.toLowerCase().endsWith(".heic") ||
-          file.name.toLowerCase().endsWith(".heif");
+let fileImportQueue = Promise.resolve();
 
-        // 處理圖片並解析 EXIF (可傳入預先讀取的 EXIF 日期)
-        const processImage = (blob, fileName, preExtractedDate = null) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const dataUrl = e.target.result;
-            const img = new Image();
-            img.onload = () => {
-              // 如果有預先提取的日期（來自 HEIC），直接使用
-              if (preExtractedDate !== null) {
-                createThumbnail(dataUrl)
-                  .then((thumbnailUrl) => {
-                    resolve({
-                      id: Date.now() + Math.random(),
-                      data: dataUrl,
-                      thumbnail: thumbnailUrl,
-                      name: fileName,
-                      size: blob.size,
-                      width: img.width,
-                      height: img.height,
-                      date: preExtractedDate,
-                    });
-                  })
-                  .catch(reject);
-              } else {
-                // 一般圖片：從轉換後的圖片讀取 EXIF
-                EXIF.getData(img, function () {
-                  const exifDate = EXIF.getTag(this, "DateTimeOriginal");
-                  const formattedDate = formatExifDate(exifDate);
-                  createThumbnail(dataUrl)
-                    .then((thumbnailUrl) => {
-                      resolve({
-                        id: Date.now() + Math.random(),
-                        data: dataUrl,
-                        thumbnail: thumbnailUrl,
-                        name: fileName,
-                        size: blob.size,
-                        width: img.width,
-                        height: img.height,
-                        date: formattedDate,
-                      });
-                    })
-                    .catch(reject);
-                });
-              }
-            };
-            img.onerror = reject;
-            img.src = dataUrl;
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        };
+export const processFiles = (files) => {
+  const filesToProcess = Array.from(files || []);
+  if (!filesToProcess.length) return Promise.resolve();
 
-        if (isHEIC) {
-          showConversionModal();
-
-          // 使用 exifr 從原始 HEIC 檔案讀取 EXIF 日期
-          exifr
-            .parse(file, {
-              pick: ["DateTimeOriginal", "CreateDate", "ModifyDate"],
-            })
-            .then((exifData) => {
-              let heicExifDate = null;
-              if (exifData) {
-                // 優先使用 DateTimeOriginal，其次 CreateDate
-                const dateValue =
-                  exifData.DateTimeOriginal ||
-                  exifData.CreateDate ||
-                  exifData.ModifyDate;
-                if (dateValue) {
-                  // exifr 回傳的是 Date 物件，轉換成我們需要的格式
-                  heicExifDate = formatExifDate(dateValue);
-                  console.log("HEIC EXIF 日期讀取成功:", heicExifDate);
-                }
-              }
-
-              // 轉換 HEIC 為 JPEG
-              return heic2any({
-                blob: file,
-                toType: "image/jpeg",
-                quality: 0.8,
-              }).then((convertedBlob) => {
-                hideConversionModal();
-                // 傳入預先讀取的 EXIF 日期
-                processImage(
-                  convertedBlob,
-                  file.name.replace(/\.(heic|heif)$/i, ".jpg"),
-                  heicExifDate
-                );
-              });
-            })
-            .catch((error) => {
-              hideConversionModal();
-              console.error("HEIC conversion failed:", error);
-              alert(
-                `HEIC 檔案 "${file.name}" 轉換失敗，請嘗試其他格式的圖片。`
-              );
-              reject(error);
-            });
-        } else {
-          processImage(file, file.name);
-        }
-      })
+  const currentImport = fileImportQueue.then(() =>
+    processFileBatch(filesToProcess),
   );
 
-  Promise.all(promises)
-    .then((imageDataArray) => {
-      console.log("Image data processed:", imageDataArray.length);
-      imageDataArray.forEach(handleImageAddition);
-      hideUploadingModal();
-    })
-    .catch((error) => {
-      hideConversionModal();
-      hideUploadingModal();
-      console.error("Error processing images:", error);
-      alert("處理圖片時發生錯誤，請重試。");
-    });
+  // 保留一條永遠可繼續的佇列，避免單次失敗阻斷後續匯入。
+  fileImportQueue = currentImport.catch(() => {});
+  return currentImport;
+};
+
+const processFileBatch = async (files) => {
+  showUploadingModal();
+  console.log("Processing files:", files.length);
+  const imageDataArray = [];
+  const failedFiles = [];
+  const unsupportedFiles = [];
+  const oversizedFiles = [];
+  const availableSlots = Math.max(
+    0,
+    IMAGE_SECURITY_LIMITS.maxCount - state.selectedImages.length,
+  );
+  const candidateFiles = files.slice(0, availableSlots);
+  const supportedFiles = files.filter((file) => {
+    if (!candidateFiles.includes(file)) {
+      unsupportedFiles.push(`${file.name || "未命名檔案"}（超過照片數量上限）`);
+      return false;
+    }
+    if (file.size > IMAGE_SECURITY_LIMITS.maxFileBytes) {
+      oversizedFiles.push(file.name || "未命名檔案");
+      return false;
+    }
+    if (isSupportedImageFile(file)) return true;
+    unsupportedFiles.push(file.name || "未命名檔案");
+    return false;
+  });
+
+  const currentTotalBytes = state.selectedImages.reduce(
+    (total, image) => total + (image.blob?.size || 0),
+    0,
+  );
+  let acceptedTotalBytes = currentTotalBytes;
+  const sizeLimitedFiles = supportedFiles.filter((file) => {
+    if (
+      acceptedTotalBytes + file.size >
+      IMAGE_SECURITY_LIMITS.maxTotalBytes
+    ) {
+      oversizedFiles.push(file.name || "未命名檔案");
+      return false;
+    }
+    acceptedTotalBytes += file.size;
+    return true;
+  });
+
+  try {
+    if (sizeLimitedFiles.some(isHeicFile)) {
+      showConversionModal();
+    }
+
+    for (const file of sizeLimitedFiles) {
+      try {
+        imageDataArray.push(await prepareImageFile(file));
+      } catch (error) {
+        console.error("Image processing failed:", file.name, error);
+        failedFiles.push(file.name);
+      }
+    }
+
+    console.log("Image data processed:", imageDataArray.length);
+    appendPreparedImages(imageDataArray);
+
+    if (failedFiles.length) {
+      alert(
+        [
+          `有 ${failedFiles.length} 個檔案無法處理：`,
+          failedFiles.join("\n"),
+          "",
+          "部分 HEIC/HEIF 可能使用瀏覽器端轉換器不支援的編碼。請先用手機或電腦相簿匯出為 JPEG 後再匯入。",
+        ].join("\n"),
+      );
+    }
+
+    if (unsupportedFiles.length) {
+      alert(
+        [
+          `已略過 ${unsupportedFiles.length} 個非圖片檔案：`,
+          unsupportedFiles.join("\n"),
+          "",
+          "目前僅支援照片圖片檔，影片不會匯入。",
+        ].join("\n"),
+      );
+    }
+
+    if (oversizedFiles.length) {
+      alert(
+        [
+          `已略過 ${oversizedFiles.length} 個超過安全容量限制的檔案：`,
+          oversizedFiles.join("\n"),
+          "",
+          "單張照片上限為 64 MB，專案照片總量上限為 1 GB。",
+        ].join("\n"),
+      );
+    }
+
+    if (imageDataArray.length) {
+      updateExifDateWarnings();
+      showMissingExifDateWarning();
+    }
+  } finally {
+    hideConversionModal();
+    hideUploadingModal();
+  }
 };
 
 /**
  * 處理圖片新增
  */
-const handleImageAddition = (imageData) => {
+const handleImageAddition = (imageData, { notify = true } = {}) => {
   const emptyState = document.querySelector(".empty-state");
   if (emptyState) {
     emptyState.remove();
@@ -164,12 +465,13 @@ const handleImageAddition = (imageData) => {
   if (isDuplicateImage(imageData)) {
     console.log("Duplicate found:", imageData.name);
     if (confirm(`檔案 "${imageData.name}" 已經存在。是否重複新增？`)) {
-      addImageToCollection(imageData);
+      addImageToCollection(imageData, { notify });
     } else {
+      revokeObjectUrl(imageData.previewUrl);
       console.log("User chose not to add duplicate image");
     }
   } else {
-    addImageToCollection(imageData);
+    addImageToCollection(imageData, { notify });
   }
 };
 
@@ -177,24 +479,103 @@ const handleImageAddition = (imageData) => {
  * 檢查是否為重複圖片
  */
 const isDuplicateImage = (newImage) => {
+  if (newImage.duplicateSignature) {
+    return state.selectedImages.some(
+      (img) => img.duplicateSignature === newImage.duplicateSignature,
+    );
+  }
+
   return state.selectedImages.some(
     (img) =>
       img.name === newImage.name &&
       img.size === newImage.size &&
       img.width === newImage.width &&
-      img.height === newImage.height
+      img.height === newImage.height,
   );
 };
 
 /**
  * 將圖片加入收藏
  */
-const addImageToCollection = (imageData) => {
+const addImageToCollection = (imageData, { notify = true } = {}) => {
   state.selectedImages.push(imageData);
   addImageToPreview(imageData, state.selectedImages.length);
   updateCreateButtonState();
+  if (notify) notifyProjectChanged();
   console.log("Image added to collection:", imageData.name);
   console.log("Total images in collection:", state.selectedImages.length);
+};
+
+export const appendPreparedImages = (records) => {
+  const list = Array.from(records || []);
+  list.forEach((record) => handleImageAddition(record, { notify: false }));
+  if (list.length) {
+    updateSplitOrderWarning();
+    notifyProjectChanged();
+  }
+};
+
+export const replaceImageWithPreparedImages = (
+  imageId,
+  records,
+  { flattenExistingSplitGroup = false } = {},
+) => {
+  const replacements = Array.from(records || []);
+  const originalIndex = state.selectedImages.findIndex(
+    (image) => image.id === imageId,
+  );
+  if (originalIndex < 0 || !replacements.length) return false;
+
+  const original = state.selectedImages[originalIndex];
+  const originalFields = {
+    customDate: state.imageDates[imageId] || "",
+    address: state.imageAddresses[imageId] || "",
+    description: state.imageDescriptions[imageId] || "",
+    accidentTags: { ...(state.imageAccidentTags[imageId] || {}) },
+  };
+
+  if (flattenExistingSplitGroup && original.splitGroupId) {
+    flattenSplitGroupReplacement(state.selectedImages, original, replacements);
+  }
+
+  state.selectedImages.splice(originalIndex, 1, ...replacements);
+  delete state.imageDescriptions[imageId];
+  delete state.imageDates[imageId];
+  delete state.imageAddresses[imageId];
+  delete state.imageAccidentTags[imageId];
+  delete state.imageRotations[imageId];
+
+  replacements.forEach((record, index) => {
+    state.imageDescriptions[record.id] = index === 0 ? originalFields.description : "";
+    state.imageDates[record.id] = originalFields.customDate;
+    state.imageAddresses[record.id] = originalFields.address;
+    state.imageAccidentTags[record.id] = { ...originalFields.accidentTags };
+    state.imageRotations[record.id] = 0;
+  });
+
+  document.querySelector(`.image-container[data-id="${imageId}"]`)?.remove();
+  replacements.forEach((record) => addImageToPreview(record, 0));
+
+  const preview = document.getElementById("imagePreview");
+  state.selectedImages.forEach((image, index) => {
+    const container = preview?.querySelector(
+      `.image-container[data-id="${image.id}"]`,
+    );
+    if (!container) return;
+    preview.appendChild(container);
+    const counter = container.querySelector(".image-counter");
+    if (counter) counter.textContent = String(getPhotoNumber(index));
+  });
+
+  if (original.previewUrl) revokeObjectUrl(original.previewUrl);
+  state.imageCounter = state.selectedImages.length;
+  state.editingImageId = null;
+  updateEditToolsState(false);
+  updateCreateButtonState();
+  updateExifDateWarnings();
+  updateSplitOrderWarning();
+  notifyProjectChanged();
+  return true;
 };
 
 /**
@@ -209,34 +590,35 @@ const addImageToPreview = (imageData, counter) => {
 
   const counterElement = document.createElement("div");
   counterElement.className = "image-counter";
-  counterElement.textContent = counter;
+  counterElement.textContent = getPhotoNumber(Math.max(0, counter - 1));
   imageContainer.appendChild(counterElement);
 
   const img = document.createElement("img");
-  img.src = imageData.thumbnail;
+  img.src = imageData.previewUrl;
   img.alt = imageData.name;
-  img.title = imageData.name; // 滑鼠懸停時顯示檔名
+  img.title = imageData.name;
+  // 防止瀏覽器啟動 <img> 的原生圖片拖曳，排序只由外層卡片處理。
+  img.draggable = false;
   imageContainer.appendChild(img);
 
-  // 讓新照片套用目前滑桿大小
   const slider = document.getElementById("photoSizeSlider");
   if (slider) {
     img.style.maxWidth = slider.value + "px";
     img.style.maxHeight = slider.value + "px";
   }
 
-  // 新增說明文字區
   const descriptionDiv = document.createElement("div");
   descriptionDiv.className = "image-description";
 
-  // 日期輸入欄位
   const dateInput = document.createElement("input");
   dateInput.type = "text";
   dateInput.className = "image-date-input";
-  dateInput.placeholder = "日期 (留空則使用側邊欄資訊)";
+  dateInput.maxLength = 80;
+  dateInput.placeholder = DEFAULT_DATE_PLACEHOLDER;
   dateInput.value = state.imageDates[imageData.id] || "";
   dateInput.addEventListener("input", (e) => {
     state.imageDates[imageData.id] = e.target.value;
+    updateExifDateWarnings();
   });
   dateInput.addEventListener("dragover", (e) => e.preventDefault());
   dateInput.addEventListener("drop", (e) => {
@@ -245,10 +627,16 @@ const addImageToPreview = (imageData, counter) => {
   });
   descriptionDiv.appendChild(dateInput);
 
-  // 地址輸入欄位
+  const dateWarning = document.createElement("span");
+  dateWarning.className = "exif-date-warning";
+  dateWarning.setAttribute("role", "status");
+  dateWarning.textContent = "未找到 EXIF 日期，請手動輸入";
+  descriptionDiv.appendChild(dateWarning);
+
   const addressInput = document.createElement("input");
   addressInput.type = "text";
   addressInput.className = "image-address-input";
+  addressInput.maxLength = 500;
   addressInput.placeholder = "地址 (留空則使用側邊欄資訊)";
   addressInput.value = state.imageAddresses[imageData.id] || "";
   addressInput.addEventListener("input", (e) => {
@@ -261,9 +649,9 @@ const addImageToPreview = (imageData, counter) => {
   });
   descriptionDiv.appendChild(addressInput);
 
-  // 說明輸入欄位 (僅限刑事案件)
   const textarea = document.createElement("textarea");
   textarea.className = "image-description-textarea";
+  textarea.maxLength = 5000;
   textarea.placeholder = "說明 (選填)";
   textarea.value = state.imageDescriptions[imageData.id] || "";
   textarea.addEventListener("input", (e) => {
@@ -278,12 +666,10 @@ const addImageToPreview = (imageData, counter) => {
   });
   descriptionDiv.appendChild(textarea);
 
-  // 交通事故勾選框 UI
   const accidentTagsContainer = document.createElement("div");
   accidentTagsContainer.className = "accident-tags-container";
   accidentTagsContainer.dataset.format = "middle";
 
-  // 初始化勾選狀態
   if (!state.imageAccidentTags[imageData.id]) {
     state.imageAccidentTags[imageData.id] = {};
   }
@@ -304,14 +690,13 @@ const addImageToPreview = (imageData, counter) => {
     labelText.textContent = option.label;
     tagLabel.appendChild(labelText);
 
-    // 如果是"其他"選項，添加文字輸入框
     if (option.id === "other") {
       const otherInput = document.createElement("input");
       otherInput.type = "text";
       otherInput.className = "accident-tag-other-input";
+      otherInput.maxLength = 500;
       otherInput.placeholder = "________________";
       otherInput.value = state.imageAccidentTags[imageData.id].otherText || "";
-      // 根據勾選狀態設定是否可輸入
       otherInput.disabled = !checkbox.checked;
       otherInput.addEventListener("input", (e) => {
         state.imageAccidentTags[imageData.id].otherText = e.target.value;
@@ -323,7 +708,6 @@ const addImageToPreview = (imageData, counter) => {
       });
       tagLabel.appendChild(otherInput);
 
-      // 勾選時啟用輸入框，取消勾選時禁用
       checkbox.addEventListener("change", (e) => {
         state.imageAccidentTags[imageData.id][option.id] = e.target.checked;
         otherInput.disabled = !e.target.checked;
@@ -344,8 +728,11 @@ const addImageToPreview = (imageData, counter) => {
   imageContainer.appendChild(descriptionDiv);
 
   const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
   deleteButton.className = "delete-button";
   deleteButton.textContent = "×";
+  deleteButton.setAttribute("aria-label", `刪除照片 ${counterElement.textContent}`);
+  deleteButton.title = "刪除這張照片";
   deleteButton.onclick = () => removeImage(imageData.id);
   imageContainer.appendChild(deleteButton);
 
@@ -353,24 +740,31 @@ const addImageToPreview = (imageData, counter) => {
   console.log("Image preview added:", imageData.name);
 };
 
-/**
- * 處理檢視模式切換
- */
 export const handleViewModeChange = (mode) => {
-  state.viewMode = mode;
+  const nextMode = ["grid", "list", "preview"].includes(mode) ? mode : "grid";
+  state.viewMode = nextMode;
   const preview = document.getElementById("imagePreview");
+  const documentPreview = document.getElementById("documentPreview");
   const gridViewBtn = document.getElementById("gridViewBtn");
   const listViewBtn = document.getElementById("listViewBtn");
+  const documentPreviewBtn = document.getElementById("documentPreviewBtn");
 
-  if (mode === "list") {
-    preview.classList.add("list-view");
-    gridViewBtn.classList.remove("active");
-    listViewBtn.classList.add("active");
-  } else {
-    preview.classList.remove("list-view");
-    gridViewBtn.classList.add("active");
-    listViewBtn.classList.remove("active");
-    // 切換回 grid 時重新套用滑桿大小
+  preview?.classList.toggle("list-view", nextMode === "list");
+  if (preview) preview.hidden = nextMode === "preview";
+  if (documentPreview) documentPreview.hidden = nextMode !== "preview";
+  document.body.classList.toggle("document-preview-mode", nextMode === "preview");
+
+  gridViewBtn?.classList.toggle("active", nextMode === "grid");
+  listViewBtn?.classList.toggle("active", nextMode === "list");
+  documentPreviewBtn?.classList.toggle("active", nextMode === "preview");
+  gridViewBtn?.setAttribute("aria-pressed", String(nextMode === "grid"));
+  listViewBtn?.setAttribute("aria-pressed", String(nextMode === "list"));
+  documentPreviewBtn?.setAttribute(
+    "aria-pressed",
+    String(nextMode === "preview"),
+  );
+
+  if (nextMode === "grid") {
     const slider = document.getElementById("photoSizeSlider");
     if (slider) {
       const imgs = preview.querySelectorAll(".image-container img");
@@ -380,20 +774,19 @@ export const handleViewModeChange = (mode) => {
       });
     }
   }
-  console.log("View mode changed to:", state.viewMode);
+  notifyProjectChanged();
+  console.log("View mode changed to:", nextMode);
 };
 
-/**
- * 處理圖片容器拖曳事件
- */
 export const handleImageContainerEvents = (e) => {
-  // 忽略來自 textarea 的拖曳事件
+  if (!e.target || !(e.target instanceof Element)) {
+    return;
+  }
   if (e.target.tagName === "TEXTAREA") return;
 
   const container = e.target.closest(".image-container");
   if (!container) return;
 
-  // 如果圖片處於編輯模式，不允許拖曳
   if (container.classList.contains("editing")) {
     e.preventDefault();
     return;
@@ -401,14 +794,29 @@ export const handleImageContainerEvents = (e) => {
 
   if (!e.dataTransfer) return;
 
+  const dragTypes = Array.from(e.dataTransfer.types || []);
+  const isInternalImageDrag = dragTypes.includes(INTERNAL_IMAGE_DRAG_TYPE);
+
+  // 只有純外部檔案拖入才交給匯入處理；內部排序識別碼具有優先權。
+  if (
+    e.type !== "dragstart" &&
+    dragTypes.includes("Files") &&
+    !isInternalImageDrag
+  ) {
+    return;
+  }
+
   switch (e.type) {
     case "dragstart":
-      // 如果任何圖片正在編輯中，阻止拖曳
       if (state.editingImageId) {
         e.preventDefault();
         return;
       }
-      e.dataTransfer.setData("text/plain", container.dataset.id);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData(
+        INTERNAL_IMAGE_DRAG_TYPE,
+        container.dataset.id,
+      );
       container.style.opacity = "0.5";
       break;
     case "dragover":
@@ -421,7 +829,8 @@ export const handleImageContainerEvents = (e) => {
       container.classList.remove("drag-over");
       if (e.type === "drop") {
         e.preventDefault();
-        const draggedId = e.dataTransfer.getData("text");
+        const draggedId = e.dataTransfer.getData(INTERNAL_IMAGE_DRAG_TYPE);
+        if (!draggedId) return;
         handleImageDrop(draggedId, container);
       }
       break;
@@ -431,17 +840,14 @@ export const handleImageContainerEvents = (e) => {
   }
 };
 
-/**
- * 處理圖片拖放
- */
 const handleImageDrop = (draggedId, dropZone) => {
   const draggedElement = document.querySelector(
-    `.image-container[data-id="${draggedId}"]`
+    `.image-container[data-id="${draggedId}"]`,
   );
   if (draggedElement && dropZone && draggedElement !== dropZone) {
     const preview = document.getElementById("imagePreview");
     const allContainers = Array.from(
-      preview.querySelectorAll(".image-container")
+      preview.querySelectorAll(".image-container"),
     );
     const draggedIndex = allContainers.indexOf(draggedElement);
     const dropIndex = allContainers.indexOf(dropZone);
@@ -456,12 +862,11 @@ const handleImageDrop = (draggedId, dropZone) => {
     }
 
     updateImageOrder();
+    updateSplitOrderWarning();
+    notifyProjectChanged();
   }
 };
 
-/**
- * 更新圖片順序
- */
 const updateImageOrder = () => {
   const preview = document.getElementById("imagePreview");
   const containers = Array.from(preview.querySelectorAll(".image-container"));
@@ -469,7 +874,7 @@ const updateImageOrder = () => {
   containers.forEach((container, index) => {
     const counter = container.querySelector(".image-counter");
     if (counter) {
-      counter.textContent = index + 1;
+      counter.textContent = getPhotoNumber(index);
     }
   });
 
@@ -477,55 +882,253 @@ const updateImageOrder = () => {
 
   console.log(
     "Image order updated. New order:",
-    state.selectedImages.map((img) => img.name)
+    state.selectedImages.map((img) => img.name),
   );
   console.log("Total images after reorder:", state.selectedImages.length);
 
   updateCreateButtonState();
+  updateExifDateWarnings();
 };
 
-/**
- * 更新編輯工具按鈕狀態
- */
+const isAutoExifEnabled = () =>
+  Boolean(document.getElementById("dateModeSwitch")?.checked);
+
+const isExifDateRelevant = () => state.selectedFormat !== "right";
+
+const getMissingExifDates = () =>
+  state.selectedImages
+    .map((image, index) => ({ image, number: getPhotoNumber(index) }))
+    .filter(
+      ({ image }) =>
+        !String(image.date || "").trim() &&
+        !String(state.imageDates[image.id] || "").trim(),
+    );
+
+export const updateExifDateWarnings = () => {
+  const shouldValidate = isAutoExifEnabled() && isExifDateRelevant();
+
+  if (!isExifDateRelevant()) closeExifWarningModal?.();
+
+  state.selectedImages.forEach((image) => {
+    const dateInput = document.querySelector(
+      `.image-container[data-id="${image.id}"] .image-date-input`,
+    );
+    if (!dateInput) return;
+
+    const isMissing =
+      shouldValidate &&
+      !String(image.date || "").trim() &&
+      !String(state.imageDates[image.id] || "").trim();
+
+    dateInput.classList.toggle("missing-exif-date", isMissing);
+    dateInput.placeholder = isMissing
+      ? MISSING_EXIF_DATE_PLACEHOLDER
+      : DEFAULT_DATE_PLACEHOLDER;
+    if (isMissing) {
+      dateInput.setAttribute("aria-invalid", "true");
+    } else {
+      dateInput.removeAttribute("aria-invalid");
+    }
+  });
+};
+
+let closeExifWarningModal = null;
+
+export const showMissingExifDateWarning = () => {
+  updateExifDateWarnings();
+  if (!isAutoExifEnabled() || !isExifDateRelevant()) return false;
+
+  const missingDates = getMissingExifDates();
+  if (!missingDates.length) return false;
+
+  const modal = document.getElementById("exifDateWarningModal");
+  const message = document.getElementById("exifDateWarningMessage");
+  const reviewButton = document.getElementById("exifDateReviewBtn");
+  const laterButton = document.getElementById("exifDateLaterBtn");
+  const closeButton = document.getElementById("exifDateWarningClose");
+  if (!modal || !message || !reviewButton || !laterButton || !closeButton) {
+    return false;
+  }
+
+  closeExifWarningModal?.();
+  message.textContent = `照片編號 ${missingDates
+    .map(({ number }) => number)
+    .join("、")} 沒有可用的拍攝日期，請手動填寫。`;
+
+  const handleKeydown = (event) => {
+    if (event.key === "Escape") closeExifWarningModal?.();
+  };
+
+  const close = () => {
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    document.removeEventListener("keydown", handleKeydown);
+    closeExifWarningModal = null;
+  };
+
+  closeExifWarningModal = close;
+  laterButton.onclick = close;
+  closeButton.onclick = close;
+  modal.onclick = (event) => {
+    if (event.target === modal) close();
+  };
+  reviewButton.onclick = () => {
+    const firstMissingId = missingDates[0].image.id;
+    close();
+    handleViewModeChange("list");
+    requestAnimationFrame(() => {
+      const firstInput = document.querySelector(
+        `.image-container[data-id="${firstMissingId}"] .image-date-input`,
+      );
+      firstInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstInput?.focus({ preventScroll: true });
+    });
+  };
+
+  document.addEventListener("keydown", handleKeydown);
+  modal.style.display = "flex";
+  modal.setAttribute("aria-hidden", "false");
+  reviewButton.focus();
+  return true;
+};
+
+export const confirmMissingDatesBeforeExport = () => {
+  if (!isExifDateRelevant() || !isAutoExifEnabled()) return true;
+
+  const sharedDate = String(
+    document.getElementById("caseDate")?.value || "",
+  ).trim();
+  const missingDates = getMissingOutputDateEntries(
+    state.selectedImages,
+    state.imageDates,
+    {
+      sharedDate,
+      useExifDate: true,
+      numberForIndex: getPhotoNumber,
+    },
+  );
+  if (!missingDates.length) return true;
+
+  const visibleNumbers = missingDates
+    .slice(0, 20)
+    .map(({ number }) => number)
+    .join("、");
+  const remainingCount = missingDates.length - 20;
+  const numberText = remainingCount > 0
+    ? `${visibleNumbers}，另有 ${remainingCount} 張`
+    : visibleNumbers;
+
+  return confirm(
+    `左側「攝影日期」尚未填寫，照片編號 ${numberText} 也沒有可用日期。輸出文件中的日期欄位將留白，仍要繼續輸出嗎？`,
+  );
+};
+
 const updateEditToolsState = (enabled) => {
   const rotateLeftBtn = document.getElementById("rotateLeftBtn");
   const rotateRightBtn = document.getElementById("rotateRightBtn");
-  const cancelEditBtn = document.getElementById("cancelEditBtn");
-  const editHint = document.getElementById("editHint");
+  const splitImageBtn = document.getElementById("splitImageBtn");
 
   if (rotateLeftBtn) rotateLeftBtn.disabled = !enabled;
   if (rotateRightBtn) rotateRightBtn.disabled = !enabled;
-  if (cancelEditBtn) cancelEditBtn.disabled = !enabled;
-
-  if (editHint) {
-    editHint.textContent = enabled
-      ? "照片編輯中，無法拖曳排序"
-      : "點擊照片以進入編輯模式";
-    editHint.classList.toggle("editing-active", enabled);
-  }
+  if (splitImageBtn) splitImageBtn.disabled = !enabled;
 };
 
-/**
- * 移除圖片
- */
-export const removeImage = (id) => {
+const showDeleteConfirmDialog = (imageData) => {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "delete-confirm-overlay";
+
+    const dialog = document.createElement("div");
+    dialog.className = "delete-confirm-dialog";
+
+    const message = imageData?.splitGroupId
+      ? "確定要刪除此長截圖分段嗎？刪除後會將剩餘分段重新編號，並視為完整群組。"
+      : "確定要刪除這張照片嗎？";
+
+    dialog.innerHTML = `
+      <div class="delete-confirm-icon">
+        <span class="material-symbols-outlined">warning</span>
+      </div>
+      <div class="delete-confirm-title">確認刪除</div>
+      <div class="delete-confirm-message">${message}</div>
+      <div class="delete-confirm-buttons">
+        <button type="button" class="delete-confirm-btn cancel">取消</button>
+        <button type="button" class="delete-confirm-btn confirm">刪除</button>
+      </div>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+      overlay.classList.add("show");
+    });
+
+    const closeDialog = (result) => {
+      document.removeEventListener("keydown", handleKeydown);
+      overlay.classList.remove("show");
+      setTimeout(() => {
+        overlay.remove();
+        resolve(result);
+      }, 200);
+    };
+
+    dialog
+      .querySelector(".cancel")
+      .addEventListener("click", () => closeDialog(false));
+    dialog
+      .querySelector(".confirm")
+      .addEventListener("click", () => closeDialog(true));
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeDialog(false);
+    });
+
+    const handleKeydown = (e) => {
+      if (e.key === "Escape") {
+        document.removeEventListener("keydown", handleKeydown);
+        closeDialog(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeydown);
+  });
+};
+
+export const removeImage = async (id) => {
   console.log("Removing image with id:", id);
 
-  // 如果正在編輯的圖片被刪除，取消編輯模式
+  const imageData = state.selectedImages.find((img) => img.id === id);
+
+  const confirmed = await showDeleteConfirmDialog(imageData);
+  if (!confirmed) {
+    console.log("Delete cancelled by user");
+    return;
+  }
+
   if (state.editingImageId === id) {
     state.editingImageId = null;
     updateEditToolsState(false);
   }
 
   state.selectedImages = state.selectedImages.filter((img) => img.id !== id);
+  if (imageData?.splitGroupId) {
+    acceptCurrentSplitGroupForImages(
+      state.selectedImages,
+      imageData.splitGroupId,
+    );
+  }
   delete state.imageDescriptions[id];
   delete state.imageDates[id];
   delete state.imageAddresses[id];
   delete state.imageAccidentTags[id];
   delete state.imageRotations[id];
 
+  if (imageData?.previewUrl) {
+    revokeObjectUrl(imageData.previewUrl);
+  }
+
   const imageElement = document.querySelector(
-    `.image-container[data-id="${id}"]`
+    `.image-container[data-id="${id}"]`,
   );
   if (imageElement) {
     imageElement.remove();
@@ -535,15 +1138,13 @@ export const removeImage = (id) => {
   updateCreateButtonState();
   console.log("Image removed. Remaining images:", state.selectedImages.length);
 
-  // 檢查是否沒有圖片，顯示空狀態
   if (state.selectedImages.length === 0) {
     showEmptyState();
   }
+  notifyProjectChanged();
+  updateSplitOrderWarning();
 };
 
-/**
- * 顯示空狀態提示
- */
 const showEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
   const emptyStateDiv = document.createElement("div");
@@ -553,24 +1154,26 @@ const showEmptyState = () => {
   console.log("No images left, displaying empty state.");
 };
 
-/**
- * 更新圖片計數器
- */
 const updateImageCounters = () => {
   const containers = document.querySelectorAll(".image-container");
   containers.forEach((container, index) => {
     const counter = container.querySelector(".image-counter");
     if (counter) {
-      counter.textContent = index + 1;
+      counter.textContent = getPhotoNumber(index);
     }
   });
   state.imageCounter = containers.length;
   console.log("Image counters updated. New count:", state.imageCounter);
 };
 
-/**
- * 更新建立按鈕狀態
- */
+export const refreshDisplayedPhotoNumbers = () => {
+  const containers = document.querySelectorAll("#imagePreview .image-container");
+  containers.forEach((container, index) => {
+    const counter = container.querySelector(".image-counter");
+    if (counter) counter.textContent = String(getPhotoNumber(index));
+  });
+};
+
 export const updateCreateButtonState = () => {
   const createButton = document.getElementById("generate");
   if (!createButton) {
@@ -578,30 +1181,49 @@ export const updateCreateButtonState = () => {
     return;
   }
   const isEnabled = state.selectedImages.length > 0;
+  const isMultiPhoto = state.selectedFormat === "right";
 
-  createButton.classList.toggle("create-btn-disabled", !isEnabled);
-  createButton.classList.toggle("create-btn-enabled", isEnabled);
+  createButton.classList.remove("create-btn-disabled");
+  createButton.classList.add("create-btn-enabled");
+  [
+    "downloadDocx",
+    "downloadPdf",
+    "downloadZip",
+    "exportProjectBtn",
+  ].forEach((buttonId) => {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      button.disabled =
+        !isEnabled || (buttonId === "downloadDocx" && isMultiPhoto);
+    }
+  });
 
-  console.log("Create button state updated. Enabled:", isEnabled);
+  const docxButton = document.getElementById("downloadDocx");
+  const docxNotice = document.getElementById("multiPhotoDocxNotice");
+  if (docxButton) {
+    docxButton.title = isMultiPhoto
+      ? "多格照片檔案限定列印/PDF"
+      : "輸出 Word 文件";
+    docxButton.setAttribute("aria-describedby", "multiPhotoDocxNotice");
+  }
+  if (docxNotice) docxNotice.hidden = !isMultiPhoto;
+  updatePhotoNumberingWarning();
+
+  console.log("Document download options enabled:", isEnabled);
   console.log("Selected images count:", state.selectedImages.length);
 };
 
-/**
- * 設定編輯中的圖片
- */
 export const setEditingImage = (imageId) => {
-  // 移除之前編輯中的狀態
   const previousEditing = document.querySelector(".image-container.editing");
   if (previousEditing) {
     previousEditing.classList.remove("editing");
     previousEditing.draggable = true;
   }
 
-  // 設定新的編輯狀態
   if (imageId) {
     state.editingImageId = imageId;
     const container = document.querySelector(
-      `.image-container[data-id="${imageId}"]`
+      `.image-container[data-id="${imageId}"]`,
     );
     if (container) {
       container.classList.add("editing");
@@ -614,53 +1236,40 @@ export const setEditingImage = (imageId) => {
   }
 };
 
-/**
- * 取消編輯模式
- */
 export const cancelEditing = () => {
   setEditingImage(null);
 };
 
-/**
- * 旋轉圖片
- * @param {number} degrees - 旋轉角度 (90 或 -90)
- */
 export const rotateImage = async (degrees) => {
   if (!state.editingImageId) return;
 
   const imageData = state.selectedImages.find(
-    (img) => img.id === state.editingImageId
+    (img) => img.id === state.editingImageId,
   );
   if (!imageData) return;
 
-  // 取得目前旋轉角度
   const currentRotation = state.imageRotations[state.editingImageId] || 0;
   const newRotation = (currentRotation + degrees + 360) % 360;
   state.imageRotations[state.editingImageId] = newRotation;
 
-  // 建立旋轉後的圖片
-  const rotatedData = await rotateImageData(imageData.data, degrees);
+  const rotatedData = await rotateImageData(imageData.blob, degrees);
 
-  // 更新圖片資料
-  imageData.data = rotatedData.data;
-  imageData.thumbnail = rotatedData.thumbnail;
+  imageData.blob = rotatedData.blob;
+  imageData.width = rotatedData.width;
+  imageData.height = rotatedData.height;
 
-  // 交換寬高（90度旋轉後寬高互換）
-  const tempWidth = imageData.width;
-  imageData.width = imageData.height;
-  imageData.height = tempWidth;
+  if (imageData.previewUrl) {
+    revokeObjectUrl(imageData.previewUrl);
+  }
+  imageData.previewUrl = rotatedData.previewUrl;
 
-  // 更新 DOM
   const container = document.querySelector(
-    `.image-container[data-id="${state.editingImageId}"]`
+    `.image-container[data-id="${state.editingImageId}"]`,
   );
   if (container) {
     const img = container.querySelector("img");
     if (img) {
-      // 使用完整數據而非縮圖，以支持無限放大
-      img.src = rotatedData.data;
-
-      // 確保旋轉後的圖片保持滑桿設定的大小
+      img.src = rotatedData.previewUrl;
       const slider = document.getElementById("photoSizeSlider");
       if (slider) {
         img.style.maxWidth = slider.value + "px";
@@ -670,69 +1279,129 @@ export const rotateImage = async (degrees) => {
   }
 
   console.log(
-    `Image rotated by ${degrees} degrees. New rotation: ${newRotation}`
+    `Image rotated by ${degrees} degrees. New rotation: ${newRotation}`,
   );
+  notifyProjectChanged();
 };
 
-/**
- * 旋轉圖片資料
- * @param {string} dataUrl - 圖片的 data URL
- * @param {number} degrees - 旋轉角度
- * @returns {Promise<{data: string, thumbnail: string}>} - 旋轉後的圖片資料
- */
-const rotateImageData = (dataUrl, degrees) => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      // 建立 canvas 進行旋轉
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+export const replaceImageCollection = async (records) => {
+  const hydratedRecords = [];
 
-      // 90度或270度時需要交換寬高
-      if (Math.abs(degrees) === 90 || Math.abs(degrees) === 270) {
-        canvas.width = img.height;
-        canvas.height = img.width;
-      } else {
-        canvas.width = img.width;
-        canvas.height = img.height;
+  try {
+    for (const record of records) {
+      if (!(record.blob instanceof Blob)) {
+        throw new Error("專案包含無效的圖片資料");
       }
 
-      // 移動到中心點進行旋轉
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((degrees * Math.PI) / 180);
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      const sourceUrl = createObjectUrl(record.blob);
+      try {
+        const { width, height } = await getImageDimensions(sourceUrl);
+        if (
+          !width ||
+          !height ||
+          width > IMAGE_SECURITY_LIMITS.maxDimension ||
+          height > IMAGE_SECURITY_LIMITS.maxDimension ||
+          width * height > IMAGE_SECURITY_LIMITS.maxPixels
+        ) {
+          throw new Error("專案圖片尺寸超過安全限制");
+        }
 
-      // 取得旋轉後的資料
-      const rotatedDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        const previewUrl = await createThumbnail(sourceUrl);
+        hydratedRecords.push({
+          ...record,
+          width,
+          height,
+          size: record.blob.size,
+          previewUrl,
+        });
+      } finally {
+        revokeObjectUrl(sourceUrl);
+      }
+    }
+  } catch (error) {
+    hydratedRecords.forEach((record) => revokeObjectUrl(record.previewUrl));
+    throw error;
+  }
 
-      // 建立縮圖
-      const thumbCanvas = document.createElement("canvas");
-      const thumbCtx = thumbCanvas.getContext("2d");
-      const maxThumbSize = 400;
-      const scale = Math.min(
-        maxThumbSize / canvas.width,
-        maxThumbSize / canvas.height,
-        1
-      );
-      thumbCanvas.width = canvas.width * scale;
-      thumbCanvas.height = canvas.height * scale;
-      thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
-      const thumbnailUrl = thumbCanvas.toDataURL("image/jpeg", 0.8);
+  state.selectedImages.forEach((record) => revokeObjectUrl(record.previewUrl));
+  state.selectedImages = hydratedRecords;
+  state.editingImageId = null;
+  state.imageDescriptions = {};
+  state.imageDates = {};
+  state.imageAddresses = {};
+  state.imageAccidentTags = {};
+  state.imageRotations = {};
 
-      resolve({
-        data: rotatedDataUrl,
-        thumbnail: thumbnailUrl,
-      });
-    };
-    img.src = dataUrl;
+  hydratedRecords.forEach((record) => {
+    state.imageDescriptions[record.id] = record.description || "";
+    state.imageDates[record.id] = record.customDate || "";
+    state.imageAddresses[record.id] = record.address || "";
+    state.imageAccidentTags[record.id] = record.accidentTags || {};
+    state.imageRotations[record.id] = record.rotation || 0;
   });
+
+  const preview = document.getElementById("imagePreview");
+  preview.replaceChildren();
+  hydratedRecords.forEach((record, index) => addImageToPreview(record, index + 1));
+  state.imageCounter = hydratedRecords.length;
+  updateEditToolsState(false);
+  updateCreateButtonState();
+
+  if (!hydratedRecords.length) {
+    showEmptyState();
+  }
+  updateSplitOrderWarning();
 };
 
-/**
- * 處理圖片點擊事件（進入編輯模式）
- */
+const rotateImageData = async (blob, degrees) => {
+  const objectUrl = createObjectUrl(blob);
+
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = objectUrl;
+    });
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (Math.abs(degrees) === 90 || Math.abs(degrees) === 270) {
+      canvas.width = img.height;
+      canvas.height = img.width;
+    } else {
+      canvas.width = img.width;
+      canvas.height = img.height;
+    }
+
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((degrees * Math.PI) / 180);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+    const rotatedBlob = await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (result) =>
+          result ? resolve(result) : reject(new Error("圖片旋轉失敗")),
+        "image/jpeg",
+        0.9,
+      );
+    });
+
+    const previewUrl = await createThumbnail(rotatedBlob, 800, 800, 0.8);
+
+    return {
+      blob: rotatedBlob,
+      previewUrl,
+      width: canvas.width,
+      height: canvas.height,
+    };
+  } finally {
+    revokeObjectUrl(objectUrl);
+  }
+};
+
 export const handleImageClick = (e) => {
-  // 忽略來自按鈕、輸入框的點擊
   if (
     e.target.tagName === "BUTTON" ||
     e.target.tagName === "INPUT" ||
@@ -748,7 +1417,6 @@ export const handleImageClick = (e) => {
 
   const imageId = parseFloat(container.dataset.id);
 
-  // 如果點擊的是已經在編輯的圖片，則取消編輯
   if (state.editingImageId === imageId) {
     cancelEditing();
   } else {

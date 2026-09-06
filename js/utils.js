@@ -1,4 +1,4 @@
-// utils.js - 工具函數模組
+﻿// utils.js - 工具函數模組
 
 // ============ Toast 通知函數 ============
 
@@ -13,29 +13,34 @@ export const showToast = (message, type = "info", duration = 3000) => {
   if (!container) return;
 
   const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-
-  // 添加圖標
   const iconMap = {
     success: "check_circle",
     error: "error",
     warning: "warning",
     info: "info",
   };
+  const toastType = Object.prototype.hasOwnProperty.call(iconMap, type)
+    ? type
+    : "info";
 
-  toast.innerHTML = `
-    <span class="material-symbols-outlined">${iconMap[type] || "info"}</span>
-    <span>${message}</span>
-  `;
+  toast.className = `toast ${toastType}`;
+
+  const icon = document.createElement("span");
+  icon.className = "material-symbols-outlined";
+  icon.textContent = iconMap[toastType];
+
+  const text = document.createElement("span");
+  text.textContent = String(message ?? "");
+
+  toast.appendChild(icon);
+  toast.appendChild(text);
 
   container.appendChild(toast);
 
-  // 觸發顯示動畫
   setTimeout(() => {
     toast.classList.add("show");
   }, 10);
 
-  // 自動移除
   setTimeout(() => {
     toast.classList.remove("show");
     setTimeout(() => {
@@ -52,91 +57,148 @@ export const showToast = (message, type = "info", duration = 3000) => {
  * 空狀態提示 HTML（首頁說明文字）
  */
 export const EMPTY_STATE_HTML = `
-    <h3 class="disclaimer-primary" style="color: #e81a1aff;">免責聲明</h3>
-    <p >本網頁為個人開發之輔助工具，僅供參考使用<br>
-                                  使用者應自行負責文件中所有資料的正確性<br>
-                                  開發者對此不擔保任何法律責任</p>
-    <h3 class="disclaimer-primary">【 <span style="color: #ff9800;">Auto-fill EXIF</span> 】</h3>
-    <p >本功能為自動讀取照片檔案內 EXIF 拍攝日期資訊</br>
-                                  使用者仍需自行確認文件內所有資訊之正確性</br>
-                                  提醒：請注意照片來源，非所有照片都附帶拍攝日期資訊!</p>   
-    <h3 class="disclaimer-primary">🚀 快速開始</h3>
-   <p >選擇文件類型「刑事案件」「交通事故」「交通違規」<br>
-       點擊左欄下方 " + " 按鈕開始新增照片<br>
-       切換至 「列表版面」可輸入照片說明文字<br>
-        點擊下載文件按鈕即可下載DOCX、PDF文件<br>
-       提醒：Word 2010或更舊版本不支援本網頁生成之DOCX文件</p>
-    <p style="font-size: 0.85em; color: #888;">💡 可拖曳照片調整順序 ｜ 可點選照片進行旋轉編輯 ｜支援部分 HEIC 格式自動轉換</p>
+    <div class="empty-state-minimal">
+      <span class="empty-state-icon" aria-hidden="true">
+        <svg class="empty-state-glyph" viewBox="0 0 24 24" focusable="false">
+          <rect x="3.5" y="6.5" width="17" height="13" rx="2"></rect>
+          <circle cx="9" cy="11" r="1.5"></circle>
+          <path d="m5.5 17 4-4 2.75 2.75 2.25-2.25 4 3.5"></path>
+          <path d="M17.5 2.5v5M15 5h5"></path>
+        </svg>
+      </span>
+      <h2>開始整理照片</h2>
+      <p>拖曳照片到這裡，或使用工作區左上角的「＋」從裝置、專案檔與 Google 相簿匯入。</p>
+      <small>支援 JPG、PNG、WebP、HEIC 等常見格式</small>
+    </div>
 `;
 
 // ============ 圖片處理函數 ============
 
-/**
- * 建立縮圖
- */
-export const createThumbnail = (dataUrl, maxWidth = 800, maxHeight = 800) => {
+const loadImageFromSource = (src) => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => {
-      const { width, height } = img;
-      let newWidth = width;
-      let newHeight = height;
-
-      if (width > height) {
-        if (width > maxWidth) {
-          newHeight = height * (maxWidth / width);
-          newWidth = maxWidth;
-        }
-      } else {
-        if (height > maxHeight) {
-          newWidth = width * (maxHeight / height);
-          newHeight = maxHeight;
-        }
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = newWidth;
-      canvas.height = newHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, newWidth, newHeight);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
-    };
+    img.onload = () => resolve(img);
     img.onerror = reject;
-    img.src = dataUrl;
+    img.src = src;
   });
+};
+
+const getScaledDimensions = (width, height, maxWidth, maxHeight) => {
+  let newWidth = width;
+  let newHeight = height;
+
+  if (width > height) {
+    if (width > maxWidth) {
+      newHeight = height * (maxWidth / width);
+      newWidth = maxWidth;
+    }
+  } else if (height > maxHeight) {
+    newWidth = width * (maxHeight / height);
+    newHeight = maxHeight;
+  }
+
+  return {
+    width: Math.round(newWidth),
+    height: Math.round(newHeight),
+  };
+};
+
+export const blobToDataUrl = (blob) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+export const blobToArrayBuffer = async (blob) => {
+  return await blob.arrayBuffer();
+};
+
+export const createObjectUrl = (blob) => URL.createObjectURL(blob);
+
+export const revokeObjectUrl = (url) => {
+  if (url && url.startsWith("blob:")) {
+    URL.revokeObjectURL(url);
+  }
+};
+
+/**
+ * 建立縮圖，回傳可直接預覽的 blob URL
+ */
+export const createThumbnail = async (
+  source,
+  maxWidth = 800,
+  maxHeight = 800,
+  quality = 0.8,
+) => {
+  const objectUrl =
+    typeof source === "string" ? source : createObjectUrl(source);
+
+  try {
+    const img = await loadImageFromSource(objectUrl);
+    const { width, height } = getScaledDimensions(
+      img.width,
+      img.height,
+      maxWidth,
+      maxHeight,
+    );
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const thumbnailBlob = await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error("縮圖建立失敗"))),
+        "image/jpeg",
+        quality,
+      );
+    });
+
+    return createObjectUrl(thumbnailBlob);
+  } finally {
+    if (typeof source !== "string") {
+      revokeObjectUrl(objectUrl);
+    }
+  }
 };
 
 /**
  * 調整圖片大小（用於文件生成）
  */
-export const resizeImageForDoc = (dataUrl, maxDimension = 1200) => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const { width, height } = img;
-      let newWidth = width;
-      let newHeight = height;
+export const resizeImageForDoc = async (blob, maxDimension = 1200) => {
+  const objectUrl = createObjectUrl(blob);
 
-      if (width > maxDimension || height > maxDimension) {
-        if (width > height) {
-          newWidth = maxDimension;
-          newHeight = height * (maxDimension / width);
-        } else {
-          newHeight = maxDimension;
-          newWidth = width * (maxDimension / height);
-        }
-      }
+  try {
+    const img = await loadImageFromSource(objectUrl);
+    const { width, height } = getScaledDimensions(
+      img.width,
+      img.height,
+      maxDimension,
+      maxDimension,
+    );
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, width, height);
 
-      const canvas = document.createElement("canvas");
-      canvas.width = newWidth;
-      canvas.height = newHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, newWidth, newHeight);
-      resolve(canvas.toDataURL("image/jpeg", 0.9));
-    };
-    img.onerror = reject;
-    img.src = dataUrl;
-  });
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (resizedBlob) =>
+          resizedBlob
+            ? resolve(resizedBlob)
+            : reject(new Error("文件圖片縮放失敗")),
+        "image/jpeg",
+        0.9,
+      );
+    });
+  } finally {
+    revokeObjectUrl(objectUrl);
+  }
 };
 
 /**
@@ -147,7 +209,6 @@ export const resizeImageForDoc = (dataUrl, maxDimension = 1200) => {
 export const formatExifDate = (exifDate) => {
   if (!exifDate) return "";
 
-  // 如果是 Date 物件（來自 exifr），直接處理
   if (exifDate instanceof Date) {
     const year = exifDate.getFullYear() - 1911;
     const m = String(exifDate.getMonth() + 1).padStart(2, "0");
@@ -157,7 +218,6 @@ export const formatExifDate = (exifDate) => {
     return `${year}/${m}/${d} ${hh}:${mm}`;
   }
 
-  // 如果是字串（來自 EXIF.js），使用原來的邏輯
   if (typeof exifDate !== "string") return "";
 
   const [datePart, timePart] = exifDate.split(" ");
@@ -187,18 +247,24 @@ export const getFormattedDate = () => {
 // ============ Modal 控制函數 ============
 
 let uploadingModalShowTime = 0;
+let uploadingModalHideTimer = null;
 
 export const showUploadingModal = () => {
+  if (uploadingModalHideTimer !== null) {
+    clearTimeout(uploadingModalHideTimer);
+    uploadingModalHideTimer = null;
+  }
   document.getElementById("uploadingModal").style.display = "block";
   uploadingModalShowTime = Date.now();
 };
 
 export const hideUploadingModal = () => {
   const elapsed = Date.now() - uploadingModalShowTime;
-  const minDuration = 500; // 至少顯示 0.5 秒
+  const minDuration = 500;
   if (elapsed < minDuration) {
-    setTimeout(() => {
+    uploadingModalHideTimer = setTimeout(() => {
       document.getElementById("uploadingModal").style.display = "none";
+      uploadingModalHideTimer = null;
     }, minDuration - elapsed);
   } else {
     document.getElementById("uploadingModal").style.display = "none";
@@ -220,5 +286,3 @@ export const showConversionModal = () => {
 export const hideConversionModal = () => {
   document.getElementById("conversionModal").style.display = "none";
 };
-
-
