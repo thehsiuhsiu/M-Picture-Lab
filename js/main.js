@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261020-4";
+import { state } from "./state.js?v=20261021-1";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -15,28 +15,29 @@ import {
   confirmMissingDatesBeforeExport,
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
-} from "./imageHandler.js?v=20261020-4";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261020-4";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261020-4";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261020-4";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261020-4";
+  getLastPhotoViewMode,
+} from "./imageHandler.js?v=20261021-1";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261021-1";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261021-1";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261021-1";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261021-1";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261020-4";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261020-4";
-import { initDocumentPreview } from "./documentPreview.js?v=20261020-4";
+} from "./projectPersistence.js?v=20261021-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261021-1";
+import { initDocumentPreview } from "./documentPreview.js?v=20261021-1";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261020-4";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-4";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261020-4";
+} from "./photoNumbering.js?v=20261021-1";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261021-1";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261021-1";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261020-4";
+} from "./splitOrderManager.js?v=20261021-1";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -214,6 +215,7 @@ const updateToggleState = (value) => {
   document.body.classList.add(`format-${value}`);
 
   updateSidebarFields(value);
+  updateCaseCardSummary();
   updateCreateButtonState();
   updateExifDateWarnings();
   notifyProjectChanged();
@@ -464,10 +466,14 @@ const applyProjectSnapshot = async (project) => {
     photoSizeSlider.value = String(project.settings.photoSize);
     photoSizeSlider.dispatchEvent(new Event("input"));
   }
+
+  setCaseCardCollapsed(hasCaseData());
 };
 
 const updateSidebarFields = (format) => {
-  const allFields = document.querySelectorAll(".sidebar [data-format]");
+  const allFields = document.querySelectorAll(
+    "#caseCard [data-format], #layoutSettings [data-format]",
+  );
 
   allFields.forEach((field) => {
     const formats = field.getAttribute("data-format").split(" ");
@@ -676,14 +682,16 @@ const init = () => {
 
   const gridViewBtn = document.getElementById("gridViewBtn");
   const listViewBtn = document.getElementById("listViewBtn");
+  const photoViewBtn = document.getElementById("photoViewBtn");
   const documentPreviewBtn = document.getElementById("documentPreviewBtn");
-  if (gridViewBtn && listViewBtn && documentPreviewBtn) {
-    gridViewBtn.addEventListener("click", () => handleViewModeChange("grid"));
-    listViewBtn.addEventListener("click", () => handleViewModeChange("list"));
-    documentPreviewBtn.addEventListener("click", () =>
-      handleViewModeChange("preview"),
-    );
-  }
+  gridViewBtn?.addEventListener("click", () => handleViewModeChange("grid"));
+  listViewBtn?.addEventListener("click", () => handleViewModeChange("list"));
+  photoViewBtn?.addEventListener("click", () =>
+    handleViewModeChange(getLastPhotoViewMode()),
+  );
+  documentPreviewBtn?.addEventListener("click", () =>
+    handleViewModeChange("preview"),
+  );
 
   console.log("圖片管理腳本初始化完成");
 };
@@ -1181,75 +1189,63 @@ const safeStorage = {
   },
 };
 
-/** 右側「文件資料」面板：寬螢幕固定在右側，較窄時改為滑出面板。 */
-const setupResponsiveSidebar = () => {
-  const openButton = document.getElementById("mobileSettingsBtn");
-  const closeButton = document.getElementById("mobileSettingsCloseBtn");
-  const sidebar = document.getElementById("projectSettings");
-  const backdrop = document.getElementById("sidebarBackdrop");
-  if (!openButton || !closeButton || !sidebar || !backdrop) return;
+/** 案件資料卡片：新專案展開；已填過資料的專案預設收合，只顯示一行摘要。 */
+const CASE_SUMMARY_FIELDS = ["zipPrefix", "caseUni", "caseDate", "caseNumber", "caseAddress"];
 
-  const overlayViewport = window.matchMedia("(max-width: 1199px)");
-  const preferenceKey = "mpictureDocPanelCollapsed";
-  if (safeStorage.get(preferenceKey) === "1") {
-    document.body.classList.add("settings-collapsed");
-  }
+const isFieldVisible = (element) => {
+  const field = element?.closest("[data-format]");
+  return Boolean(field) && field.style.display !== "none";
+};
 
-  const updateToggleState = () => {
-    const isExpanded = overlayViewport.matches
-      ? document.body.classList.contains("settings-open")
-      : !document.body.classList.contains("settings-collapsed");
-    openButton.setAttribute("aria-expanded", String(isExpanded));
-    openButton.setAttribute(
-      "aria-label",
-      `${isExpanded ? "隱藏" : "顯示"}文件資料`,
-    );
-    sidebar.inert = !isExpanded;
-  };
+const getCaseSummaryParts = () =>
+  CASE_SUMMARY_FIELDS.map((id) => document.getElementById(id))
+    .filter((input) => input && isFieldVisible(input))
+    .map((input) => input.value.trim())
+    .filter(Boolean);
 
-  const setOpen = (isOpen, { restoreFocus = false } = {}) => {
-    document.body.classList.toggle("settings-open", isOpen);
-    backdrop.setAttribute("aria-hidden", String(!isOpen));
-    if (isOpen) closeButton.focus();
-    if (!isOpen && restoreFocus) openButton.focus();
-    updateToggleState();
-  };
-
-  openButton.addEventListener("click", () => {
-    if (overlayViewport.matches) {
-      setOpen(!document.body.classList.contains("settings-open"));
-      return;
-    }
-    const collapsed = document.body.classList.toggle("settings-collapsed");
-    safeStorage.set(preferenceKey, collapsed ? "1" : "0");
-    updateToggleState();
-  });
-  closeButton.addEventListener("click", () => {
-    if (overlayViewport.matches) {
-      setOpen(false, { restoreFocus: true });
-      return;
-    }
-    document.body.classList.add("settings-collapsed");
-    safeStorage.set(preferenceKey, "1");
-    updateToggleState();
-    openButton.focus();
-  });
-  backdrop.addEventListener("click", () =>
-    setOpen(false, { restoreFocus: true }),
+const hasCaseData = () =>
+  ["zipPrefix", "caseUni", "caseDate", "caseAddress", "caseNumber"].some(
+    (id) => document.getElementById(id)?.value.trim(),
   );
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.body.classList.contains("settings-open")) {
-      setOpen(false, { restoreFocus: true });
+
+const updateCaseCardSummary = () => {
+  const summary = document.getElementById("caseCardSummary");
+  if (!summary) return;
+  const parts = getCaseSummaryParts();
+  summary.textContent = parts.length ? parts.join("｜") : "尚未填寫";
+  summary.classList.toggle("is-empty", parts.length === 0);
+};
+
+const setCaseCardCollapsed = (collapsed) => {
+  const card = document.getElementById("caseCard");
+  const toggle = document.getElementById("caseCardToggle");
+  const body = document.getElementById("caseCardBody");
+  if (!card || !toggle || !body) return;
+  card.classList.toggle("is-collapsed", collapsed);
+  body.hidden = collapsed;
+  toggle.setAttribute("aria-expanded", String(!collapsed));
+  const text = toggle.querySelector(".case-card-toggle-text");
+  const icon = toggle.querySelector(".material-symbols-outlined");
+  if (text) text.textContent = collapsed ? "編輯" : "收合";
+  if (icon) icon.textContent = collapsed ? "expand_more" : "expand_less";
+  document.getElementById("caseCardSummary")?.setAttribute("aria-hidden", String(!collapsed));
+  updateCaseCardSummary();
+};
+
+const setupCaseCard = () => {
+  const card = document.getElementById("caseCard");
+  const toggle = document.getElementById("caseCardToggle");
+  if (!card || !toggle) return;
+  toggle.addEventListener("click", () => {
+    const willCollapse = !card.classList.contains("is-collapsed");
+    setCaseCardCollapsed(willCollapse);
+    if (!willCollapse) {
+      const firstInput = [...card.querySelectorAll(".sidebar-input")].find(isFieldVisible);
+      firstInput?.focus();
     }
   });
-
-  overlayViewport.addEventListener("change", () => {
-    document.body.classList.remove("settings-open");
-    backdrop.setAttribute("aria-hidden", "true");
-    updateToggleState();
-  });
-
-  updateToggleState();
+  card.addEventListener("input", updateCaseCardSummary);
+  setCaseCardCollapsed(false);
 };
 
 /** 左側專案欄：桌機可收合成細欄，手機改為從左側滑出。 */
@@ -1359,7 +1355,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupPdfFontPreview();
   setupBeforeUnload();
   setupInfoModals();
-  setupResponsiveSidebar();
+  setupCaseCard();
   setupNavSidebar();
   setupConsentGate(() => {
     initProjectPersistence({ applyProject: applyProjectSnapshot });

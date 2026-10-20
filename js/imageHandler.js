@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-4";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261021-1";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,18 +14,18 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261020-4";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261020-4";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261020-4";
+} from "./utils.js?v=20261021-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261021-1";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261021-1";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261020-4";
+} from "./photoNumbering.js?v=20261021-1";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261020-4";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261020-4";
+} from "./splitGroupLogic.js?v=20261021-1";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261021-1";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -48,7 +48,7 @@ const SAFE_IMAGE_MIME_TYPES = new Set([
 export const INTERNAL_IMAGE_DRAG_TYPE =
   "application/x-mpicture-image-id";
 
-const DEFAULT_DATE_PLACEHOLDER = "拍攝日期（留空時使用文件資料）";
+const DEFAULT_DATE_PLACEHOLDER = "拍攝日期（留空時使用案件資料）";
 const MISSING_EXIF_DATE_PLACEHOLDER = "未找到 EXIF 日期，請手動輸入";
 
 const detectSafeImageType = async (blob) => {
@@ -645,7 +645,7 @@ const addImageToPreview = (imageData, counter) => {
   addressInput.type = "text";
   addressInput.className = "image-address-input";
   addressInput.maxLength = 500;
-  addressInput.placeholder = "攝影地址（留空時使用文件資料）";
+  addressInput.placeholder = "攝影地址（留空時使用案件資料）";
   addressInput.value = state.imageAddresses[imageData.id] || "";
   addressInput.addEventListener("input", (e) => {
     state.imageAddresses[imageData.id] = e.target.value;
@@ -748,18 +748,28 @@ const addImageToPreview = (imageData, counter) => {
   console.log("Image preview added:", imageData.name);
 };
 
+/** 「照片」與「版面預覽」來回切換時，回到上次使用的照片顯示方式。 */
+let lastPhotoViewMode = "grid";
+export const getLastPhotoViewMode = () => lastPhotoViewMode;
+
 export const handleViewModeChange = (mode) => {
   const nextMode = ["grid", "list", "preview"].includes(mode) ? mode : "grid";
   state.viewMode = nextMode;
+  if (nextMode !== "preview") lastPhotoViewMode = nextMode;
   const preview = document.getElementById("imagePreview");
   const documentPreview = document.getElementById("documentPreview");
+  const previewWorkspace = document.getElementById("previewWorkspace");
   const gridViewBtn = document.getElementById("gridViewBtn");
   const listViewBtn = document.getElementById("listViewBtn");
+  const photoViewBtn = document.getElementById("photoViewBtn");
   const documentPreviewBtn = document.getElementById("documentPreviewBtn");
 
   preview?.classList.toggle("list-view", nextMode === "list");
   if (preview) preview.hidden = nextMode === "preview";
   if (documentPreview) documentPreview.hidden = nextMode !== "preview";
+  if (previewWorkspace) previewWorkspace.hidden = nextMode !== "preview";
+  photoViewBtn?.classList.toggle("active", nextMode !== "preview");
+  photoViewBtn?.setAttribute("aria-pressed", String(nextMode !== "preview"));
   document.body.classList.toggle("document-preview-mode", nextMode === "preview");
 
   gridViewBtn?.classList.toggle("active", nextMode === "grid");
@@ -1021,7 +1031,7 @@ export const confirmMissingDatesBeforeExport = async () => {
 
   return showDialog({
     title: "部分照片沒有日期",
-    message: `「文件資料」的攝影日期尚未填寫，照片 ${numberText} 也找不到拍攝日期。這些照片在文件中的日期欄會是空白。`,
+    message: `「案件資料」的攝影日期尚未填寫，照片 ${numberText} 也找不到拍攝日期。這些照片在文件中的日期欄會是空白。`,
     tone: "warning",
     confirmText: "仍要輸出",
     cancelText: "返回填寫",

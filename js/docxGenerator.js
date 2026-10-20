@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-4";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261021-1";
 import {
   resizeImageForDoc,
   getFormattedDate,
@@ -8,12 +8,12 @@ import {
   hideLoadingModal,
   blobToArrayBuffer,
   showToast,
-} from "./utils.js?v=20261020-4";
+} from "./utils.js?v=20261021-1";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261020-4";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261020-4";
+} from "./multiPhotoLayout.js?v=20261021-1";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261021-1";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
