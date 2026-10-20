@@ -1,14 +1,20 @@
-import { state } from "./state.js";
+import { state } from "./state.js?v=20261020-2";
 import {
   IMAGE_SECURITY_LIMITS,
   buildImageRecord,
   replaceImageWithPreparedImages,
-} from "./imageHandler.js";
+} from "./imageHandler.js?v=20261020-2";
 import {
   getSplitGroupIntegrity,
   restoreSplitGroup,
-} from "./splitOrderManager.js";
-import { createObjectUrl, revokeObjectUrl, showToast } from "./utils.js";
+} from "./splitOrderManager.js?v=20261020-2";
+import {
+  createObjectUrl,
+  revokeObjectUrl,
+  showDialog,
+  showNotice,
+  showToast,
+} from "./utils.js?v=20261020-2";
 
 const TARGET_HEIGHT_RATIO = Object.freeze({ 2: 22 / 9, 4: 4 / 3 });
 const ANALYSIS_WIDTH = 256;
@@ -275,15 +281,21 @@ const openForSelectedImage = async () => {
   if (record.splitGroupId) {
     const integrity = getSplitGroupIntegrity(record.splitGroupId);
     if (!integrity.complete) {
-      alert(
-        `此長截圖的分段不完整（${integrity.existingCount}/${integrity.expectedCount}），無法再次分割。請重新匯入原始長截圖或補齊分段。`,
-      );
+      await showNotice({
+        title: "這組長截圖的分段不完整",
+        message: `目前只有 ${integrity.existingCount}/${integrity.expectedCount} 段，無法再次分割。請重新匯入原始長截圖，或先補齊分段。`,
+        tone: "warning",
+      });
       return;
     }
     if (!integrity.contiguous || !integrity.ordered) {
-      const shouldRestore = confirm(
-        "此長截圖的分段順序已變更。要先恢復此長圖順序，再繼續分割嗎？",
-      );
+      const shouldRestore = await showDialog({
+        title: "分段順序已變更",
+        message: "要先把這組長截圖恢復成原本的順序，再繼續分割嗎？",
+        tone: "warning",
+        confirmText: "恢復順序並繼續",
+        cancelText: "取消",
+      });
       if (!shouldRestore) return;
       restoreSplitGroup(record.splitGroupId);
       record = state.selectedImages.find((image) => image.id === state.editingImageId);
@@ -297,7 +309,13 @@ const openForSelectedImage = async () => {
     warnings.push("此分段高度較小，再次分割可能降低輸出清晰度");
   }
   if (warnings.length) {
-    const shouldContinue = confirm(`${warnings.join("；")}，仍要繼續嗎？`);
+    const shouldContinue = await showDialog({
+      title: "確定要分割這張照片嗎？",
+      message: `${warnings.join("；")}。`,
+      tone: "warning",
+      confirmText: "繼續分割",
+      cancelText: "取消",
+    });
     if (!shouldContinue) return;
   }
 
@@ -347,7 +365,7 @@ const cropSelectedImage = async () => {
   const originalIndex = state.selectedImages.findIndex((image) => image.id === item.originalId);
   if (originalIndex < 0) return;
   if (state.selectedImages.length + item.cuts.length > IMAGE_SECURITY_LIMITS.maxCount) {
-    alert("分割後會超過專案 500 張照片上限。");
+    showToast("分割後會超過專案 500 張照片的上限。", "warning");
     return;
   }
 
@@ -455,7 +473,7 @@ const cropSelectedImage = async () => {
       if (!state.selectedImages.includes(record)) revokeObjectUrl(record.previewUrl);
     });
     console.error("長截圖分割失敗:", error);
-    alert(`長截圖分割失敗：${error.message || "未知錯誤"}`);
+    showToast("長截圖分割失敗，原照片沒有變更。請再試一次。", "error", 6000);
     if (status) status.textContent = "分割失敗，原照片沒有變更。";
   } finally {
     if (loaded?.url) revokeObjectUrl(loaded.url);

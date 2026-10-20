@@ -1,14 +1,14 @@
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js";
+import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261020-2";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261020-2";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js";
-import { getPhotoNumber } from "./photoNumbering.js";
+} from "./multiPhotoLayout.js?v=20261020-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261020-2";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js";
+} from "./pageNumbering.js?v=20261020-2";
 
 const PREVIEW_UPDATE_DELAY_MS = 220;
 const MIN_ZOOM = 0.3;
