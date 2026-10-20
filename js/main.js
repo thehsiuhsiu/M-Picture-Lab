@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261020-2";
+import { state } from "./state.js?v=20261020-3";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -15,28 +15,28 @@ import {
   confirmMissingDatesBeforeExport,
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
-} from "./imageHandler.js?v=20261020-2";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261020-2";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261020-2";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261020-2";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261020-2";
+} from "./imageHandler.js?v=20261020-3";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261020-3";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261020-3";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261020-3";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261020-3";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261020-2";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261020-2";
-import { initDocumentPreview } from "./documentPreview.js?v=20261020-2";
+} from "./projectPersistence.js?v=20261020-3";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261020-3";
+import { initDocumentPreview } from "./documentPreview.js?v=20261020-3";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261020-2";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-2";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261020-2";
+} from "./photoNumbering.js?v=20261020-3";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-3";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261020-3";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261020-2";
+} from "./splitOrderManager.js?v=20261020-3";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -1124,7 +1124,7 @@ const blockWheelScroll = (element) => {
 };
 
 const setupConsentGate = (onConsentReady) => {
-  const consentVersion = "2026-08-23-v2";
+  const consentVersion = "2026-10-20-v3";
   const storageKey = "mpictureConsentVersion";
   const consentModal = document.getElementById("consentModal");
   const consentContent = consentModal?.querySelector(".consent-modal-content");
@@ -1161,6 +1161,24 @@ const setupConsentGate = (onConsentReady) => {
   });
 };
 
+const safeStorage = {
+  get(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (_error) {
+      return null;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (_error) {
+      // 瀏覽器不允許時只是不記住偏好
+    }
+  },
+};
+
+/** 右側「文件資料」面板：寬螢幕固定在右側，較窄時改為滑出面板。 */
 const setupResponsiveSidebar = () => {
   const openButton = document.getElementById("mobileSettingsBtn");
   const closeButton = document.getElementById("mobileSettingsCloseBtn");
@@ -1168,10 +1186,14 @@ const setupResponsiveSidebar = () => {
   const backdrop = document.getElementById("sidebarBackdrop");
   if (!openButton || !closeButton || !sidebar || !backdrop) return;
 
-  const mobileViewport = window.matchMedia("(max-width: 820px)");
+  const overlayViewport = window.matchMedia("(max-width: 1199px)");
+  const preferenceKey = "mpictureDocPanelCollapsed";
+  if (safeStorage.get(preferenceKey) === "1") {
+    document.body.classList.add("settings-collapsed");
+  }
 
   const updateToggleState = () => {
-    const isExpanded = mobileViewport.matches
+    const isExpanded = overlayViewport.matches
       ? document.body.classList.contains("settings-open")
       : !document.body.classList.contains("settings-collapsed");
     openButton.setAttribute("aria-expanded", String(isExpanded));
@@ -1191,17 +1213,24 @@ const setupResponsiveSidebar = () => {
   };
 
   openButton.addEventListener("click", () => {
-    if (mobileViewport.matches) {
+    if (overlayViewport.matches) {
       setOpen(!document.body.classList.contains("settings-open"));
       return;
     }
-
-    document.body.classList.toggle("settings-collapsed");
+    const collapsed = document.body.classList.toggle("settings-collapsed");
+    safeStorage.set(preferenceKey, collapsed ? "1" : "0");
     updateToggleState();
   });
-  closeButton.addEventListener("click", () =>
-    setOpen(false, { restoreFocus: true }),
-  );
+  closeButton.addEventListener("click", () => {
+    if (overlayViewport.matches) {
+      setOpen(false, { restoreFocus: true });
+      return;
+    }
+    document.body.classList.add("settings-collapsed");
+    safeStorage.set(preferenceKey, "1");
+    updateToggleState();
+    openButton.focus();
+  });
   backdrop.addEventListener("click", () =>
     setOpen(false, { restoreFocus: true }),
   );
@@ -1211,13 +1240,77 @@ const setupResponsiveSidebar = () => {
     }
   });
 
-  mobileViewport.addEventListener("change", () => {
+  overlayViewport.addEventListener("change", () => {
     document.body.classList.remove("settings-open");
     backdrop.setAttribute("aria-hidden", "true");
     updateToggleState();
   });
 
   updateToggleState();
+};
+
+/** 左側專案欄：桌機可收合成細欄，手機改為從左側滑出。 */
+const setupNavSidebar = () => {
+  const nav = document.getElementById("appNav");
+  const toggleButton = document.getElementById("navToggleBtn");
+  const openButton = document.getElementById("navOpenBtn");
+  const backdrop = document.getElementById("navBackdrop");
+  if (!nav || !toggleButton || !openButton || !backdrop) return;
+
+  const mobileViewport = window.matchMedia("(max-width: 820px)");
+  const preferenceKey = "mpictureNavCollapsed";
+  if (safeStorage.get(preferenceKey) === "1") {
+    document.body.classList.add("nav-collapsed");
+  }
+
+  const updateState = () => {
+    const isMobile = mobileViewport.matches;
+    const isOpen = isMobile
+      ? document.body.classList.contains("nav-open")
+      : !document.body.classList.contains("nav-collapsed");
+    toggleButton.setAttribute("aria-expanded", String(isOpen));
+    const label = isMobile ? "關閉專案清單" : isOpen ? "收合側邊欄" : "展開側邊欄";
+    toggleButton.setAttribute("aria-label", label);
+    toggleButton.title = label;
+    openButton.setAttribute("aria-expanded", String(isMobile && isOpen));
+    nav.inert = isMobile && !isOpen;
+  };
+
+  const setMobileOpen = (isOpen, { restoreFocus = false } = {}) => {
+    document.body.classList.toggle("nav-open", isOpen);
+    backdrop.setAttribute("aria-hidden", String(!isOpen));
+    if (isOpen) document.getElementById("newProjectBtn")?.focus();
+    if (!isOpen && restoreFocus) openButton.focus();
+    updateState();
+  };
+
+  toggleButton.addEventListener("click", () => {
+    if (mobileViewport.matches) {
+      setMobileOpen(false, { restoreFocus: true });
+      return;
+    }
+    const collapsed = document.body.classList.toggle("nav-collapsed");
+    safeStorage.set(preferenceKey, collapsed ? "1" : "0");
+    updateState();
+  });
+  openButton.addEventListener("click", () => setMobileOpen(true));
+  backdrop.addEventListener("click", () => setMobileOpen(false, { restoreFocus: true }));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.body.classList.contains("nav-open")) {
+      setMobileOpen(false, { restoreFocus: true });
+    }
+  });
+  // 專案清單的項目關閉手機側欄時，同步按鈕狀態
+  new MutationObserver(updateState).observe(document.body, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+  mobileViewport.addEventListener("change", () => {
+    document.body.classList.remove("nav-open");
+    backdrop.setAttribute("aria-hidden", "true");
+    updateState();
+  });
+  updateState();
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1264,6 +1357,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupBeforeUnload();
   setupInfoModals();
   setupResponsiveSidebar();
+  setupNavSidebar();
   setupConsentGate(() => {
     initProjectPersistence({ applyProject: applyProjectSnapshot });
   });

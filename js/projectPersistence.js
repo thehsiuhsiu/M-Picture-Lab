@@ -1,17 +1,28 @@
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-2";
-import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261020-2";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261020-2";
-import { createObjectUrl, revokeObjectUrl, showDialog, showToast } from "./utils.js?v=20261020-2";
-import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261020-2";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-2";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-3";
+import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261020-3";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261020-3";
+import {
+  createObjectUrl,
+  revokeObjectUrl,
+  showDialog,
+  showPromptDialog,
+  showToast,
+} from "./utils.js?v=20261020-3";
+import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261020-3";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-3";
 
 const DATABASE_NAME = "mpicture-local-projects-v1";
-const DATABASE_VERSION = 2;
-const DRAFT_STORE = "drafts";
-const DRAFT_IMAGE_STORE = "draftImages";
-const ACTIVE_DRAFT_ID = "active";
-const DRAFT_RETENTION_MS = 2 * 60 * 60 * 1000;
+const DATABASE_VERSION = 3;
+// 舊版（單一草稿、2 小時到期）資料表，只用於一次性轉換成專案。
+const LEGACY_DRAFT_STORE = "drafts";
+const LEGACY_DRAFT_IMAGE_STORE = "draftImages";
+const LEGACY_DRAFT_ID = "active";
+// 新版：多個專案，保存到使用者自行刪除。
+const PROJECT_STORE = "projects";
+const PROJECT_IMAGE_STORE = "projectImages";
+const LAST_PROJECT_STORAGE_KEY = "mpictureLastProjectId";
 const AUTOSAVE_DELAY_MS = 1000;
+const MAX_PROJECT_NAME_LENGTH = 80;
 
 const PROJECT_FORMAT = "m-picture-project";
 const PROJECT_VERSION = 6;
@@ -88,8 +99,14 @@ let dirty = false;
 let persistRequested = false;
 let applyProjectSnapshot = null;
 let persistenceInitialized = false;
-let persistedDraftImages = new Map();
 let localDraftStorageAvailable = true;
+
+// 目前開啟的專案。isStored 為 false 表示還沒有內容、尚未寫進清單。
+let currentProject = null;
+// 照片 Blob → 資料庫鍵值；同一張照片重複儲存時不必再寫一次。
+let blobStorageKeys = new WeakMap();
+let persistedImageKeys = new Set();
+let projectIndex = [];
 
 const getElementValue = (id) => document.getElementById(id)?.value || "";
 
@@ -181,7 +198,7 @@ const readBlobBytes = async (blob, start, length) => {
 
 const openDatabase = () => {
   if (!window.indexedDB) {
-    return Promise.reject(new Error("此瀏覽器不支援本機草稿儲存"));
+    return Promise.reject(new Error("此瀏覽器不支援本機專案儲存"));
   }
   if (databasePromise) return databasePromise;
 
@@ -189,144 +206,189 @@ const openDatabase = () => {
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
     request.onupgradeneeded = () => {
       const database = request.result;
-      if (!database.objectStoreNames.contains(DRAFT_STORE)) {
-        database.createObjectStore(DRAFT_STORE, { keyPath: "id" });
+      if (!database.objectStoreNames.contains(PROJECT_STORE)) {
+        database.createObjectStore(PROJECT_STORE, { keyPath: "id" });
       }
-      if (!database.objectStoreNames.contains(DRAFT_IMAGE_STORE)) {
-        database.createObjectStore(DRAFT_IMAGE_STORE, { keyPath: "id" });
+      if (!database.objectStoreNames.contains(PROJECT_IMAGE_STORE)) {
+        const imageStore = database.createObjectStore(PROJECT_IMAGE_STORE, {
+          keyPath: "key",
+        });
+        imageStore.createIndex("projectId", "projectId", { unique: false });
       }
     };
     request.onsuccess = () => {
       request.result.onversionchange = () => request.result.close();
       resolve(request.result);
     };
-    request.onerror = () => reject(request.error || new Error("無法開啟草稿資料庫"));
-    request.onblocked = () => reject(new Error("草稿資料庫正被其他分頁占用"));
+    request.onerror = () => reject(request.error || new Error("無法開啟專案資料庫"));
+    request.onblocked = () => reject(new Error("專案資料庫正被其他分頁占用"));
   });
 
   return databasePromise;
 };
 
-const runDraftRequest = async (mode, operation) => {
+/** 在同一個交易中執行 work(stores)，交易完成後回傳 work 的結果。 */
+const runTransaction = async (storeNames, mode, work) => {
   const database = await openDatabase();
+  const names = storeNames.filter((name) => database.objectStoreNames.contains(name));
+  if (!names.length) return undefined;
   return await new Promise((resolve, reject) => {
-    const transaction = database.transaction(DRAFT_STORE, mode);
-    const store = transaction.objectStore(DRAFT_STORE);
-    let request;
-    let requestResult;
-    let settled = false;
-    const fail = (error) => {
-      if (settled) return;
-      settled = true;
-      reject(error);
-    };
+    const transaction = database.transaction(names, mode);
+    const stores = Object.fromEntries(
+      names.map((name) => [name, transaction.objectStore(name)]),
+    );
+    let result;
     try {
-      request = operation(store);
+      result = work(stores);
     } catch (error) {
-      fail(error);
+      reject(error);
+      try {
+        transaction.abort();
+      } catch (_abortError) {
+        // 交易可能已自行結束
+      }
       return;
     }
-    request.onsuccess = () => {
-      requestResult = request.result;
-    };
-    request.onerror = () =>
-      fail(request.error || new Error("草稿資料庫操作失敗"));
-    transaction.oncomplete = () => {
-      if (settled) return;
-      settled = true;
-      resolve(requestResult);
-    };
+    transaction.oncomplete = () =>
+      resolve(typeof result === "function" ? result() : result);
     transaction.onerror = () =>
-      fail(transaction.error || new Error("草稿資料庫交易失敗"));
+      reject(transaction.error || new Error("專案資料庫操作失敗"));
     transaction.onabort = () =>
-      fail(transaction.error || new Error("草稿寫入已中止"));
+      reject(transaction.error || new Error("專案資料庫交易已中止"));
   });
 };
 
-const getDraft = () => runDraftRequest("readonly", (store) => store.get(ACTIVE_DRAFT_ID));
-
-const getDraftImages = async (ids) => {
-  const database = await openDatabase();
-  return await new Promise((resolve, reject) => {
-    const transaction = database.transaction(DRAFT_IMAGE_STORE, "readonly");
-    const store = transaction.objectStore(DRAFT_IMAGE_STORE);
-    const results = new Map();
-    ids.forEach((id) => {
-      const request = store.get(id);
-      request.onsuccess = () => results.set(id, request.result);
-    });
-    transaction.oncomplete = () => resolve(results);
-    transaction.onerror = () =>
-      reject(transaction.error || new Error("無法讀取草稿圖片"));
-    transaction.onabort = () =>
-      reject(transaction.error || new Error("草稿圖片讀取已中止"));
-  });
+const requestToCollector = (request) => {
+  let value;
+  request.onsuccess = () => {
+    value = request.result;
+  };
+  return () => value;
 };
 
-const putProjectDraft = async (project) => {
-  const database = await openDatabase();
-  const imageIds = state.selectedImages.map((image) => String(image.id));
-  if (new Set(imageIds).size !== imageIds.length) {
-    throw new Error("照片識別碼重複，無法安全儲存草稿");
-  }
-  const currentImages = new Map(
-    state.selectedImages.map((image, index) => [imageIds[index], image.blob]),
+const listProjectRecords = () =>
+  runTransaction([PROJECT_STORE], "readonly", (stores) =>
+    requestToCollector(stores[PROJECT_STORE].getAll()),
+  ).then((records) => (Array.isArray(records) ? records : []));
+
+const getProjectRecord = (id) =>
+  runTransaction([PROJECT_STORE], "readonly", (stores) =>
+    requestToCollector(stores[PROJECT_STORE].get(id)),
   );
+
+const getProjectImages = (keys) =>
+  runTransaction([PROJECT_IMAGE_STORE], "readonly", (stores) => {
+    const results = new Map();
+    keys.forEach((key) => {
+      const request = stores[PROJECT_IMAGE_STORE].get(key);
+      request.onsuccess = () => results.set(key, request.result);
+    });
+    return results;
+  });
+
+const updateProjectRecord = (id, changes) =>
+  runTransaction([PROJECT_STORE], "readwrite", (stores) => {
+    const store = stores[PROJECT_STORE];
+    const request = store.get(id);
+    request.onsuccess = () => {
+      if (request.result) store.put({ ...request.result, ...changes });
+    };
+  });
+
+const deleteProjectData = (id) =>
+  runTransaction([PROJECT_STORE, PROJECT_IMAGE_STORE], "readwrite", (stores) => {
+    stores[PROJECT_STORE].delete(id);
+    const index = stores[PROJECT_IMAGE_STORE].index("projectId");
+    const cursorRequest = index.openKeyCursor(IDBKeyRange.only(id));
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (!cursor) return;
+      stores[PROJECT_IMAGE_STORE].delete(cursor.primaryKey);
+      cursor.continue();
+    };
+  });
+
+const createProjectId = () =>
+  crypto?.randomUUID?.() ||
+  `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+const createImageKey = (projectId) =>
+  `${projectId}:${crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`}`;
+
+const FORMAT_LABELS = Object.freeze({
+  left: "刑事案件",
+  middle: "交通事故",
+  right: "多格照片",
+});
+
+const formatShortDate = (iso) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+};
+
+const buildAutoProjectName = (project, createdAt) => {
+  const caseName = String(project.fields?.zipPrefix || "").trim();
+  if (caseName) return caseName.slice(0, MAX_PROJECT_NAME_LENGTH);
+  const label = FORMAT_LABELS[project.settings?.selectedFormat] || "照片";
+  return `${label} ${formatShortDate(createdAt)}`.trim();
+};
+
+const getDisplayName = (meta) =>
+  (meta?.customName || meta?.autoName || "").trim() || "未命名專案";
+
+const putProjectRecord = async (project) => {
+  const meta = currentProject;
+  const imageKeys = state.selectedImages.map((image) => {
+    let key = blobStorageKeys.get(image.blob);
+    if (!key || !key.startsWith(`${meta.id}:`)) {
+      key = createImageKey(meta.id);
+      blobStorageKeys.set(image.blob, key);
+    }
+    return key;
+  });
+  if (new Set(imageKeys).size !== imageKeys.length) {
+    throw new Error("照片識別碼重複，無法安全儲存專案");
+  }
   const projectWithoutBlobs = {
     ...project,
     images: project.images.map(({ blob, ...metadata }) => metadata),
   };
+  const autoName = buildAutoProjectName(project, meta.createdAt);
   const record = {
-    id: ACTIVE_DRAFT_ID,
-    savedAt: project.savedAt,
-    expiresAt: new Date(Date.now() + DRAFT_RETENTION_MS).toISOString(),
-    imageIds,
+    id: meta.id,
+    customName: meta.customName || "",
+    autoName,
+    pinned: Boolean(meta.pinned),
+    createdAt: meta.createdAt,
+    updatedAt: project.savedAt,
+    imageCount: imageKeys.length,
+    imageKeys,
     project: projectWithoutBlobs,
   };
+  const nextKeys = new Set(imageKeys);
 
-  await new Promise((resolve, reject) => {
-    const transaction = database.transaction(
-      [DRAFT_STORE, DRAFT_IMAGE_STORE],
-      "readwrite",
-    );
-    const draftStore = transaction.objectStore(DRAFT_STORE);
-    const imageStore = transaction.objectStore(DRAFT_IMAGE_STORE);
-    draftStore.put(record);
-
-    currentImages.forEach((blob, id) => {
-      if (persistedDraftImages.get(id) !== blob) {
-        imageStore.put({ id, blob });
+  await runTransaction([PROJECT_STORE, PROJECT_IMAGE_STORE], "readwrite", (stores) => {
+    stores[PROJECT_STORE].put(record);
+    state.selectedImages.forEach((image, index) => {
+      const key = imageKeys[index];
+      if (!persistedImageKeys.has(key)) {
+        stores[PROJECT_IMAGE_STORE].put({ key, projectId: meta.id, blob: image.blob });
       }
     });
-    persistedDraftImages.forEach((_blob, id) => {
-      if (!currentImages.has(id)) imageStore.delete(id);
+    persistedImageKeys.forEach((key) => {
+      if (!nextKeys.has(key)) stores[PROJECT_IMAGE_STORE].delete(key);
     });
-
-    transaction.oncomplete = resolve;
-    transaction.onerror = () =>
-      reject(transaction.error || new Error("草稿交易寫入失敗"));
-    transaction.onabort = () =>
-      reject(transaction.error || new Error("草稿交易已中止"));
   });
-  persistedDraftImages = currentImages;
-};
 
-const deleteDraft = async () => {
-  const database = await openDatabase();
-  await new Promise((resolve, reject) => {
-    const transaction = database.transaction(
-      [DRAFT_STORE, DRAFT_IMAGE_STORE],
-      "readwrite",
-    );
-    transaction.objectStore(DRAFT_STORE).delete(ACTIVE_DRAFT_ID);
-    transaction.objectStore(DRAFT_IMAGE_STORE).clear();
-    transaction.oncomplete = resolve;
-    transaction.onerror = () =>
-      reject(transaction.error || new Error("無法清除本機草稿"));
-    transaction.onabort = () =>
-      reject(transaction.error || new Error("清除草稿交易已中止"));
-  });
-  persistedDraftImages = new Map();
+  persistedImageKeys = nextKeys;
+  meta.autoName = autoName;
+  meta.isStored = true;
+  try {
+    localStorage.setItem(LAST_PROJECT_STORAGE_KEY, meta.id);
+  } catch (_error) {
+    // 瀏覽器不允許時只是不記住上次開啟的專案
+  }
 };
 
 const normalizeAccidentTags = (value) => {
@@ -710,50 +772,65 @@ const hasMeaningfulContent = (project) => {
   );
 };
 
-const normalizeDraftRecord = async (record) => {
-  const draft = requirePlainObject(record, "草稿");
+const normalizeProjectRecord = async (record) => {
+  const stored = requirePlainObject(record, "專案");
   assertOnlyKeys(
-    draft,
-    new Set(["id", "savedAt", "expiresAt", "imageIds", "project"]),
-    "草稿",
+    stored,
+    new Set([
+      "id",
+      "customName",
+      "autoName",
+      "pinned",
+      "createdAt",
+      "updatedAt",
+      "imageCount",
+      "imageKeys",
+      "project",
+    ]),
+    "專案",
   );
-  if (draft.id !== ACTIVE_DRAFT_ID) throw new Error("草稿識別碼無效");
-  const expiresAt = Date.parse(requireString(draft.expiresAt, 40, "草稿到期時間"));
-  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
-    throw new Error("草稿已到期");
-  }
-  const normalized = normalizeProjectStructure(draft.project);
+  const id = requireString(stored.id, 80, "專案識別碼");
+  const normalized = normalizeProjectStructure(stored.project);
   if (
-    !Array.isArray(draft.imageIds) ||
-    draft.imageIds.length !== normalized.images.length
+    !Array.isArray(stored.imageKeys) ||
+    stored.imageKeys.length !== normalized.images.length
   ) {
-    throw new Error("草稿圖片資料不完整");
+    throw new Error("專案照片資料不完整");
   }
-
+  const imageKeys = stored.imageKeys.map((value) =>
+    requireString(value, 160, "專案照片識別碼"),
+  );
+  if (
+    imageKeys.some((key) => !key.startsWith(`${id}:`)) ||
+    new Set(imageKeys).size !== imageKeys.length
+  ) {
+    throw new Error("專案照片識別碼無效或重複");
+  }
+  const storedImages = await getProjectImages(imageKeys);
   const images = [];
-  const loadedImages = new Map();
-  const validatedImageIds = draft.imageIds.map((value) =>
-    requireString(value, 64, "草稿圖片識別碼"),
-  );
-  if (
-    validatedImageIds.some((imageId) => !/^\d+(?:\.\d+)?$/.test(imageId)) ||
-    new Set(validatedImageIds).size !== validatedImageIds.length
-  ) {
-    throw new Error("草稿圖片識別碼無效或重複");
-  }
-  const storedImages = await getDraftImages(validatedImageIds);
   for (let index = 0; index < normalized.images.length; index += 1) {
-    const imageId = validatedImageIds[index];
-    const source = storedImages.get(imageId);
-    if (!source || source.id !== imageId) throw new Error("草稿圖片資料遺失");
+    const key = imageKeys[index];
+    const source = storedImages.get(key);
+    if (!source || source.key !== key || source.projectId !== id) {
+      throw new Error("專案照片資料遺失");
+    }
     const metadata = normalized.images[index];
     await validateImageBlob(source.blob, metadata.type);
-    if (source.blob.size !== metadata.size) throw new Error("草稿圖片大小不一致");
+    if (source.blob.size !== metadata.size) throw new Error("專案照片大小不一致");
     images.push({ ...metadata, blob: source.blob });
-    loadedImages.set(imageId, source.blob);
   }
-  persistedDraftImages = loadedImages;
-  return { ...normalized, images };
+  return {
+    meta: {
+      id,
+      customName: String(stored.customName || "").slice(0, MAX_PROJECT_NAME_LENGTH),
+      autoName: String(stored.autoName || "").slice(0, MAX_PROJECT_NAME_LENGTH),
+      pinned: stored.pinned === true,
+      createdAt: String(stored.createdAt || stored.updatedAt || ""),
+      isStored: true,
+    },
+    imageKeys,
+    project: { ...normalized, images },
+  };
 };
 
 const setStorageStatus = (message, status = "idle") => {
@@ -774,7 +851,7 @@ const requestPersistentStorage = async () => {
 };
 
 const saveDraftNow = async () => {
-  if (persistenceSuspended) return;
+  if (persistenceSuspended || !currentProject) return;
   if (saveInProgress) {
     saveRequestedWhileBusy = true;
     return;
@@ -787,37 +864,37 @@ const saveDraftNow = async () => {
 
   try {
     const normalized = normalizeProjectStructure(project);
-    if (!hasMeaningfulContent(normalized)) {
-      await deleteDraft();
+    if (!currentProject.isStored && !hasMeaningfulContent(normalized) && !currentProject.customName) {
       dirty = false;
-      setStorageStatus("尚無草稿", "idle");
+      setStorageStatus("新專案", "idle");
       return;
     }
 
     const availableStorage = await navigator.storage?.estimate?.();
     const changedImageBytes = state.selectedImages.reduce((sum, image) => {
-      const imageId = String(image.id);
-      return sum + (persistedDraftImages.get(imageId) === image.blob ? 0 : image.blob.size);
+      const key = blobStorageKeys.get(image.blob);
+      return sum + (key && persistedImageKeys.has(key) ? 0 : image.blob.size);
     }, 0);
     if (
       availableStorage?.quota &&
       availableStorage.quota - (availableStorage.usage || 0) <
         changedImageBytes + 10 * 1024 * 1024
     ) {
-      throw new Error("瀏覽器可用空間不足，請先匯出專案檔或清理空間");
+      throw new Error("瀏覽器可用空間不足，請刪除不需要的專案，或先匯出加密專案備份");
     }
 
-    await putProjectDraft(project);
+    await putProjectRecord(project);
     await requestPersistentStorage();
     if (!saveRequestedWhileBusy) {
       dirty = false;
       setStorageStatus("已儲存", "saved");
     }
+    await refreshProjectList();
   } catch (error) {
-    console.error("草稿自動儲存失敗:", error);
+    console.error("專案自動儲存失敗:", error);
     dirty = true;
     setStorageStatus("儲存失敗", "error");
-    showToast(error.message || "草稿自動儲存失敗", "error", 5000);
+    showToast(error.message || "專案自動儲存失敗", "error", 5000);
   } finally {
     saveInProgress = false;
     if (saveRequestedWhileBusy) {
@@ -831,7 +908,7 @@ const scheduleAutosave = () => {
   if (persistenceSuspended) return;
   if (!localDraftStorageAvailable) {
     dirty = true;
-    setStorageStatus("草稿功能不可用", "error");
+    setStorageStatus("無法自動儲存", "error");
     return;
   }
   if (saveInProgress) saveRequestedWhileBusy = true;
@@ -839,6 +916,15 @@ const scheduleAutosave = () => {
   setStorageStatus("尚未儲存", "pending");
   window.clearTimeout(autosaveTimer);
   autosaveTimer = window.setTimeout(saveDraftNow, AUTOSAVE_DELAY_MS);
+};
+
+/** 切換專案前，把目前專案尚未寫入的變更存好。 */
+const flushPendingSave = async () => {
+  window.clearTimeout(autosaveTimer);
+  for (let attempt = 0; attempt < 50 && saveInProgress; attempt += 1) {
+    await new Promise((resolve) => window.setTimeout(resolve, 100));
+  }
+  if (dirty && localDraftStorageAvailable) await saveDraftNow();
 };
 
 const buildHeader = (salt, manifestIv) => {
@@ -1190,7 +1276,7 @@ const handleExport = async () => {
   setProjectBusy(true, "正在加密專案…");
   try {
     const encryptedBlob = await encryptProject(project, password);
-    downloadProjectBlob(encryptedBlob, project.fields.zipPrefix || "M-Picture專案");
+    downloadProjectBlob(encryptedBlob, getDisplayName(currentProject) || "M-Picture專案");
     showToast("加密專案檔已匯出", "success");
   } catch (error) {
     console.error("專案匯出失敗:", error);
@@ -1210,14 +1296,18 @@ const handleImportFile = async (file) => {
   if (!password) return;
 
   setProjectBusy(true, "正在驗證並解密專案…");
-  persistenceSuspended = true;
   try {
     const project = await decryptProject(file, password);
+    await flushPendingSave();
+    persistenceSuspended = true;
+    const baseName = String(file.name || "").replace(/\.mpicture$/i, "").trim();
+    resetCurrentProject({ customName: baseName.slice(0, MAX_PROJECT_NAME_LENGTH) });
     await applyProjectSnapshot(project);
     persistenceSuspended = false;
     dirty = true;
     await saveDraftNow();
-    showToast("專案已安全開啟", "success");
+    renderProjectHeader();
+    showToast("已開啟為新專案", "success");
   } catch (error) {
     persistenceSuspended = false;
     console.error("專案匯入失敗:", error);
@@ -1225,32 +1315,6 @@ const handleImportFile = async (file) => {
   } finally {
     setProjectBusy(false);
   }
-};
-
-const showRestorePrompt = (project) => {
-  return new Promise((resolve) => {
-    const modal = document.getElementById("projectRestoreModal");
-    const summary = document.getElementById("projectRestoreSummary");
-    const restoreButton = document.getElementById("projectRestoreBtn");
-    const discardButton = document.getElementById("projectDiscardBtn");
-    const savedDate = new Date(project.savedAt);
-    summary.textContent = `${Number.isNaN(savedDate.getTime()) ? "先前" : savedDate.toLocaleString("zh-TW")}儲存，包含 ${project.images.length} 張照片。`;
-    modal.style.display = "flex";
-    modal.setAttribute("aria-hidden", "false");
-    restoreButton.focus();
-
-    const finish = (shouldRestore) => {
-      modal.style.display = "none";
-      modal.setAttribute("aria-hidden", "true");
-      restoreButton.removeEventListener("click", restore);
-      discardButton.removeEventListener("click", discard);
-      resolve(shouldRestore);
-    };
-    const restore = () => finish(true);
-    const discard = () => finish(false);
-    restoreButton.addEventListener("click", restore);
-    discardButton.addEventListener("click", discard);
-  });
 };
 
 const createEmptyProject = () => ({
@@ -1278,62 +1342,483 @@ const createEmptyProject = () => ({
   images: [],
 });
 
-const clearCurrentProject = async () => {
+const resetCurrentProject = ({ customName = "" } = {}) => {
+  currentProject = {
+    id: createProjectId(),
+    customName,
+    autoName: "",
+    pinned: false,
+    createdAt: new Date().toISOString(),
+    isStored: false,
+  };
+  blobStorageKeys = new WeakMap();
+  persistedImageKeys = new Set();
+  dirty = false;
+};
+
+const startNewProject = async () => {
+  await flushPendingSave();
+  persistenceSuspended = true;
+  try {
+    resetCurrentProject();
+    await applyProjectSnapshot(createEmptyProject());
+    setStorageStatus("新專案", "idle");
+  } finally {
+    persistenceSuspended = false;
+    dirty = false;
+    renderProjectHeader();
+    renderProjectList();
+  }
+};
+
+const openProject = async (id) => {
+  if (currentProject?.id === id) return;
+  await flushPendingSave();
+  setProjectBusy(true, "正在開啟專案…");
+  persistenceSuspended = true;
+  try {
+    const record = await getProjectRecord(id);
+    if (!record) throw new Error("找不到這個專案，可能已被刪除");
+    const loaded = await normalizeProjectRecord(record);
+    currentProject = loaded.meta;
+    blobStorageKeys = new WeakMap();
+    loaded.project.images.forEach((image, index) => {
+      blobStorageKeys.set(image.blob, loaded.imageKeys[index]);
+    });
+    persistedImageKeys = new Set(loaded.imageKeys);
+    await applyProjectSnapshot(loaded.project);
+    try {
+      localStorage.setItem(LAST_PROJECT_STORAGE_KEY, id);
+    } catch (_error) {
+      // 忽略
+    }
+    setStorageStatus("已儲存", "saved");
+  } catch (error) {
+    console.error("開啟專案失敗:", error);
+    showToast(error.message || "無法開啟這個專案", "error", 5000);
+  } finally {
+    persistenceSuspended = false;
+    dirty = false;
+    setProjectBusy(false);
+    renderProjectHeader();
+    renderProjectList();
+  }
+};
+
+const renameProject = async (id) => {
+  const meta =
+    id === currentProject?.id
+      ? currentProject
+      : projectIndex.find((item) => item.id === id);
+  if (!meta) return;
+  const name = await showPromptDialog({
+    title: "重新命名專案",
+    value: getDisplayName(meta),
+    placeholder: "例：竊盜案 現場照片",
+    maxLength: MAX_PROJECT_NAME_LENGTH,
+    confirmText: "儲存",
+  });
+  if (name === null) return;
+  const customName = name.trim().slice(0, MAX_PROJECT_NAME_LENGTH);
+  if (id === currentProject?.id) {
+    currentProject.customName = customName;
+    renderProjectHeader();
+    if (currentProject.isStored) {
+      await updateProjectRecord(id, { customName });
+    } else {
+      dirty = true;
+      await saveDraftNow();
+    }
+  } else {
+    await updateProjectRecord(id, { customName });
+  }
+  await refreshProjectList();
+};
+
+const togglePinProject = async (id) => {
+  const meta = projectIndex.find((item) => item.id === id);
+  if (!meta) {
+    showToast("新增照片或填寫資料後，專案才會儲存，之後就能釘選。", "info", 4000);
+    return;
+  }
+  const pinned = !meta.pinned;
+  await updateProjectRecord(id, { pinned });
+  if (id === currentProject?.id) currentProject.pinned = pinned;
+  await refreshProjectList();
+  showToast(pinned ? "已釘選到清單最上方" : "已取消釘選", "success");
+};
+
+const deleteProject = async (id) => {
+  const meta =
+    projectIndex.find((item) => item.id === id) ||
+    (id === currentProject?.id ? currentProject : null);
+  if (!meta) return;
   const confirmed = await showDialog({
-    title: "清除所有照片與草稿？",
-    message: "目前的照片、填寫的資料，以及這台裝置上自動儲存的草稿都會刪除，無法復原。",
+    title: `刪除「${getDisplayName(meta)}」？`,
+    message:
+      "專案中的照片和填寫的資料都會從這台裝置刪除，無法復原。需要保留的話，請先用「輸出」選單匯出加密專案。",
     tone: "danger",
-    confirmText: "全部清除",
+    confirmText: "刪除專案",
     cancelText: "取消",
   });
   if (!confirmed) return;
-  persistenceSuspended = true;
   try {
-    await applyProjectSnapshot(createEmptyProject());
-    await deleteDraft();
-    dirty = false;
-    setStorageStatus("尚無草稿", "idle");
-    showToast("目前專案與本機草稿已清除", "success");
+    const isCurrent = id === currentProject?.id;
+    if (isCurrent) {
+      window.clearTimeout(autosaveTimer);
+      dirty = false;
+    }
+    if (meta.isStored !== false) await deleteProjectData(id);
+    try {
+      if (localStorage.getItem(LAST_PROJECT_STORAGE_KEY) === id) {
+        localStorage.removeItem(LAST_PROJECT_STORAGE_KEY);
+      }
+    } catch (_error) {
+      // 忽略
+    }
+    if (isCurrent) await startNewProject();
+    await refreshProjectList();
+    showToast("專案已刪除", "success");
   } catch (error) {
-    console.error("清除專案失敗:", error);
-    showToast("無法完整清除專案資料", "error");
-  } finally {
-    persistenceSuspended = false;
+    console.error("刪除專案失敗:", error);
+    showToast("無法完整刪除專案資料", "error");
+  }
+};
+
+/** 舊版只保存一份 2 小時草稿；第一次開啟新版時，把未到期的草稿轉成專案。 */
+const migrateLegacyDraft = async () => {
+  const legacy = await runTransaction([LEGACY_DRAFT_STORE], "readonly", (stores) =>
+    requestToCollector(stores[LEGACY_DRAFT_STORE].get(LEGACY_DRAFT_ID)),
+  );
+  if (legacy) {
+    try {
+      const expiresAt = Date.parse(String(legacy.expiresAt || ""));
+      if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+        throw new Error("舊草稿已到期");
+      }
+      const normalized = normalizeProjectStructure(legacy.project);
+      const imageIds = Array.isArray(legacy.imageIds) ? legacy.imageIds.map(String) : [];
+      if (imageIds.length !== normalized.images.length) {
+        throw new Error("舊草稿照片不完整");
+      }
+      const legacyImages = await runTransaction(
+        [LEGACY_DRAFT_IMAGE_STORE],
+        "readonly",
+        (stores) => {
+          const results = new Map();
+          imageIds.forEach((imageId) => {
+            const request = stores[LEGACY_DRAFT_IMAGE_STORE].get(imageId);
+            request.onsuccess = () => results.set(imageId, request.result);
+          });
+          return results;
+        },
+      );
+      const id = createProjectId();
+      const imageKeys = imageIds.map(() => createImageKey(id));
+      const blobs = [];
+      for (let index = 0; index < imageIds.length; index += 1) {
+        const source = legacyImages?.get(imageIds[index]);
+        if (!source?.blob) throw new Error("舊草稿照片遺失");
+        await validateImageBlob(source.blob, normalized.images[index].type);
+        blobs.push(source.blob);
+      }
+      const createdAt = normalized.savedAt || new Date().toISOString();
+      await runTransaction([PROJECT_STORE, PROJECT_IMAGE_STORE], "readwrite", (stores) => {
+        stores[PROJECT_STORE].put({
+          id,
+          customName: "",
+          autoName: buildAutoProjectName(normalized, createdAt),
+          pinned: false,
+          createdAt,
+          updatedAt: createdAt,
+          imageCount: imageKeys.length,
+          imageKeys,
+          project: {
+            ...normalized,
+            images: normalized.images.map(({ blob, ...metadata }) => metadata),
+          },
+        });
+        blobs.forEach((blob, index) => {
+          stores[PROJECT_IMAGE_STORE].put({ key: imageKeys[index], projectId: id, blob });
+        });
+      });
+      try {
+        localStorage.setItem(LAST_PROJECT_STORAGE_KEY, id);
+      } catch (_error) {
+        // 忽略
+      }
+    } catch (error) {
+      console.warn("舊版草稿未轉換:", error);
+    }
+  }
+  await runTransaction(
+    [LEGACY_DRAFT_STORE, LEGACY_DRAFT_IMAGE_STORE],
+    "readwrite",
+    (stores) => {
+      Object.values(stores).forEach((store) => store.clear());
+    },
+  );
+};
+
+/* ---------- 專案清單畫面 ---------- */
+
+const formatRelativeTime = (iso) => {
+  const time = Date.parse(iso);
+  if (!Number.isFinite(time)) return "";
+  const diff = Date.now() - time;
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  if (diff < minute) return "剛剛";
+  if (diff < hour) return `${Math.floor(diff / minute)} 分鐘前`;
+  const date = new Date(time);
+  const today = new Date();
+  const startOfToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  ).getTime();
+  if (time >= startOfToday) return `${Math.floor(diff / hour)} 小時前`;
+  if (time >= startOfToday - 24 * hour) return "昨天";
+  if (date.getFullYear() === today.getFullYear()) {
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
+  }
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+};
+
+const formatBytes = (bytes) => {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 MB";
+  if (bytes < 1024 * 1024) return "不到 1 MB";
+  if (bytes < 1024 * 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+};
+
+const updateStorageUsage = async () => {
+  const element = document.getElementById("storageUsage");
+  if (!element) return;
+  if (!navigator.storage?.estimate) {
+    element.textContent = "專案只存在這台裝置的瀏覽器中";
+    return;
+  }
+  try {
+    const { usage } = await navigator.storage.estimate();
+    element.textContent = `專案只存在這台裝置・已使用 ${formatBytes(usage || 0)}`;
+  } catch (_error) {
+    element.textContent = "專案只存在這台裝置的瀏覽器中";
+  }
+};
+
+const renderProjectHeader = () => {
+  const title = document.getElementById("projectTitleText");
+  const isBlankNew = !currentProject?.isStored && !currentProject?.customName;
+  if (title) title.textContent = isBlankNew ? "新專案" : getDisplayName(currentProject);
+  const titleButton = document.getElementById("projectTitleBtn");
+  titleButton?.classList.toggle("is-new", !currentProject?.isStored);
+  document.title = currentProject?.isStored
+    ? `${getDisplayName(currentProject)} - M-Picture`
+    : "M-Picture";
+};
+
+const createProjectListItem = (meta) => {
+  const item = document.createElement("li");
+  item.className = "project-list-item";
+  item.dataset.projectId = meta.id;
+  const isCurrent = meta.id === currentProject?.id;
+  item.classList.toggle("is-current", isCurrent);
+
+  const openButton = document.createElement("button");
+  openButton.type = "button";
+  openButton.className = "project-link";
+  openButton.title = getDisplayName(meta);
+  if (isCurrent) openButton.setAttribute("aria-current", "page");
+  const name = document.createElement("span");
+  name.className = "project-link-name";
+  name.textContent = getDisplayName(meta);
+  const detail = document.createElement("span");
+  detail.className = "project-link-detail";
+  detail.textContent = `${meta.imageCount || 0} 張照片・${formatRelativeTime(meta.updatedAt)}`;
+  openButton.append(name, detail);
+  openButton.addEventListener("click", () => {
+    closeNavOnMobile();
+    openProject(meta.id);
+  });
+
+  const moreButton = document.createElement("button");
+  moreButton.type = "button";
+  moreButton.className = "project-more-btn";
+  moreButton.title = "更多動作";
+  moreButton.setAttribute("aria-label", `「${getDisplayName(meta)}」的更多動作`);
+  moreButton.setAttribute("aria-haspopup", "menu");
+  moreButton.setAttribute("aria-expanded", "false");
+  const moreIcon = document.createElement("span");
+  moreIcon.className = "material-symbols-outlined";
+  moreIcon.setAttribute("aria-hidden", "true");
+  moreIcon.textContent = "more_horiz";
+  moreButton.appendChild(moreIcon);
+  moreButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openProjectMenu(meta.id, moreButton);
+  });
+
+  item.append(openButton, moreButton);
+  return item;
+};
+
+const renderProjectList = () => {
+  const pinnedList = document.getElementById("pinnedProjectList");
+  const recentList = document.getElementById("recentProjectList");
+  const pinnedSection = document.getElementById("pinnedProjectsSection");
+  const recentSection = document.getElementById("recentProjectsSection");
+  const emptyHint = document.getElementById("projectListEmpty");
+  if (!pinnedList || !recentList) return;
+  const sorted = [...projectIndex].sort((a, b) =>
+    String(b.updatedAt).localeCompare(String(a.updatedAt)),
+  );
+  const pinned = sorted.filter((item) => item.pinned);
+  const recent = sorted.filter((item) => !item.pinned);
+  pinnedList.replaceChildren(...pinned.map(createProjectListItem));
+  recentList.replaceChildren(...recent.map(createProjectListItem));
+  if (pinnedSection) pinnedSection.hidden = pinned.length === 0;
+  if (recentSection) recentSection.hidden = recent.length === 0 && pinned.length > 0;
+  if (emptyHint) emptyHint.hidden = sorted.length > 0;
+};
+
+const refreshProjectList = async () => {
+  try {
+    const records = await listProjectRecords();
+    projectIndex = records.map((record) => ({
+      id: String(record.id),
+      customName: String(record.customName || ""),
+      autoName: String(record.autoName || ""),
+      pinned: record.pinned === true,
+      createdAt: String(record.createdAt || ""),
+      updatedAt: String(record.updatedAt || ""),
+      imageCount: Number(record.imageCount) || 0,
+      isStored: true,
+    }));
+    const current = projectIndex.find((item) => item.id === currentProject?.id);
+    if (current && currentProject) {
+      currentProject.pinned = current.pinned;
+      currentProject.customName = current.customName;
+      currentProject.autoName = current.autoName;
+    }
+  } catch (error) {
+    console.warn("無法讀取專案清單:", error);
+  }
+  renderProjectList();
+  renderProjectHeader();
+  updateStorageUsage();
+};
+
+/* 專案動作選單（清單的「⋯」與頂列專案名稱共用） */
+let projectMenuTargetId = null;
+let projectMenuAnchor = null;
+
+const closeProjectMenu = () => {
+  const menu = document.getElementById("projectMenu");
+  if (!menu) return;
+  menu.classList.remove("show");
+  projectMenuAnchor?.setAttribute("aria-expanded", "false");
+  projectMenuAnchor = null;
+  projectMenuTargetId = null;
+};
+
+const openProjectMenu = (id, anchor) => {
+  const menu = document.getElementById("projectMenu");
+  if (!menu) return;
+  if (projectMenuTargetId === id && projectMenuAnchor === anchor) {
+    closeProjectMenu();
+    return;
+  }
+  closeProjectMenu();
+  projectMenuTargetId = id;
+  projectMenuAnchor = anchor;
+  const meta =
+    projectIndex.find((item) => item.id === id) ||
+    (id === currentProject?.id ? currentProject : null);
+  const pinButton = menu.querySelector('[data-project-action="pin"]');
+  const pinLabel = pinButton?.querySelector(".menu-label");
+  const pinIcon = pinButton?.querySelector(".material-symbols-outlined");
+  if (pinLabel) pinLabel.textContent = meta?.pinned ? "取消釘選" : "釘選";
+  if (pinIcon) pinIcon.textContent = meta?.pinned ? "keep_off" : "keep";
+  menu.classList.add("show");
+  anchor.setAttribute("aria-expanded", "true");
+  const rect = anchor.getBoundingClientRect();
+  const menuWidth = menu.offsetWidth || 200;
+  const menuHeight = menu.offsetHeight || 140;
+  const left = Math.min(Math.max(8, rect.left), window.innerWidth - menuWidth - 8);
+  let top = rect.bottom + 6;
+  if (top + menuHeight > window.innerHeight - 8) top = rect.top - menuHeight - 6;
+  menu.style.left = `${left}px`;
+  menu.style.top = `${Math.max(8, top)}px`;
+  menu.querySelector("button")?.focus({ preventScroll: true });
+};
+
+const closeNavOnMobile = () => {
+  if (window.matchMedia("(max-width: 820px)").matches) {
+    document.body.classList.remove("nav-open");
+    document.getElementById("navBackdrop")?.setAttribute("aria-hidden", "true");
   }
 };
 
 const setupProjectControls = () => {
   const exportButton = document.getElementById("exportProjectBtn");
   const importButton = document.getElementById("openProjectBtn");
-  const clearButton = document.getElementById("clearProjectBtn");
+  const newButton = document.getElementById("newProjectBtn");
+  const titleButton = document.getElementById("projectTitleBtn");
+  const menu = document.getElementById("projectMenu");
   const fileInput = document.getElementById("projectFileInput");
+
   exportButton?.addEventListener("click", (event) => {
     event.stopPropagation();
     document.getElementById("downloadMenu")?.classList.remove("show");
     handleExport();
   });
-  clearButton?.addEventListener("click", clearCurrentProject);
+  newButton?.addEventListener("click", () => {
+    closeNavOnMobile();
+    startNewProject();
+  });
   importButton?.addEventListener("click", (event) => {
     event.stopPropagation();
-    document.getElementById("photoSourcePicker")?.classList.remove("open");
+    closeNavOnMobile();
     fileInput?.click();
   });
   fileInput?.addEventListener("change", async () => {
     const file = fileInput.files?.[0] || null;
     fileInput.value = "";
-    if (!file) return;
-    if (hasMeaningfulContent(normalizeProjectStructure(captureProject()))) {
-      const proceed = await showDialog({
-        title: "開啟專案會取代目前內容",
-        message: "目前的照片和資料會被專案檔的內容取代。需要保留的話，請先匯出加密專案備份。",
-        tone: "warning",
-        confirmText: "開啟專案",
-        cancelText: "取消",
-      });
-      if (!proceed) return;
-    }
-    await handleImportFile(file);
+    if (file) await handleImportFile(file);
   });
+
+  titleButton?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (!currentProject) return;
+    openProjectMenu(currentProject.id, titleButton);
+  });
+
+  menu?.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    const button = event.target.closest("[data-project-action]");
+    if (!button || !projectMenuTargetId) return;
+    const id = projectMenuTargetId;
+    closeProjectMenu();
+    const action = button.dataset.projectAction;
+    if (action === "rename") await renameProject(id);
+    if (action === "pin") await togglePinProject(id);
+    if (action === "delete") await deleteProject(id);
+  });
+  document.addEventListener("click", closeProjectMenu);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menu?.classList.contains("show")) {
+      const anchor = projectMenuAnchor;
+      closeProjectMenu();
+      anchor?.focus();
+    }
+  });
+  window.addEventListener("resize", closeProjectMenu);
+  document.getElementById("navScroll")?.addEventListener("scroll", closeProjectMenu, {
+    passive: true,
+  });
+  // 讓「幾分鐘前」的時間保持正確
+  window.setInterval(renderProjectList, 60 * 1000);
 };
 
 const isProjectInput = (target) =>
@@ -1348,8 +1833,9 @@ export const initProjectPersistence = async ({ applyProject }) => {
   if (persistenceInitialized) return;
   persistenceInitialized = true;
   applyProjectSnapshot = applyProject;
-  let didRestoreDraft = false;
   setupProjectControls();
+  resetCurrentProject();
+  renderProjectHeader();
   document.addEventListener(PROJECT_CHANGED_EVENT, scheduleAutosave);
   document.addEventListener("input", (event) => {
     if (isProjectInput(event.target)) scheduleAutosave();
@@ -1362,48 +1848,28 @@ export const initProjectPersistence = async ({ applyProject }) => {
   });
 
   try {
-    const draftRecord = await getDraft();
-    if (draftRecord) {
-      let draft;
-      try {
-        draft = await normalizeDraftRecord(draftRecord);
-      } catch (error) {
-        console.warn("已移除無效或過期的本機草稿:", error);
-        await deleteDraft();
-      }
-      if (draft) {
-        const shouldRestore = await showRestorePrompt(draft);
-        if (shouldRestore) {
-          setProjectBusy(true, "正在恢復本機草稿…");
-          try {
-            await applyProjectSnapshot(draft);
-            didRestoreDraft = true;
-          } catch (error) {
-            await deleteDraft();
-            throw error;
-          }
-          setStorageStatus("已儲存", "saved");
-          showToast("已恢復上次未完成的專案", "success");
-        } else {
-          await deleteDraft();
-          setStorageStatus("尚無草稿", "idle");
-        }
-      }
+    await openDatabase();
+    await migrateLegacyDraft();
+    await refreshProjectList();
+    let lastId = null;
+    try {
+      lastId = localStorage.getItem(LAST_PROJECT_STORAGE_KEY);
+    } catch (_error) {
+      lastId = null;
+    }
+    persistenceSuspended = false;
+    if (lastId && projectIndex.some((item) => item.id === lastId)) {
+      await openProject(lastId);
     } else {
-      setStorageStatus("尚無草稿", "idle");
+      setStorageStatus("新專案", "idle");
     }
   } catch (error) {
-    console.error("草稿功能初始化失敗:", error);
+    console.error("專案儲存功能初始化失敗:", error);
     localDraftStorageAvailable = false;
-    setStorageStatus("草稿功能不可用", "error");
-    showToast("此瀏覽器目前無法使用本機草稿功能", "error", 5000);
+    setStorageStatus("無法自動儲存", "error");
+    showToast("此瀏覽器目前無法在本機儲存專案", "error", 5000);
   } finally {
-    setProjectBusy(false);
     persistenceSuspended = false;
     dirty = false;
-    if (didRestoreDraft && localDraftStorageAvailable) {
-      dirty = true;
-      await saveDraftNow();
-    }
   }
 };

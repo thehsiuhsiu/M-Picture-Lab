@@ -18,12 +18,12 @@
     />
     <meta
       name="theme-color"
-      content="#ffffff"
+      content="#faf9f5"
       media="(prefers-color-scheme: light)"
     />
     <meta
       name="theme-color"
-      content="#121212"
+      content="#262624"
       media="(prefers-color-scheme: dark)"
     />
     <link
@@ -49,9 +49,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20261020-3" />
+    <link rel="stylesheet" href="styles.css?v=20261020-4" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;600&amp;display=swap"
       rel="stylesheet"
     />
     <link
@@ -61,28 +61,99 @@
   </head>
 
   <body>
-    <header class="app-header">
-      <div class="brand-block">
+    <div id="navBackdrop" class="nav-backdrop" aria-hidden="true"></div>
+    <nav class="app-nav" id="appNav" aria-label="專案">
+      <div class="nav-header">
+        <a class="brand-link" href="./" title="M-Picture">
+          <img
+            class="brand-mark"
+            src="images/icons/brand-mark.png"
+            alt=""
+            width="46"
+            height="26"
+          />
+          <span class="brand-name">M-Picture</span>
+        </a>
         <button
           type="button"
-          id="mobileSettingsBtn"
-          class="icon-btn mobile-settings-btn"
-          aria-controls="projectSettings"
+          id="navToggleBtn"
+          class="icon-btn nav-toggle-btn"
+          aria-controls="appNav"
           aria-expanded="true"
-          aria-label="隱藏文件資料"
-          title="顯示或隱藏文件資料"
+          aria-label="收合側邊欄"
+          title="收合側邊欄"
         >
-          <span class="material-symbols-outlined icon-panel-open" aria-hidden="true">left_panel_open</span>
-          <span class="material-symbols-outlined icon-panel-close" aria-hidden="true">left_panel_close</span>
+          <span class="material-symbols-outlined icon-nav-close" aria-hidden="true">left_panel_close</span>
+          <span class="material-symbols-outlined icon-nav-open" aria-hidden="true">left_panel_open</span>
         </button>
-        <img
-          class="brand-mark"
-          src="images/icons/brand-mark.png"
-          alt=""
-          width="46"
-          height="26"
-        />
-        <h1>M-Picture</h1>
+      </div>
+      <div class="nav-actions">
+        <button type="button" id="newProjectBtn" class="nav-new-btn" title="新專案">
+          <span class="nav-new-icon" aria-hidden="true">
+            <span class="material-symbols-outlined">add</span>
+          </span>
+          <span class="nav-label">新專案</span>
+        </button>
+        <button type="button" id="openProjectBtn" class="nav-item" title="開啟加密專案檔">
+          <span class="material-symbols-outlined" aria-hidden="true">folder_open</span>
+          <span class="nav-label">開啟加密專案</span>
+        </button>
+      </div>
+      <div class="nav-scroll" id="navScroll">
+        <section class="nav-section" id="pinnedProjectsSection" aria-labelledby="pinnedProjectsTitle" hidden>
+          <h2 class="nav-section-title" id="pinnedProjectsTitle">已釘選</h2>
+          <ul class="project-list" id="pinnedProjectList"></ul>
+        </section>
+        <section class="nav-section" id="recentProjectsSection" aria-labelledby="recentProjectsTitle">
+          <h2 class="nav-section-title" id="recentProjectsTitle">最近</h2>
+          <ul class="project-list" id="recentProjectList"></ul>
+          <p class="nav-empty" id="projectListEmpty">
+            新增照片後，專案會自動儲存在這裡，直到你刪除為止。
+          </p>
+        </section>
+      </div>
+      <div class="nav-footer">
+        <p class="nav-storage" id="storageUsage">專案只存在這台裝置的瀏覽器中</p>
+        <p class="nav-footer-links">
+          <button type="button" id="privacyPolicyBtn" class="footer-link-btn">隱私權政策</button>
+          <span aria-hidden="true">・</span>
+          <span>© 2024 M-Picture</span>
+        </p>
+      </div>
+    </nav>
+
+    <header class="app-header">
+      <button
+        type="button"
+        id="navOpenBtn"
+        class="icon-btn nav-open-btn"
+        aria-controls="appNav"
+        aria-label="開啟專案清單"
+        title="開啟專案清單"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+      <div class="project-title-wrap">
+        <button
+          type="button"
+          id="projectTitleBtn"
+          class="project-title-btn"
+          aria-haspopup="menu"
+          aria-expanded="false"
+          aria-controls="projectMenu"
+          title="專案動作"
+        >
+          <span id="projectTitleText">新專案</span>
+          <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
+        </button>
+        <span
+          id="projectSaveStatus"
+          class="project-save-status"
+          data-status="idle"
+          role="status"
+          aria-live="polite"
+          >新專案</span
+        >
       </div>
 
       <div class="zip-controls">
@@ -124,6 +195,18 @@
             </button>
           </div>
         </div>
+        <button
+          type="button"
+          id="mobileSettingsBtn"
+          class="panel-toggle-btn"
+          aria-controls="projectSettings"
+          aria-expanded="true"
+          aria-label="隱藏文件資料"
+          title="顯示或隱藏文件資料"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">tune</span>
+          <span class="panel-toggle-text">文件資料</span>
+        </button>
         <div class="download-dropdown">
           <button
             type="button"
@@ -178,6 +261,21 @@
         </div>
       </div>
     </header>
+
+    <div class="project-menu menu-panel" id="projectMenu" role="menu" aria-label="專案動作">
+      <button type="button" class="menu-item" role="menuitem" data-project-action="rename">
+        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+        <span class="menu-label">重新命名</span>
+      </button>
+      <button type="button" class="menu-item" role="menuitem" data-project-action="pin">
+        <span class="material-symbols-outlined" aria-hidden="true">keep</span>
+        <span class="menu-label">釘選</span>
+      </button>
+      <button type="button" class="menu-item menu-item-danger" role="menuitem" data-project-action="delete">
+        <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+        <span class="menu-label">刪除專案</span>
+      </button>
+    </div>
     <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
     <aside class="sidebar" id="projectSettings" aria-label="文件資料">
       <div class="sidebar-heading">
@@ -556,14 +654,6 @@
             </button>
           </div>
         </div>
-        <span
-          id="projectSaveStatus"
-          class="project-save-status"
-          data-status="idle"
-          role="status"
-          aria-live="polite"
-          >草稿準備中</span
-        >
       </div>
       <div class="view-switch-container">
         <div class="photo-source-picker" id="photoSourcePicker">
@@ -575,14 +665,6 @@
             >
               <span class="material-symbols-outlined">add_photo_alternate</span>
               <span>從裝置選擇照片</span>
-            </button>
-            <button
-              type="button"
-              class="photo-source-option menu-item"
-              id="openProjectBtn"
-            >
-              <span class="material-symbols-outlined">folder_open</span>
-              <span>開啟加密專案</span>
             </button>
             <button
               type="button"
@@ -733,21 +815,6 @@
               <span class="material-symbols-outlined">add</span>
             </button>
           </div>
-        </div>
-        <div
-          class="project-toolbar preview-project-toolbar"
-          aria-label="專案管理"
-        >
-
-          <button
-            type="button"
-            id="clearProjectBtn"
-            class="project-tool-btn project-clear-btn"
-            title="清除所有照片與草稿"
-            aria-label="清除所有照片與草稿"
-          >
-            <span class="material-symbols-outlined">delete_sweep</span>
-          </button>
         </div>
       </div>
       <div class="container">
@@ -1142,36 +1209,6 @@
       </div>
     </div>
 
-    <div
-      id="projectRestoreModal"
-      class="modal info-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-hidden="true"
-      aria-labelledby="projectRestoreTitle"
-    >
-      <div class="project-dialog-content">
-        <h2 id="projectRestoreTitle">發現未完成的專案</h2>
-        <p id="projectRestoreSummary"></p>
-        <p>草稿只儲存在這台裝置的目前瀏覽器中。</p>
-        <div class="project-dialog-actions">
-          <button
-            type="button"
-            class="project-dialog-secondary project-discard-btn"
-            id="projectDiscardBtn"
-          >
-            捨棄草稿
-          </button>
-          <button
-            type="button"
-            class="project-dialog-primary"
-            id="projectRestoreBtn"
-          >
-            繼續編輯
-          </button>
-        </div>
-      </div>
-    </div>
 
     <div id="projectBusyModal" class="modal loading-modal" role="status" aria-live="polite">
       <div class="modal-content">
@@ -1180,16 +1217,8 @@
       </div>
     </div>
 
-    <script type="module" src="js/main.js?v=20261020-2"></script>
+    <script type="module" src="js/main.js?v=20261020-3"></script>
 
-    <footer>
-      <p class="footer-text">
-        <span>© 2024 M-Picture</span>
-        <button type="button" id="privacyPolicyBtn" class="footer-link-btn">
-          隱私權政策
-        </button>
-      </p>
-    </footer>
 
     <div id="consentModal" class="modal consent-modal" aria-hidden="true">
       <div
@@ -1219,9 +1248,7 @@
         <section>
           <h3>隱私權聲明</h3>
           <p>
-            本網頁不提供伺服器端照片儲存，照片處理在使用者瀏覽器本機完成。為協助使用者繼續未完成的工作，專案草稿會自動儲存在目前瀏覽器中，自最後一次自動儲存起保留
-            2
-            小時；再次開啟網站時會檢查並清除過期草稿，使用者也可隨時手動清除。Google
+            本網頁不提供伺服器端照片儲存，照片處理在使用者瀏覽器本機完成。為方便使用者繼續先前的工作，每個專案都會自動儲存在目前裝置的瀏覽器中，並且一直保存到使用者自行刪除為止；本網站不會自動刪除。若裝置可能由他人使用，請在工作完成後刪除不需要的專案。Google
             相簿匯入功能目前未對外公開，僅供測試人員手動選取照片進行測試使用。
           </p>
           <p>
@@ -1285,7 +1312,7 @@
           <span class="material-symbols-outlined">close</span>
         </button>
         <h2 id="privacyModalTitle">M-Picture 隱私權政策</h2>
-        <p class="privacy-updated">最後更新：2026-08-23</p>
+        <p class="privacy-updated">最後更新：2026-10-20</p>
 
         <section>
           <h3>資料處理原則</h3>
@@ -1312,11 +1339,9 @@
         </section>
 
         <section>
-          <h3>本機專案草稿</h3>
+          <h3>本機專案儲存</h3>
           <p>
-            為協助使用者繼續未完成的工作，本網站會將專案欄位、設定與照片草稿儲存在目前裝置的瀏覽器中。草稿自最後一次自動儲存起保留
-            2
-            小時；再次開啟本網站時，系統會檢查並清除已過期的草稿。網站關閉期間無法主動執行刪除，因此過期資料可能由瀏覽器保留至再次開啟本網站或手動清除網站資料為止。草稿不會上傳至伺服器，使用者可隨時透過「清除目前專案」移除草稿。清除瀏覽器網站資料、使用無痕模式、變更瀏覽器或裝置後，草稿可能無法復原。
+            為了讓使用者可以隨時回到之前的工作，本網站會將每個專案的欄位、設定與照片自動儲存在目前裝置的瀏覽器中，並列在左側的專案清單。專案會一直保存在這台裝置上，直到使用者在清單中刪除該專案，或自行清除瀏覽器的網站資料為止；本網站不會自動刪除，也不會上傳至伺服器。若裝置可能由他人使用，請在工作完成後刪除不需要的專案。清除瀏覽器網站資料、使用無痕模式、變更瀏覽器或裝置後，專案可能無法復原；需要長期保存或移到其他裝置時，請匯出加密專案檔。
           </p>
         </section>
 
@@ -1438,15 +1463,21 @@
         <section>
           <h3>離開網頁後可以繼續編輯嗎？</h3>
           <p>
-            可以。變更會自動儲存在目前瀏覽器中，並自最後一次自動儲存起保留 2
-            小時。請在期限內重新開啟網頁並選擇繼續編輯；超過期限的草稿會在再次開啟網站時清除。若需要保存更久，請從右上角「輸出」選單匯出加密專案檔。
+            可以。每個專案都會自動儲存在這台裝置的瀏覽器中，並列在左側的專案清單。下次開啟網站時會自動回到上次的專案，也可以從清單點選其他專案。專案會一直保存到你刪除為止。
+          </p>
+        </section>
+
+        <section>
+          <h3>如何管理專案清單？</h3>
+          <p>
+            按左側的「新專案」開始新的工作，原本的專案會留在清單中。把滑鼠移到專案上（手機上直接點）右側的「⋯」，可以重新命名、釘選到清單最上方，或刪除專案；點頂端的專案名稱也有同樣的選單。刪除後無法復原，需要保留請先匯出加密專案。
           </p>
         </section>
 
         <section>
           <h3>為什麼顯示「儲存失敗」？</h3>
           <p>
-            可能原因包括裝置或瀏覽器儲存空間不足、瀏覽器停用或限制網站資料、使用無痕或私密瀏覽模式、其他分頁暫時占用草稿資料庫，或瀏覽器不支援本機草稿功能。請先關閉本網站的其他分頁、確認瀏覽器允許儲存網站資料並釋放空間，再重新整理網頁。若仍無法儲存，請立即從右上角「輸出」選單匯出加密專案檔，以免資料遺失。
+            可能原因包括裝置或瀏覽器儲存空間不足、瀏覽器停用或限制網站資料、使用無痕或私密瀏覽模式、其他分頁暫時占用專案資料庫，或瀏覽器不支援本機儲存功能。請先關閉本網站的其他分頁、確認瀏覽器允許儲存網站資料並釋放空間，再重新整理網頁。若仍無法儲存，請立即從右上角「輸出」選單匯出加密專案檔，以免資料遺失。
           </p>
         </section>
 
