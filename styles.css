@@ -9,27 +9,29 @@
   /* 字型 */
   --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
     system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: "Source Serif 4", "Noto Serif TC", "Songti TC", Georgia,
-    serif;
+  /* 介面一律用黑體；文件字型另由 .font-preview-* 設定 */
+  --font-serif: var(--font-sans);
 
   /* 色彩 */
-  --bg: #faf9f5;
-  --nav-bg: #f4f2ea;
+  --bg: #ffffff;
+  --nav-bg: #fafaf9;
   --surface: #ffffff;
-  --surface-2: #f6f5f0;
-  --surface-3: #eceadf;
-  --hover: rgba(31, 30, 29, 0.06);
-  --active: rgba(31, 30, 29, 0.09);
-  --border: #e2dfd5;
-  --border-strong: #cdc9bc;
+  --surface-2: #fbfbfa;
+  --surface-3: #f3f3f1;
+  --hover: rgba(31, 30, 29, 0.05);
+  --active: rgba(31, 30, 29, 0.08);
+  --border: #e8e7e3;
+  --border-strong: #d6d5d0;
   --text: #1f1e1d;
   --text-2: #4a4945;
-  --text-3: #7c7a73;
-  --accent: #c96442;
-  --accent-hover: #b45637;
-  --accent-soft: #f7e9e2;
-  --accent-ink: #a84d2f;
-  --on-accent: #ffffff;
+  --text-3: #6b6963;
+  --accent: #c3c4ab;
+  --accent-hover: #b3b497;
+  --accent-soft: #ececdf;
+  --accent-ink: #4f5038;
+  /* 開關、勾選等需要和灰色明顯區分的地方 */
+  --accent-strong: #7d7e62;
+  --on-accent: #1f1e1d;
   --danger: #b4382c;
   --danger-soft: #f9e6e3;
   --success: #3d7a4f;
@@ -37,7 +39,7 @@
   --warning: #96600e;
   --warning-soft: #f8eedb;
   --overlay: rgba(31, 30, 29, 0.42);
-  --ring: 0 0 0 3px rgba(201, 100, 66, 0.28);
+  --ring: 0 0 0 3px rgba(122, 124, 94, 0.4);
   --shadow-sm: 0 1px 2px rgba(31, 30, 29, 0.06);
   --shadow-md: 0 4px 16px rgba(31, 30, 29, 0.08), 0 1px 3px rgba(31, 30, 29, 0.06);
   --shadow-lg: 0 16px 48px rgba(31, 30, 29, 0.18);
@@ -67,11 +69,11 @@
   --input-text-area-bg: var(--surface-2);
   --shadow-primary: rgba(31, 30, 29, 0.12);
   --shadow-secondary: var(--border);
-  --link-primary: var(--accent);
+  --link-primary: var(--accent-ink);
   --switch-bg-checked: var(--accent);
   --sidebar-label: var(--text-2);
   --surface-border: var(--border);
-  --input-focus-shadow: rgba(201, 100, 66, 0.28);
+  --input-focus-shadow: rgba(122, 124, 94, 0.4);
 
   color-scheme: light;
 }
@@ -89,11 +91,12 @@ html[data-theme="dark"] {
   --text: #f5f4ef;
   --text-2: #c9c6bb;
   --text-3: #9b988e;
-  --accent: #d97757;
-  --accent-hover: #e48a6c;
-  --accent-soft: rgba(217, 119, 87, 0.16);
-  --accent-ink: #eb9a7e;
-  --on-accent: #ffffff;
+  --accent: #c3c4ab;
+  --accent-hover: #d2d3bd;
+  --accent-soft: rgba(195, 196, 171, 0.16);
+  --accent-ink: #d6d7c2;
+  --accent-strong: #9fa084;
+  --on-accent: #1f1e1d;
   --danger: #f08070;
   --danger-soft: rgba(240, 128, 112, 0.14);
   --success: #7cc28f;
@@ -101,12 +104,12 @@ html[data-theme="dark"] {
   --warning: #e7b464;
   --warning-soft: rgba(231, 180, 100, 0.14);
   --overlay: rgba(0, 0, 0, 0.58);
-  --ring: 0 0 0 3px rgba(217, 119, 87, 0.35);
+  --ring: 0 0 0 3px rgba(195, 196, 171, 0.4);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 18px 52px rgba(0, 0, 0, 0.55);
   --shadow-primary: rgba(0, 0, 0, 0.45);
-  --input-focus-shadow: rgba(217, 119, 87, 0.35);
+  --input-focus-shadow: rgba(195, 196, 171, 0.4);
   color-scheme: dark;
 }
 
@@ -122,7 +125,7 @@ html[data-theme="dark"] {
     --text: #f5f4ef;
     --text-2: #c9c6bb;
     --text-3: #9b988e;
-    --accent: #d97757;
+    --accent: #c3c4ab;
     color-scheme: dark;
   }
 }
@@ -379,7 +382,7 @@ html[data-theme="dark"] .brand-mark {
   overflow: hidden;
   font-family: var(--font-serif);
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -979,7 +982,7 @@ html:not([data-theme-mode]) .theme-toggle-icon .theme-icon-system {
 }
 
 .switch input:checked + .slider {
-  background: var(--accent);
+  background: var(--accent-strong);
 }
 
 .switch input:checked + .slider::before {
@@ -1758,7 +1761,7 @@ body.format-right .exif-date-warning {
   width: 15px;
   height: 15px;
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--accent-strong);
   cursor: pointer;
 }
 
@@ -2120,7 +2123,7 @@ body.format-right .exif-date-warning {
   height: 18px;
   flex: 0 0 auto;
   margin: 2px 0 0;
-  accent-color: var(--accent);
+  accent-color: var(--accent-strong);
 }
 
 /* 主要／次要按鈕 */
