@@ -1,15 +1,16 @@
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-3";
-import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261020-3";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261020-3";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-4";
+import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261020-4";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261020-4";
 import {
   createObjectUrl,
   revokeObjectUrl,
   showDialog,
+  showNotice,
   showPromptDialog,
   showToast,
-} from "./utils.js?v=20261020-3";
-import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261020-3";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-3";
+} from "./utils.js?v=20261020-4";
+import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261020-4";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-4";
 
 const DATABASE_NAME = "mpicture-local-projects-v1";
 const DATABASE_VERSION = 3;
@@ -93,6 +94,7 @@ const decoder = new TextDecoder("utf-8", { fatal: true });
 let databasePromise = null;
 let autosaveTimer = null;
 let saveInProgress = false;
+let activeSave = Promise.resolve();
 let saveRequestedWhileBusy = false;
 let persistenceSuspended = true;
 let dirty = false;
@@ -368,19 +370,28 @@ const putProjectRecord = async (project) => {
   };
   const nextKeys = new Set(imageKeys);
 
+  // iPhone／iPad 的 WebKit 存進 IndexedDB 的 Blob 之後可能讀回空檔，
+  // 因此照片一律以原始位元組（ArrayBuffer）儲存，讀取時再組回 Blob。
+  const newImageData = [];
+  for (let index = 0; index < state.selectedImages.length; index += 1) {
+    const key = imageKeys[index];
+    if (persistedImageKeys.has(key)) continue;
+    const blob = state.selectedImages[index].blob;
+    const bytes = await blob.arrayBuffer();
+    if (!bytes.byteLength) throw new Error("照片資料讀取失敗，無法儲存專案");
+    newImageData.push({ key, projectId: meta.id, type: blob.type, bytes });
+  }
+
   await runTransaction([PROJECT_STORE, PROJECT_IMAGE_STORE], "readwrite", (stores) => {
     stores[PROJECT_STORE].put(record);
-    state.selectedImages.forEach((image, index) => {
-      const key = imageKeys[index];
-      if (!persistedImageKeys.has(key)) {
-        stores[PROJECT_IMAGE_STORE].put({ key, projectId: meta.id, blob: image.blob });
-      }
-    });
+    newImageData.forEach((entry) => stores[PROJECT_IMAGE_STORE].put(entry));
     persistedImageKeys.forEach((key) => {
       if (!nextKeys.has(key)) stores[PROJECT_IMAGE_STORE].delete(key);
     });
   });
 
+  // 儲存期間若已切換到別的專案，就不要改動新專案的狀態
+  if (currentProject !== meta) return;
   persistedImageKeys = nextKeys;
   meta.autoName = autoName;
   meta.isStored = true;
@@ -438,7 +449,8 @@ const detectImageType = (bytes) => {
 
 const validateImageBlob = async (blob, declaredType) => {
   if (!(blob instanceof Blob)) throw new Error("圖片內容不是有效的二進位資料");
-  if (!blob.size || blob.size > IMAGE_SECURITY_LIMITS.maxFileBytes) {
+  if (!blob.size) throw new Error("照片資料讀取失敗（內容是空的）");
+  if (blob.size > IMAGE_SECURITY_LIMITS.maxFileBytes) {
     throw new Error("圖片大小超過安全限制");
   }
   const safeDeclaredType = requireEnum(declaredType, SAFE_IMAGE_TYPES, "圖片類型");
@@ -808,16 +820,38 @@ const normalizeProjectRecord = async (record) => {
   }
   const storedImages = await getProjectImages(imageKeys);
   const images = [];
+  const loadedKeys = [];
+  const upToDateKeys = [];
+  const unreadable = [];
   for (let index = 0; index < normalized.images.length; index += 1) {
     const key = imageKeys[index];
-    const source = storedImages.get(key);
-    if (!source || source.key !== key || source.projectId !== id) {
-      throw new Error("專案照片資料遺失");
-    }
     const metadata = normalized.images[index];
-    await validateImageBlob(source.blob, metadata.type);
-    if (source.blob.size !== metadata.size) throw new Error("專案照片大小不一致");
-    images.push({ ...metadata, blob: source.blob });
+    try {
+      const source = storedImages.get(key);
+      if (!source || source.key !== key || source.projectId !== id) {
+        throw new Error("專案照片資料遺失");
+      }
+      let blob;
+      let isCurrentFormat = false;
+      if (source.bytes instanceof ArrayBuffer) {
+        blob = new Blob([source.bytes], { type: metadata.type });
+        isCurrentFormat = true;
+      } else if (source.blob instanceof Blob) {
+        // 舊格式：先讀成位元組確認可讀，下次儲存時改用新格式
+        const bytes = await source.blob.arrayBuffer();
+        blob = new Blob([bytes], { type: metadata.type });
+      } else {
+        throw new Error("專案照片資料遺失");
+      }
+      await validateImageBlob(blob, metadata.type);
+      if (blob.size !== metadata.size) throw new Error("專案照片大小不一致");
+      images.push({ ...metadata, blob });
+      loadedKeys.push(key);
+      if (isCurrentFormat) upToDateKeys.push(key);
+    } catch (error) {
+      console.warn(`第 ${index + 1} 張照片無法讀取:`, error);
+      unreadable.push(metadata.name || `第 ${index + 1} 張照片`);
+    }
   }
   return {
     meta: {
@@ -828,7 +862,9 @@ const normalizeProjectRecord = async (record) => {
       createdAt: String(stored.createdAt || stored.updatedAt || ""),
       isStored: true,
     },
-    imageKeys,
+    imageKeys: loadedKeys,
+    upToDateKeys,
+    unreadable,
     project: { ...normalized, images },
   };
 };
@@ -858,6 +894,10 @@ const saveDraftNow = async () => {
   }
 
   saveInProgress = true;
+  let finishSave;
+  activeSave = new Promise((resolve) => {
+    finishSave = resolve;
+  });
   dirty = true;
   setStorageStatus("儲存中…", "saving");
   const project = captureProject();
@@ -897,6 +937,7 @@ const saveDraftNow = async () => {
     showToast(error.message || "專案自動儲存失敗", "error", 5000);
   } finally {
     saveInProgress = false;
+    finishSave();
     if (saveRequestedWhileBusy) {
       saveRequestedWhileBusy = false;
       scheduleAutosave();
@@ -920,11 +961,17 @@ const scheduleAutosave = () => {
 
 /** 切換專案前，把目前專案尚未寫入的變更存好。 */
 const flushPendingSave = async () => {
-  window.clearTimeout(autosaveTimer);
-  for (let attempt = 0; attempt < 50 && saveInProgress; attempt += 1) {
-    await new Promise((resolve) => window.setTimeout(resolve, 100));
+  // 等目前這次儲存真正完成（照片多時可能需要較久），再把剩下的變更存好。
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    window.clearTimeout(autosaveTimer);
+    if (saveInProgress) {
+      await activeSave;
+    } else if (dirty && localDraftStorageAvailable && !persistenceSuspended) {
+      await saveDraftNow();
+    } else {
+      return;
+    }
   }
-  if (dirty && localDraftStorageAvailable) await saveDraftNow();
 };
 
 const buildHeader = (salt, manifestIv) => {
@@ -1373,6 +1420,8 @@ const startNewProject = async () => {
 
 const openProject = async (id) => {
   if (currentProject?.id === id) return;
+  let needsResave = false;
+  let unreadablePhotos = [];
   await flushPendingSave();
   setProjectBusy(true, "正在開啟專案…");
   persistenceSuspended = true;
@@ -1385,8 +1434,10 @@ const openProject = async (id) => {
     loaded.project.images.forEach((image, index) => {
       blobStorageKeys.set(image.blob, loaded.imageKeys[index]);
     });
-    persistedImageKeys = new Set(loaded.imageKeys);
+    persistedImageKeys = new Set(loaded.upToDateKeys);
     await applyProjectSnapshot(loaded.project);
+    needsResave = loaded.upToDateKeys.length !== loaded.imageKeys.length;
+    unreadablePhotos = loaded.unreadable;
     try {
       localStorage.setItem(LAST_PROJECT_STORAGE_KEY, id);
     } catch (_error) {
@@ -1403,6 +1454,18 @@ const openProject = async (id) => {
     renderProjectHeader();
     renderProjectList();
   }
+  if (unreadablePhotos.length) {
+    needsResave = true;
+    showNotice({
+      title: `有 ${unreadablePhotos.length} 張照片讀取不到`,
+      message:
+        "這台裝置的瀏覽器沒有完整保留這些照片，專案已先開啟其他照片。若手邊還有原始照片，請重新加入。",
+      details: unreadablePhotos,
+      tone: "warning",
+    });
+  }
+  // 舊格式或有照片讀不到時，用新格式重新儲存一次
+  if (needsResave) scheduleAutosave();
 };
 
 const renameProject = async (id) => {
@@ -1515,12 +1578,14 @@ const migrateLegacyDraft = async () => {
       );
       const id = createProjectId();
       const imageKeys = imageIds.map(() => createImageKey(id));
-      const blobs = [];
+      const buffers = [];
       for (let index = 0; index < imageIds.length; index += 1) {
         const source = legacyImages?.get(imageIds[index]);
         if (!source?.blob) throw new Error("舊草稿照片遺失");
-        await validateImageBlob(source.blob, normalized.images[index].type);
-        blobs.push(source.blob);
+        const type = normalized.images[index].type;
+        const bytes = await source.blob.arrayBuffer();
+        await validateImageBlob(new Blob([bytes], { type }), type);
+        buffers.push({ type, bytes });
       }
       const createdAt = normalized.savedAt || new Date().toISOString();
       await runTransaction([PROJECT_STORE, PROJECT_IMAGE_STORE], "readwrite", (stores) => {
@@ -1538,8 +1603,8 @@ const migrateLegacyDraft = async () => {
             images: normalized.images.map(({ blob, ...metadata }) => metadata),
           },
         });
-        blobs.forEach((blob, index) => {
-          stores[PROJECT_IMAGE_STORE].put({ key: imageKeys[index], projectId: id, blob });
+        buffers.forEach(({ type, bytes }, index) => {
+          stores[PROJECT_IMAGE_STORE].put({ key: imageKeys[index], projectId: id, type, bytes });
         });
       });
       try {

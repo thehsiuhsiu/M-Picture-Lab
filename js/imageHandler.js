@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-3";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-4";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,18 +14,18 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261020-3";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261020-3";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261020-3";
+} from "./utils.js?v=20261020-4";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261020-4";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261020-4";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261020-3";
+} from "./photoNumbering.js?v=20261020-4";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261020-3";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261020-3";
+} from "./splitGroupLogic.js?v=20261020-4";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261020-4";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
