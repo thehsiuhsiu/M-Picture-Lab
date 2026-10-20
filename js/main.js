@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js";
+import { state } from "./state.js?v=20261020-2";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -15,28 +15,28 @@ import {
   confirmMissingDatesBeforeExport,
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
-} from "./imageHandler.js?v=20260906-1";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20260901-12";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20260903-17";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20260906-1";
-import { initGooglePhotosImport } from "./googlePhotos.js";
+} from "./imageHandler.js?v=20261020-2";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261020-2";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261020-2";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261020-2";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261020-2";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20260905-14";
-import { notifyProjectChanged } from "./projectEvents.js";
-import { initDocumentPreview } from "./documentPreview.js?v=20261020-1";
+} from "./projectPersistence.js?v=20261020-2";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261020-2";
+import { initDocumentPreview } from "./documentPreview.js?v=20261020-2";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20260901-15";
+} from "./photoNumbering.js?v=20261020-2";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-2";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261020-2";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js";
+} from "./splitOrderManager.js?v=20261020-2";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -236,8 +236,9 @@ const setupDraggableFormatToggle = (toggleContainer) => {
 
   const getMetrics = () => {
     const rect = toggleContainer.getBoundingClientRect();
-    const inset = 2;
-    const step = rect.width / values.length;
+    // 與 styles.css 的 .toggle-container::before 一致：左右各留 3px，寬度三等分。
+    const inset = 3;
+    const step = (rect.width - inset * 2) / values.length;
     return {
       rect,
       inset,
@@ -305,7 +306,10 @@ const setupDraggableFormatToggle = (toggleContainer) => {
     const startLeft = metrics.inset + metrics.step * startIndex;
     const tapIndex = Math.min(
       values.length - 1,
-      Math.max(0, Math.floor((event.clientX - metrics.rect.left) / metrics.step)),
+      Math.max(
+        0,
+        Math.floor((event.clientX - metrics.rect.left - metrics.inset) / metrics.step),
+      ),
     );
 
     dragState = {
@@ -626,11 +630,11 @@ const init = () => {
     e.stopPropagation();
     setDownloadMenuOpen(false);
     if (state.selectedFormat === "right") {
-      showToast("多格照片檔案限定列印/PDF", "warning");
+      showToast("多格照片版型只能輸出 PDF。", "warning");
       return;
     }
     if (!(await confirmSplitOrderBeforeExport())) return;
-    if (!confirmMissingDatesBeforeExport()) return;
+    if (!(await confirmMissingDatesBeforeExport())) return;
     handleGenerateWrapper(e);
   });
 
@@ -638,7 +642,7 @@ const init = () => {
     e.stopPropagation();
     setDownloadMenuOpen(false);
     if (!(await confirmSplitOrderBeforeExport())) return;
-    if (!confirmMissingDatesBeforeExport()) return;
+    if (!(await confirmMissingDatesBeforeExport())) return;
     handleGeneratePDF();
   });
 
@@ -646,10 +650,7 @@ const init = () => {
     e.stopPropagation();
     setDownloadMenuOpen(false);
     if (!state.selectedImages.length) {
-      showToast(
-        "打包照片的紙箱準備好了…但沒有看到照片，只看到小貓在裡面睡了一整個下午💤",
-        "error",
-      );
+      showToast("請先新增照片，再打包下載。", "warning");
       return;
     }
 
@@ -716,9 +717,7 @@ const setupEventListeners = () => {
     }
 
     console.error("Uncaught error:", event.error || event.message);
-    alert(
-      "發生了意外錯誤。請重新加載頁面並重試。如果問題持續存在，請聯繫維護者。",
-    );
+    showToast("發生了意外錯誤。請重新整理頁面後再試一次。", "error", 6000);
   });
 };
 
@@ -829,14 +828,13 @@ const setupPhotoSizeSlider = () => {
   const sizeIncBtn = document.getElementById("sizeIncBtn");
 
   const updateImageSizes = () => {
-    const imgs = document.querySelectorAll(".image-container img");
-    imgs.forEach((img) => {
-      img.style.maxWidth = slider.value + "px";
-      img.style.maxHeight = slider.value + "px";
-    });
+    document
+      .getElementById("imagePreview")
+      ?.style.setProperty("--photo-size", `${slider.value}px`);
   };
 
   slider.addEventListener("input", updateImageSizes);
+  updateImageSizes();
 
   sizeDecBtn.addEventListener("click", () => {
     const newValue = Math.max(
@@ -878,15 +876,9 @@ const setupDateModeSwitch = () => {
   const dateModeLabel = document.getElementById("dateModeLabel");
 
   function setDateInputMode() {
-    if (dateSwitch.checked) {
-      dateInput.disabled = false;
-      dateModeLabel.textContent = "Auto-fill EXIF";
-      dateModeLabel.classList.remove("disabled");
-    } else {
-      dateInput.disabled = false;
-      dateModeLabel.textContent = "Auto-fill EXIF";
-      dateModeLabel.classList.add("disabled");
-    }
+    dateInput.disabled = false;
+    dateModeLabel.textContent = "自動帶入照片日期";
+    dateModeLabel.classList.toggle("disabled", !dateSwitch.checked);
     updateExifDateWarnings();
   }
 
@@ -1185,7 +1177,7 @@ const setupResponsiveSidebar = () => {
     openButton.setAttribute("aria-expanded", String(isExpanded));
     openButton.setAttribute(
       "aria-label",
-      `${isExpanded ? "隱藏" : "顯示"}文件設定`,
+      `${isExpanded ? "隱藏" : "顯示"}文件資料`,
     );
     sidebar.inert = !isExpanded;
   };

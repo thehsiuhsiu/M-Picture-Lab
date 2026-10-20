@@ -1,12 +1,12 @@
-import { state } from "./state.js";
-import { notifyProjectChanged } from "./projectEvents.js";
-import { showToast } from "./utils.js";
-import { getPhotoNumber } from "./photoNumbering.js";
+import { state } from "./state.js?v=20261020-2";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261020-2";
+import { showDialog, showToast } from "./utils.js?v=20261020-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261020-2";
 import {
   acceptCurrentSplitGroupForImages,
   getSplitGroupIntegrityForImages,
   restoreSplitGroupAtCurrentPositionForImages,
-} from "./splitGroupLogic.js";
+} from "./splitGroupLogic.js?v=20261020-2";
 
 let dismissedFingerprint = "";
 
@@ -137,10 +137,14 @@ const showIssueDetails = (issues) => {
       const accept = document.createElement("button");
       accept.type = "button";
       accept.textContent = "接受目前分段";
-      accept.addEventListener("click", () => {
-        const confirmed = confirm(
-          "將目前仍存在的分段視為完整群組並重新編號。已刪除的分段無法復原，確定繼續嗎？",
-        );
+      accept.addEventListener("click", async () => {
+        const confirmed = await showDialog({
+          title: "接受目前的分段？",
+          message: "目前仍存在的分段會視為完整群組並重新編號。已刪除的分段無法復原。",
+          tone: "warning",
+          confirmText: "接受",
+          cancelText: "取消",
+        });
         if (!confirmed) return;
         acceptCurrentSplitGroup(issue.groupId);
         overlay.remove();

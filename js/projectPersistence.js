@@ -1,9 +1,9 @@
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js";
-import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js";
-import { createObjectUrl, revokeObjectUrl, showToast } from "./utils.js";
-import { normalizePhotoStartNumber } from "./photoNumbering.js";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-2";
+import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261020-2";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261020-2";
+import { createObjectUrl, revokeObjectUrl, showDialog, showToast } from "./utils.js?v=20261020-2";
+import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261020-2";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-2";
 
 const DATABASE_NAME = "mpicture-local-projects-v1";
 const DATABASE_VERSION = 2;
@@ -1279,7 +1279,14 @@ const createEmptyProject = () => ({
 });
 
 const clearCurrentProject = async () => {
-  if (!confirm("確定要清除目前專案與本機自動儲存草稿嗎？此操作無法復原。")) return;
+  const confirmed = await showDialog({
+    title: "清除所有照片與草稿？",
+    message: "目前的照片、填寫的資料，以及這台裝置上自動儲存的草稿都會刪除，無法復原。",
+    tone: "danger",
+    confirmText: "全部清除",
+    cancelText: "取消",
+  });
+  if (!confirmed) return;
   persistenceSuspended = true;
   try {
     await applyProjectSnapshot(createEmptyProject());
@@ -1316,7 +1323,13 @@ const setupProjectControls = () => {
     fileInput.value = "";
     if (!file) return;
     if (hasMeaningfulContent(normalizeProjectStructure(captureProject()))) {
-      const proceed = confirm("開啟專案檔會取代目前內容。建議先匯出備份，是否繼續？");
+      const proceed = await showDialog({
+        title: "開啟專案會取代目前內容",
+        message: "目前的照片和資料會被專案檔的內容取代。需要保留的話，請先匯出加密專案備份。",
+        tone: "warning",
+        confirmText: "開啟專案",
+        cancelText: "取消",
+      });
       if (!proceed) return;
     }
     await handleImportFile(file);

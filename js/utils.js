@@ -51,6 +51,142 @@ export const showToast = (message, type = "info", duration = 3000) => {
   }, duration);
 };
 
+// ============ 對話框 ============
+
+const DIALOG_ICONS = {
+  danger: "delete",
+  warning: "warning",
+  info: "info",
+  error: "error",
+};
+
+/**
+ * 顯示網站樣式的對話框，取代瀏覽器原生的 alert / confirm。
+ * @param {object} options
+ * @param {string} options.title - 標題
+ * @param {string} [options.message] - 內文
+ * @param {string[]} [options.details] - 條列細節（例如檔名清單）
+ * @param {"danger"|"warning"|"info"|"error"} [options.tone]
+ * @param {string} [options.confirmText] - 主要按鈕文字
+ * @param {string|null} [options.cancelText] - 次要按鈕文字；傳 null 則只顯示一個按鈕
+ * @returns {Promise<boolean>} 按下主要按鈕為 true，其餘為 false
+ */
+export const showDialog = ({
+  title,
+  message = "",
+  details = [],
+  tone = "info",
+  confirmText = "確定",
+  cancelText = "取消",
+} = {}) =>
+  new Promise((resolve) => {
+    const previouslyFocused = document.activeElement;
+    const overlay = document.createElement("div");
+    overlay.className = "delete-confirm-overlay app-dialog-overlay";
+
+    const dialog = document.createElement("div");
+    dialog.className = `delete-confirm-dialog app-dialog tone-${tone}`;
+    dialog.setAttribute("role", cancelText === null ? "alertdialog" : "dialog");
+    dialog.setAttribute("aria-modal", "true");
+
+    const icon = document.createElement("div");
+    icon.className = "delete-confirm-icon";
+    icon.setAttribute("aria-hidden", "true");
+    const iconGlyph = document.createElement("span");
+    iconGlyph.className = "material-symbols-outlined";
+    iconGlyph.textContent = DIALOG_ICONS[tone] || DIALOG_ICONS.info;
+    icon.appendChild(iconGlyph);
+    dialog.appendChild(icon);
+
+    const titleId = `appDialogTitle${Date.now()}`;
+    const titleElement = document.createElement("h2");
+    titleElement.className = "delete-confirm-title";
+    titleElement.id = titleId;
+    titleElement.textContent = String(title ?? "");
+    dialog.setAttribute("aria-labelledby", titleId);
+    dialog.appendChild(titleElement);
+
+    if (message) {
+      const messageElement = document.createElement("p");
+      messageElement.className = "delete-confirm-message";
+      messageElement.textContent = String(message);
+      dialog.appendChild(messageElement);
+    }
+
+    const detailList = Array.from(details || []).filter(Boolean);
+    if (detailList.length) {
+      const list = document.createElement("ul");
+      list.className = "app-dialog-details";
+      detailList.forEach((item) => {
+        const row = document.createElement("li");
+        row.textContent = String(item);
+        list.appendChild(row);
+      });
+      dialog.appendChild(list);
+    }
+
+    const buttons = document.createElement("div");
+    buttons.className = "delete-confirm-buttons";
+    let cancelButton = null;
+    if (cancelText !== null) {
+      cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.className = "delete-confirm-btn cancel";
+      cancelButton.textContent = cancelText;
+      buttons.appendChild(cancelButton);
+    }
+    const confirmButton = document.createElement("button");
+    confirmButton.type = "button";
+    confirmButton.className = "delete-confirm-btn confirm";
+    confirmButton.textContent = confirmText;
+    buttons.appendChild(confirmButton);
+    dialog.appendChild(buttons);
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+      overlay.classList.add("show");
+      confirmButton.focus();
+    });
+
+    const close = (result) => {
+      document.removeEventListener("keydown", handleKeydown, true);
+      overlay.classList.remove("show");
+      setTimeout(() => {
+        overlay.remove();
+        if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
+        resolve(result);
+      }, 180);
+    };
+
+    const handleKeydown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        close(false);
+      } else if (event.key === "Tab") {
+        const focusables = [cancelButton, confirmButton].filter(Boolean);
+        const index = focusables.indexOf(document.activeElement);
+        event.preventDefault();
+        const next = event.shiftKey
+          ? focusables[(index - 1 + focusables.length) % focusables.length]
+          : focusables[(index + 1) % focusables.length];
+        next.focus();
+      }
+    };
+
+    cancelButton?.addEventListener("click", () => close(false));
+    confirmButton.addEventListener("click", () => close(true));
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) close(false);
+    });
+    document.addEventListener("keydown", handleKeydown, true);
+  });
+
+/** 只有一個「知道了」按鈕的提示對話框。 */
+export const showNotice = (options) =>
+  showDialog({ confirmText: "知道了", cancelText: null, ...options });
+
 // ============ 共用 HTML 內容 ============
 
 /**
@@ -59,15 +195,10 @@ export const showToast = (message, type = "info", duration = 3000) => {
 export const EMPTY_STATE_HTML = `
     <div class="empty-state-minimal">
       <span class="empty-state-icon" aria-hidden="true">
-        <svg class="empty-state-glyph" viewBox="0 0 24 24" focusable="false">
-          <rect x="3.5" y="6.5" width="17" height="13" rx="2"></rect>
-          <circle cx="9" cy="11" r="1.5"></circle>
-          <path d="m5.5 17 4-4 2.75 2.75 2.25-2.25 4 3.5"></path>
-          <path d="M17.5 2.5v5M15 5h5"></path>
-        </svg>
+        <span class="material-symbols-outlined">add_photo_alternate</span>
       </span>
       <h2>開始整理照片</h2>
-      <p>拖曳照片到這裡，或使用工作區左上角的「＋」從裝置、專案檔與 Google 相簿匯入。</p>
+      <p>把照片拖曳到這裡，或按工具列的「新增照片」從裝置選擇。</p>
       <small>支援 JPG、PNG、WebP、HEIC 等常見格式</small>
     </div>
 `;

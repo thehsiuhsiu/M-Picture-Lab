@@ -49,21 +49,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20261020-1" />
+    <link rel="stylesheet" href="styles.css?v=20261020-2" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Black+Ops+One&amp;family=Noto+Sans+TC:wght@400;700&amp;display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap"
       rel="stylesheet"
     />
     <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
-    />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0"
       rel="stylesheet"
     />
   </head>
@@ -74,87 +66,341 @@
         <button
           type="button"
           id="mobileSettingsBtn"
-          class="mobile-settings-btn"
+          class="icon-btn mobile-settings-btn"
           aria-controls="projectSettings"
           aria-expanded="true"
-          aria-label="隱藏文件設定"
-          title="顯示或隱藏文件設定"
+          aria-label="隱藏文件資料"
+          title="顯示或隱藏文件資料"
         >
-          <svg
-            class="sidebar-toggle-icon"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <rect x="3" y="4" width="18" height="16" rx="4"></rect>
-            <path class="sidebar-toggle-divider" d="M8.5 4v16"></path>
-          </svg>
+          <span class="material-symbols-outlined icon-panel-open" aria-hidden="true">left_panel_open</span>
+          <span class="material-symbols-outlined icon-panel-close" aria-hidden="true">left_panel_close</span>
         </button>
-        <h1>M-Picture #</h1>
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" focusable="false">
+            <rect x="1" y="1" width="30" height="30" rx="8"></rect>
+            <path d="M8 22.5V9.5l8 7.5 8-7.5v13"></path>
+          </svg>
+        </span>
+        <h1>M-Picture</h1>
       </div>
 
       <div class="zip-controls">
         <button
           type="button"
           id="faqBtn"
-          class="faq-btn"
+          class="icon-btn faq-btn"
           title="常見問題"
           aria-label="常見問題"
         >
-          <span class="material-symbols-outlined">help</span>
+          <span class="material-symbols-outlined" aria-hidden="true">help</span>
         </button>
+        <div class="theme-selector">
+          <button
+            type="button"
+            id="themeToggleBtn"
+            class="icon-btn theme-toggle-icon"
+            title="切換深淺色"
+            aria-label="切換深淺色"
+            aria-controls="themeMenu"
+            aria-expanded="false"
+          >
+            <span class="material-symbols-outlined theme-icon-light" aria-hidden="true">light_mode</span>
+            <span class="material-symbols-outlined theme-icon-dark" aria-hidden="true">dark_mode</span>
+            <span class="material-symbols-outlined theme-icon-system" aria-hidden="true">contrast</span>
+          </button>
+          <div class="theme-menu menu-panel" id="themeMenu">
+            <button type="button" class="theme-option menu-item" data-theme="light">
+              <span class="material-symbols-outlined" aria-hidden="true">light_mode</span>
+              <span>淺色</span>
+            </button>
+            <button type="button" class="theme-option menu-item" data-theme="dark">
+              <span class="material-symbols-outlined" aria-hidden="true">dark_mode</span>
+              <span>深色</span>
+            </button>
+            <button type="button" class="theme-option menu-item" data-theme="system">
+              <span class="material-symbols-outlined" aria-hidden="true">contrast</span>
+              <span>跟隨系統</span>
+            </button>
+          </div>
+        </div>
         <div class="download-dropdown">
           <button
+            type="button"
             id="generate"
             class="create-btn create-btn-enabled"
-            title="下載與匯出"
-            aria-label="下載與匯出"
+            title="輸出文件或照片"
+            aria-label="輸出"
+            aria-haspopup="menu"
             aria-controls="downloadMenu"
             aria-expanded="false"
           >
-            <span class="material-symbols-outlined">file_save</span>
+            <span class="material-symbols-outlined" aria-hidden="true">download</span>
+            <span class="create-btn-text">輸出</span>
+            <span class="material-symbols-outlined create-btn-caret" aria-hidden="true">expand_more</span>
           </button>
-          <div class="download-menu" id="downloadMenu">
-            <button type="button" class="download-option" id="downloadDocx">
-              <span class="material-symbols-outlined">description</span>
-              <span>DOCX</span>
+          <div class="download-menu menu-panel" id="downloadMenu">
+            <p class="menu-section-title">產生文件</p>
+            <button type="button" class="download-option menu-item" id="downloadDocx">
+              <span class="material-symbols-outlined" aria-hidden="true">description</span>
+              <span class="menu-item-text">
+                <span>Word 文件</span>
+                <small>.docx，可再編輯</small>
+              </span>
             </button>
             <p id="multiPhotoDocxNotice" class="multi-photo-docx-notice" hidden>
-              多格照片檔案限定列印/PDF
+              多格照片版型只能輸出 PDF。
             </p>
-            <button type="button" class="download-option" id="downloadPdf">
-              <span class="material-symbols-outlined">picture_as_pdf</span>
-              <span>列印/PDF</span>
+            <button type="button" class="download-option menu-item" id="downloadPdf">
+              <span class="material-symbols-outlined" aria-hidden="true">picture_as_pdf</span>
+              <span class="menu-item-text">
+                <span>PDF／列印</span>
+                <small>開啟列印視窗，可另存 PDF</small>
+              </span>
             </button>
-            <div class="download-page-number-setting">
-              <span class="download-setting-title">PDF 頁碼</span>
-              <label class="pdf-page-number-toggle" for="pdfPageNumberEnabled">
-                <span>顯示頁碼</span>
-                <input type="checkbox" id="pdfPageNumberEnabled" />
-                <span
-                  class="pdf-page-number-toggle-track"
-                  aria-hidden="true"
-                ></span>
-              </label>
-              <label
-                class="pdf-page-start-setting"
-                id="pdfPageStartSetting"
-                for="pdfPageStartNumber"
-                hidden
-              >
-                <span>頁碼起始編號</span>
-                <input
-                  type="number"
-                  id="pdfPageStartNumber"
-                  min="1"
-                  max="9999"
-                  step="1"
-                  inputmode="numeric"
-                  value="1"
-                />
-              </label>
-            </div>
-            <div class="download-font-setting">
-              <label for="pdfFontSelect">PDF 字型</label>
+            <p class="menu-section-title">照片與專案</p>
+            <button type="button" class="download-option menu-item" id="downloadZip">
+              <span class="material-symbols-outlined" aria-hidden="true">folder_zip</span>
+              <span class="menu-item-text">
+                <span>打包照片</span>
+                <small>依編號下載 ZIP 壓縮檔</small>
+              </span>
+            </button>
+            <button type="button" class="download-option menu-item" id="exportProjectBtn">
+              <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+              <span class="menu-item-text">
+                <span>匯出加密專案</span>
+                <small>備份後可在其他裝置開啟</small>
+              </span>
+            </button>
+            <p class="menu-empty-hint">新增照片後才能輸出。</p>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+    <aside class="sidebar" id="projectSettings" aria-label="文件資料">
+      <div class="sidebar-heading">
+        <div>
+          <h2>文件資料</h2>
+          <p>填寫後會套用到輸出的每一頁</p>
+        </div>
+        <button
+          type="button"
+          id="mobileSettingsCloseBtn"
+          class="icon-btn mobile-settings-close"
+          aria-label="關閉文件資料"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true"
+            >close</span
+          >
+        </button>
+      </div>
+      <div class="form-group" data-format="left">
+        <label for="docTitleLeft">文件標題</label>
+        <input
+          type="text"
+          id="docTitleLeft"
+          class="sidebar-input"
+          maxlength="120"
+          placeholder="照片黏貼表"
+          value="照片黏貼表"
+        />
+      </div>
+      <div class="form-group" data-format="middle">
+        <label for="docTitleMiddle">文件標題</label>
+        <input
+          type="text"
+          id="docTitleMiddle"
+          class="sidebar-input"
+          maxlength="120"
+          placeholder="照片黏貼表"
+          value="照片黏貼表"
+        />
+      </div>
+      <div class="form-group" data-format="right">
+        <label for="docTitleRight">文件標題</label>
+        <input
+          type="text"
+          id="docTitleRight"
+          class="sidebar-input"
+          maxlength="120"
+          placeholder="照片黏貼表"
+          value="照片黏貼表"
+        />
+      </div>
+      <div
+        class="form-group photo-numbering-setting"
+        data-format="left middle right"
+      >
+        <label for="photoStartNumber">照片起始編號</label>
+        <input
+          type="number"
+          id="photoStartNumber"
+          class="sidebar-input"
+          min="1"
+          max="999"
+          step="1"
+          inputmode="numeric"
+          value="1"
+          aria-describedby="photoStartNumberHelp photoStartNumberWarning"
+        />
+        <small id="photoStartNumberHelp" class="sidebar-field-help">
+          例如接續上次編號20，請輸入21。
+        </small>
+        <small
+          id="photoStartNumberWarning"
+          class="sidebar-field-warning"
+          hidden
+        ></small>
+      </div>
+      <div class="multi-photo-settings" data-format="right">
+        <div class="multi-photo-setting-group">
+          <span class="sidebar-label">每頁張數</span>
+          <div
+            class="multi-photo-options"
+            role="radiogroup"
+            aria-label="每頁張數"
+          >
+            <label class="multi-photo-option">
+              <input
+                type="radio"
+                name="multiPhotoCount"
+                value="2"
+                class="multi-layout-input"
+              />
+              <span>2 張</span>
+            </label>
+            <label class="multi-photo-option">
+              <input
+                type="radio"
+                name="multiPhotoCount"
+                value="4"
+                class="multi-layout-input"
+                checked
+              />
+              <span>4 張</span>
+            </label>
+          </div>
+        </div>
+        <div class="multi-photo-setting-group" id="multiPhotoOrderGroup">
+          <span class="sidebar-label">排序方式</span>
+          <div
+            class="multi-photo-options"
+            role="radiogroup"
+            aria-label="照片排序方式"
+          >
+            <label class="multi-photo-option">
+              <input
+                type="radio"
+                name="multiPhotoOrder"
+                value="horizontal"
+                class="multi-layout-input"
+                checked
+              />
+              <span>水平</span>
+            </label>
+            <label class="multi-photo-option">
+              <input
+                type="radio"
+                name="multiPhotoOrder"
+                value="vertical"
+                class="multi-layout-input"
+              />
+              <span>垂直</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <h3 class="sidebar-section-title" data-format="left middle">案件資料</h3>
+      <div class="form-group" data-format="left">
+        <label for="zipPrefix">案由</label>
+        <input
+          type="text"
+          id="zipPrefix"
+          class="sidebar-input"
+          maxlength="200"
+          placeholder="例：竊盜案"
+        />
+      </div>
+      <div class="form-group" data-format="left">
+        <label for="caseUni">單位</label>
+        <input
+          type="text"
+          id="caseUni"
+          class="sidebar-input"
+          maxlength="200"
+          placeholder="例：○○派出所"
+        />
+      </div>
+
+      <div class="form-group-row" data-format="left middle">
+        <label for="caseDate" id="dateLabelText">攝影日期</label>
+        <label class="switch">
+          <input
+            type="checkbox"
+            id="dateModeSwitch"
+            role="switch"
+            aria-label="自動帶入照片日期"
+          />
+          <span class="slider"></span>
+        </label>
+        <span id="dateModeLabel"></span>
+      </div>
+      <div class="form-group" data-format="left middle">
+        <input
+          type="text"
+          id="caseDate"
+          class="sidebar-input"
+          maxlength="80"
+          placeholder="例：115/05/16 09:18"
+        />
+      </div>
+
+      <div class="form-group" data-format="left" id="addressGroup">
+        <label for="caseAddress" id="addressLabelText">攝影地址</label>
+        <input
+          type="text"
+          id="caseAddress"
+          class="sidebar-input"
+          maxlength="500"
+          placeholder="例：○○市○○區○○路 1 號"
+        />
+      </div>
+
+      <div class="form-group" data-format="left" id="personGroup">
+        <label for="caseNumber" id="personLabelText">攝影人員</label>
+        <input
+          type="text"
+          id="caseNumber"
+          class="sidebar-input"
+          maxlength="200"
+          placeholder="姓名"
+        />
+      </div>
+      <section class="sidebar-section" aria-labelledby="pdfSettingsTitle">
+        <h3 class="sidebar-section-title" id="pdfSettingsTitle">PDF 輸出設定</h3>
+        <div class="form-group-row pdf-page-number-row">
+          <label for="pdfPageNumberEnabled" class="sidebar-label">顯示頁碼</label>
+          <label class="switch">
+            <input type="checkbox" id="pdfPageNumberEnabled" role="switch" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="form-group pdf-page-start-setting" id="pdfPageStartSetting" hidden>
+          <label for="pdfPageStartNumber">頁碼起始編號</label>
+          <input
+            type="number"
+            id="pdfPageStartNumber"
+            class="sidebar-input"
+            min="1"
+            max="9999"
+            step="1"
+            inputmode="numeric"
+            value="1"
+          />
+        </div>
+        <div class="form-group download-font-setting">
+          <label for="pdfFontTrigger">PDF 字型</label>
               <select
                 id="pdfFontSelect"
                 class="native-font-select"
@@ -289,292 +535,57 @@
                 </div>
               </div>
             </div>
-            <button type="button" class="download-option" id="downloadZip">
-              <span class="material-symbols-outlined"
-                >deployed_code_update</span
-              >
-              <span>打包照片</span>
-            </button>
-            <button type="button" class="download-option" id="exportProjectBtn">
-              <span class="material-symbols-outlined">lock</span>
-              <span>匯出加密專案</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
-    <aside class="sidebar" id="projectSettings" aria-label="文件設定">
-      <div class="sidebar-heading">
-        <div>
-          <h2>文件設定</h2>
-          <p>選擇版型並填寫輸出資料</p>
-        </div>
-        <button
-          type="button"
-          id="mobileSettingsCloseBtn"
-          class="mobile-settings-close"
-          aria-label="關閉文件設定"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true"
-            >close</span
-          >
-        </button>
-      </div>
-      <div class="toggle-container" role="group" aria-label="文件版型">
-        <div class="labels">
-          <button
-            type="button"
-            class="label"
-            data-value="left"
-            aria-pressed="true"
-            aria-label="刑事案件"
-            title="刑事案件"
-          >
-            <svg class="format-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m13 4 7 7"></path>
-              <path d="m10 7 7 7"></path>
-              <path d="M4 20 13.5 10.5"></path>
-              <path d="M3 21h8"></path>
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="label"
-            data-value="middle"
-            aria-pressed="false"
-            aria-label="交通事故"
-            title="交通事故"
-          >
-            <svg class="format-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 17v-4l2-5h9l2 5v4"></path>
-              <path d="M4 14h11"></path>
-              <path d="M6 17v2M13 17v2"></path>
-              <path d="M18 5v4M16 7h4M16.5 4.5l1 1M19.5 8.5l1 1"></path>
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="label"
-            data-value="right"
-            aria-pressed="false"
-            aria-label="多格照片"
-            title="多格照片"
-          >
-            <svg class="format-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-              <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-              <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-              <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="form-group" data-format="left">
-        <label for="docTitleLeft">文件標題</label>
-        <input
-          type="text"
-          id="docTitleLeft"
-          class="sidebar-input"
-          maxlength="120"
-          placeholder="照片黏貼表"
-          value="照片黏貼表"
-        />
-      </div>
-      <div class="form-group" data-format="middle">
-        <label for="docTitleMiddle">文件標題</label>
-        <input
-          type="text"
-          id="docTitleMiddle"
-          class="sidebar-input"
-          maxlength="120"
-          placeholder="照片黏貼表"
-          value="照片黏貼表"
-        />
-      </div>
-      <div class="form-group" data-format="right">
-        <label for="docTitleRight">文件標題</label>
-        <input
-          type="text"
-          id="docTitleRight"
-          class="sidebar-input"
-          maxlength="120"
-          placeholder="照片黏貼表"
-          value="照片黏貼表"
-        />
-      </div>
-      <div
-        class="form-group photo-numbering-setting"
-        data-format="left middle right"
-      >
-        <label for="photoStartNumber">照片起始編號</label>
-        <input
-          type="number"
-          id="photoStartNumber"
-          class="sidebar-input"
-          min="1"
-          max="999"
-          step="1"
-          inputmode="numeric"
-          value="1"
-          aria-describedby="photoStartNumberHelp photoStartNumberWarning"
-        />
-        <small id="photoStartNumberHelp" class="sidebar-field-help">
-          例如接續上次編號20，請輸入21。
-        </small>
-        <small
-          id="photoStartNumberWarning"
-          class="sidebar-field-warning"
-          hidden
-        ></small>
-      </div>
-      <div class="multi-photo-settings" data-format="right">
-        <div class="multi-photo-setting-group">
-          <span class="sidebar-label">每頁張數</span>
-          <div
-            class="multi-photo-options"
-            role="radiogroup"
-            aria-label="每頁張數"
-          >
-            <label class="multi-photo-option">
-              <input
-                type="radio"
-                name="multiPhotoCount"
-                value="2"
-                class="multi-layout-input"
-              />
-              <span>2 張</span>
-            </label>
-            <label class="multi-photo-option">
-              <input
-                type="radio"
-                name="multiPhotoCount"
-                value="4"
-                class="multi-layout-input"
-                checked
-              />
-              <span>4 張</span>
-            </label>
-          </div>
-        </div>
-        <div class="multi-photo-setting-group" id="multiPhotoOrderGroup">
-          <span class="sidebar-label">排序方式</span>
-          <div
-            class="multi-photo-options"
-            role="radiogroup"
-            aria-label="照片排序方式"
-          >
-            <label class="multi-photo-option">
-              <input
-                type="radio"
-                name="multiPhotoOrder"
-                value="horizontal"
-                class="multi-layout-input"
-                checked
-              />
-              <span>水平</span>
-            </label>
-            <label class="multi-photo-option">
-              <input
-                type="radio"
-                name="multiPhotoOrder"
-                value="vertical"
-                class="multi-layout-input"
-              />
-              <span>垂直</span>
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="form-group" data-format="left">
-        <label for="zipPrefix">案 由</label>
-        <input
-          type="text"
-          id="zipPrefix"
-          class="sidebar-input"
-          maxlength="200"
-          placeholder="〇〇案"
-        />
-      </div>
-      <div class="form-group" data-format="left">
-        <label for="caseUni">單 位</label>
-        <input
-          type="text"
-          id="caseUni"
-          class="sidebar-input"
-          maxlength="200"
-          placeholder="公園前派出所"
-        />
-      </div>
-
-      <div class="form-group-row" data-format="left middle">
-        <label for="caseDate" id="dateLabelText">攝影日期</label>
-        <label class="switch">
-          <input
-            type="checkbox"
-            id="dateModeSwitch"
-            role="switch"
-            aria-label="Auto-fill EXIF"
-          />
-          <span class="slider"></span>
-        </label>
-        <span id="dateModeLabel"></span>
-      </div>
-      <div class="form-group" data-format="left middle">
-        <input
-          type="text"
-          id="caseDate"
-          class="sidebar-input"
-          maxlength="80"
-          placeholder="115/05/16 09:18"
-        />
-      </div>
-
-      <div class="form-group" data-format="left" id="addressGroup">
-        <label for="caseAddress" id="addressLabelText">攝影地址</label>
-        <input
-          type="text"
-          id="caseAddress"
-          class="sidebar-input"
-          maxlength="500"
-          placeholder="東京都葛飾區龜有3丁目32番17號"
-        />
-      </div>
-
-      <div class="form-group" data-format="left" id="personGroup">
-        <label for="caseNumber" id="personLabelText">攝影人員</label>
-        <input
-          type="text"
-          id="caseNumber"
-          class="sidebar-input"
-          maxlength="200"
-          placeholder="〇〇〇"
-        />
-      </div>
+      </section>
     </aside>
     <main class="main-content">
+      <div class="workspace-bar">
+        <div class="toggle-container" role="group" aria-label="文件版型" data-state="left">
+          <div class="labels">
+            <button type="button" class="label" data-value="left" aria-pressed="true" title="刑事案件照片黏貼表">
+              <span class="material-symbols-outlined format-icon" aria-hidden="true">gavel</span>
+              <span class="label-text">刑事案件</span>
+            </button>
+            <button type="button" class="label" data-value="middle" aria-pressed="false" title="交通事故照片黏貼紀錄表">
+              <span class="material-symbols-outlined format-icon" aria-hidden="true">car_crash</span>
+              <span class="label-text">交通事故</span>
+            </button>
+            <button type="button" class="label" data-value="right" aria-pressed="false" title="每頁多張照片">
+              <span class="material-symbols-outlined format-icon" aria-hidden="true">grid_view</span>
+              <span class="label-text">多格照片</span>
+            </button>
+          </div>
+        </div>
+        <span
+          id="projectSaveStatus"
+          class="project-save-status"
+          data-status="idle"
+          role="status"
+          aria-live="polite"
+          >草稿準備中</span
+        >
+      </div>
       <div class="view-switch-container">
         <div class="photo-source-picker" id="photoSourcePicker">
-          <div class="photo-source-menu" id="photoSourceMenu">
+          <div class="photo-source-menu menu-panel" id="photoSourceMenu">
             <button
               type="button"
-              class="photo-source-option"
+              class="photo-source-option menu-item"
               id="localPhotoSourceBtn"
             >
               <span class="material-symbols-outlined">add_photo_alternate</span>
-              <span>本機照片</span>
+              <span>從裝置選擇照片</span>
             </button>
             <button
               type="button"
-              class="photo-source-option"
+              class="photo-source-option menu-item"
               id="openProjectBtn"
             >
               <span class="material-symbols-outlined">folder_open</span>
-              <span>開啟專案</span>
+              <span>開啟加密專案</span>
             </button>
             <button
               type="button"
-              class="photo-source-option"
+              class="photo-source-option menu-item"
               id="googlePhotoSourceBtn"
             >
               <span class="material-symbols-outlined">photo_library</span>
@@ -582,14 +593,15 @@
             </button>
           </div>
           <button
+            type="button"
             class="fab-add-photo"
             id="fabAddPhoto"
             title="新增照片"
             aria-label="新增照片"
+            aria-haspopup="menu"
           >
-            <span class="material-symbols-outlined" aria-hidden="true"
-              >add</span
-            >
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            <span class="fab-add-text">新增照片</span>
           </button>
         </div>
         <div class="view-mode-controls" role="group" aria-label="檢視模式">
@@ -597,7 +609,7 @@
             type="button"
             id="gridViewBtn"
             class="view-btn active"
-            title="格狀版面配置"
+            title="格狀檢視"
             aria-label="格狀檢視"
             aria-pressed="true"
           >
@@ -607,7 +619,7 @@
             type="button"
             id="listViewBtn"
             class="view-btn"
-            title="列表版面配置"
+            title="列表檢視：填寫每張照片的資料"
             aria-label="列表檢視"
             aria-pressed="false"
           >
@@ -617,7 +629,7 @@
             type="button"
             id="documentPreviewBtn"
             class="view-btn"
-            title="版面預覽"
+            title="版面預覽：查看輸出的 A4 頁面"
             aria-label="版面預覽"
             aria-pressed="false"
           >
@@ -625,28 +637,31 @@
           </button>
         </div>
         <span class="toolbar-divider"></span>
-        <div class="size-slider-container">
-          <button type="button" id="sizeDecBtn" class="size-btn" title="縮小">
-            <span class="material-symbols-outlined">remove</span>
+        <div class="size-slider-container" role="group" aria-label="照片大小">
+          <button type="button" id="sizeDecBtn" class="size-btn" title="縮小照片" aria-label="縮小照片">
+            <span class="material-symbols-outlined" aria-hidden="true">photo_size_select_small</span>
           </button>
           <input
             type="range"
             id="photoSizeSlider"
+            aria-label="照片大小"
             min="120"
             max="600"
             value="250"
             step="20"
           />
-          <button type="button" id="sizeIncBtn" class="size-btn" title="放大">
-            <span class="material-symbols-outlined">add</span>
+          <button type="button" id="sizeIncBtn" class="size-btn" title="放大照片" aria-label="放大照片">
+            <span class="material-symbols-outlined" aria-hidden="true">photo_size_select_large</span>
           </button>
         </div>
-        <div class="edit-tools-container" aria-label="照片編輯">
+        <div class="edit-tools-container" role="group" aria-label="照片編輯">
+          <span class="edit-tools-hint">點選照片後可旋轉或分割</span>
           <button
             type="button"
             id="rotateLeftBtn"
             class="edit-tool-btn"
-            title="向左旋轉90°"
+            title="向左旋轉 90°"
+            aria-label="向左旋轉 90°"
             disabled
           >
             <span class="material-symbols-outlined">rotate_left</span>
@@ -655,7 +670,8 @@
             type="button"
             id="rotateRightBtn"
             class="edit-tool-btn"
-            title="向右旋轉90°"
+            title="向右旋轉 90°"
+            aria-label="向右旋轉 90°"
             disabled
           >
             <span class="material-symbols-outlined">rotate_right</span>
@@ -721,20 +737,13 @@
           class="project-toolbar preview-project-toolbar"
           aria-label="專案管理"
         >
-          <span
-            id="projectSaveStatus"
-            class="project-save-status"
-            data-status="idle"
-            role="status"
-            aria-live="polite"
-            >草稿準備中</span
-          >
+
           <button
             type="button"
             id="clearProjectBtn"
             class="project-tool-btn project-clear-btn"
-            title="清除目前專案與本機草稿"
-            aria-label="清除目前專案與本機草稿"
+            title="清除所有照片與草稿"
+            aria-label="清除所有照片與草稿"
           >
             <span class="material-symbols-outlined">delete_sweep</span>
           </button>
@@ -792,10 +801,10 @@
       </div>
     </main>
 
-    <div id="uploadingModal" class="modal">
+    <div id="uploadingModal" class="modal loading-modal" role="status" aria-live="polite">
       <div class="modal-content">
-        <p>🚀 照片載入中，請稍候...</p>
-        <div class="loader"></div>
+        <p>照片載入中，請稍候…</p>
+        <div class="loader" aria-hidden="true"></div>
       </div>
     </div>
 
@@ -843,16 +852,16 @@
       </div>
     </div>
 
-    <div id="loadingModal" class="modal">
+    <div id="loadingModal" class="modal loading-modal" role="status" aria-live="polite">
       <div class="modal-content">
-        <p>🖨️ 照片黏貼中，請稍候...</p>
-        <div class="loader"></div>
+        <p>正在產生文件，請稍候…</p>
+        <div class="loader" aria-hidden="true"></div>
       </div>
     </div>
-    <div id="zippingModal" class="modal">
+    <div id="zippingModal" class="modal loading-modal" role="status" aria-live="polite">
       <div class="modal-content">
-        <p>📦 照片打包中，請稍候...</p>
-        <div class="loader"></div>
+        <p>照片打包中，請稍候…</p>
+        <div class="loader" aria-hidden="true"></div>
       </div>
     </div>
     <div
@@ -903,10 +912,10 @@
         </div>
       </div>
     </div>
-    <div id="conversionModal" class="modal">
+    <div id="conversionModal" class="modal loading-modal" role="status" aria-live="polite">
       <div class="modal-content">
-        <p>⚙️ 轉換.heic檔案中，請稍候...</p>
-        <div class="loader"></div>
+        <p>正在轉換 HEIC 照片，請稍候…</p>
+        <div class="loader" aria-hidden="true"></div>
       </div>
     </div>
 
@@ -1163,57 +1172,22 @@
       </div>
     </div>
 
-    <div id="projectBusyModal" class="modal" aria-live="polite">
+    <div id="projectBusyModal" class="modal loading-modal" role="status" aria-live="polite">
       <div class="modal-content">
         <p id="projectBusyMessage">處理專案中…</p>
-        <div class="loader"></div>
+        <div class="loader" aria-hidden="true"></div>
       </div>
     </div>
 
-    <script type="module" src="js/main.js?v=20261020-1"></script>
+    <script type="module" src="js/main.js?v=20261020-2"></script>
 
     <footer>
-      <h3>
-        <span>Copyright© 2024 M-Picture. All rights reserved.</span>
+      <p class="footer-text">
+        <span>© 2024 M-Picture</span>
         <button type="button" id="privacyPolicyBtn" class="footer-link-btn">
           隱私權政策
         </button>
-      </h3>
-      <div class="theme-selector">
-        <button
-          type="button"
-          id="themeToggleBtn"
-          class="theme-toggle-icon"
-          title="切換主題"
-          aria-label="切換主題"
-          aria-controls="themeMenu"
-          aria-expanded="false"
-        >
-          <span class="material-symbols-outlined theme-icon-light"
-            >light_mode</span
-          >
-          <span class="material-symbols-outlined theme-icon-dark"
-            >dark_mode</span
-          >
-          <span class="material-symbols-outlined theme-icon-system"
-            >contrast</span
-          >
-        </button>
-        <div class="theme-menu" id="themeMenu">
-          <button type="button" class="theme-option" data-theme="light">
-            <span class="material-symbols-outlined">light_mode</span>
-            <span>淺色模式</span>
-          </button>
-          <button type="button" class="theme-option" data-theme="dark">
-            <span class="material-symbols-outlined">dark_mode</span>
-            <span>深色模式</span>
-          </button>
-          <button type="button" class="theme-option" data-theme="system">
-            <span class="material-symbols-outlined">contrast</span>
-            <span>依系統設置</span>
-          </button>
-        </div>
-      </div>
+      </p>
     </footer>
 
     <div id="consentModal" class="modal consent-modal" aria-hidden="true">
@@ -1395,7 +1369,7 @@
         <section>
           <h3>如何新增照片？</h3>
           <p>
-            可從電腦檔案總管選取一張或多張照片，拖曳到頁面中的「照片顯示區」。出現藍色提示框後放開，照片就會新增至目前專案；在側邊欄或頁首放開不會匯入。也可點右下角「＋」按鈕，選擇「本機照片」從裝置選取圖片；選擇「Google
+            可從電腦檔案總管選取一張或多張照片，拖曳到頁面中的「照片顯示區」。出現藍色提示框後放開，照片就會新增至目前專案；在文件資料欄或頁首放開不會匯入。也可按工具列左側的「新增照片」，選擇「從裝置選擇照片」；選擇「Google
             相簿」會開啟測試中的 Google
             授權與相簿選取流程，目前僅限測試人員使用。
           </p>
@@ -1404,7 +1378,7 @@
         <section>
           <h3>如何輸入每張照片的說明？</h3>
           <p>
-            切換到列表版面後，每張照片旁邊會出現日期、地址與說明欄位。未填寫的欄位會使用左側側欄的共用資料。
+            切換到列表版面後，每張照片旁邊會出現日期、地址與說明欄位。未填寫的欄位會使用「文件資料」中的共用資料。
           </p>
         </section>
 
@@ -1418,7 +1392,7 @@
         <section>
           <h3>如何旋轉照片？</h3>
           <p>
-            點選一張照片後，右上工具列的旋轉按鈕會啟用。再次點選同一張照片可取消選取。
+            點選一張照片後，工具列上的旋轉按鈕會啟用。再次點選同一張照片可取消選取。
           </p>
         </section>
 
@@ -1464,14 +1438,14 @@
           <h3>離開網頁後可以繼續編輯嗎？</h3>
           <p>
             可以。變更會自動儲存在目前瀏覽器中，並自最後一次自動儲存起保留 2
-            小時。請在期限內重新開啟網頁並選擇繼續編輯；超過期限的草稿會在再次開啟網站時清除。若需要保存更久，請從右上角下載選單匯出加密專案檔。
+            小時。請在期限內重新開啟網頁並選擇繼續編輯；超過期限的草稿會在再次開啟網站時清除。若需要保存更久，請從右上角「輸出」選單匯出加密專案檔。
           </p>
         </section>
 
         <section>
           <h3>為什麼顯示「儲存失敗」？</h3>
           <p>
-            可能原因包括裝置或瀏覽器儲存空間不足、瀏覽器停用或限制網站資料、使用無痕或私密瀏覽模式、其他分頁暫時占用草稿資料庫，或瀏覽器不支援本機草稿功能。請先關閉本網站的其他分頁、確認瀏覽器允許儲存網站資料並釋放空間，再重新整理網頁。若仍無法儲存，請立即從右上角下載選單匯出加密專案檔，以免資料遺失。
+            可能原因包括裝置或瀏覽器儲存空間不足、瀏覽器停用或限制網站資料、使用無痕或私密瀏覽模式、其他分頁暫時占用草稿資料庫，或瀏覽器不支援本機草稿功能。請先關閉本網站的其他分頁、確認瀏覽器允許儲存網站資料並釋放空間，再重新整理網頁。若仍無法儲存，請立即從右上角「輸出」選單匯出加密專案檔，以免資料遺失。
           </p>
         </section>
 
@@ -1484,7 +1458,7 @@
 
         <section>
           <h3>可以輸出哪些格式？</h3>
-          <p>右上角下載按鈕可建立 DOCX、列印 PDF，或將目前照片打包成 ZIP。</p>
+          <p>右上角「輸出」選單可建立 Word 文件（.docx）、列印或另存 PDF，或將目前照片打包成 ZIP。</p>
         </section>
 
         <section>

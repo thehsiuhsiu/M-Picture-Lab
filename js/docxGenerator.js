@@ -1,18 +1,19 @@
 ﻿// docxGenerator.js
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-2";
 import {
   resizeImageForDoc,
   getFormattedDate,
   showLoadingModal,
   hideLoadingModal,
   blobToArrayBuffer,
-} from "./utils.js";
+  showToast,
+} from "./utils.js?v=20261020-2";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js";
-import { getPhotoNumber } from "./photoNumbering.js";
+} from "./multiPhotoLayout.js?v=20261020-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261020-2";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -38,7 +39,7 @@ export const handleGenerateWrapper = async (event) => {
   event.stopPropagation();
 
   if (state.selectedFormat === "right") {
-    alert("多格照片檔案限定列印/PDF");
+    showToast("多格照片版型只能輸出 PDF。", "warning");
     return;
   }
 
@@ -61,7 +62,7 @@ export const handleGenerateWrapper = async (event) => {
 
 const handleGenerate = async () => {
   if (state.selectedImages.length === 0) {
-    alert("請選擇至少一張圖片。");
+    showToast("請先新增照片，再產生文件。", "warning");
     return;
   }
   showLoadingModal();
@@ -118,7 +119,7 @@ const handleGenerate = async () => {
   } catch (error) {
     hideLoadingModal();
     console.error("Error in document generation:", error);
-    alert("文件生成過程中出錯，請查看控制台以獲取詳細信息。");
+    showToast("產生 Word 文件時發生問題，請重新整理頁面後再試一次。", "error", 6000);
   }
 };
 

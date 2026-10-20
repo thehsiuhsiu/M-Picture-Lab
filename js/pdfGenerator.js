@@ -1,22 +1,23 @@
 ﻿// pdfGenerator.js - PDF 生成模組
 
-import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js";
+import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-2";
 import {
   showLoadingModal,
   hideLoadingModal,
   createObjectUrl,
   revokeObjectUrl,
   resizeImageForDoc,
-} from "./utils.js";
+  showToast,
+} from "./utils.js?v=20261020-2";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js";
-import { getPhotoNumber } from "./photoNumbering.js";
+} from "./multiPhotoLayout.js?v=20261020-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261020-2";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js";
+} from "./pageNumbering.js?v=20261020-2";
 
 const PDF_PRINT_IMAGE_MAX_DIMENSION = 1800;
 
@@ -114,7 +115,7 @@ const escapeHtml = (value) => {
 
 export const handleGeneratePDF = async () => {
   if (state.selectedImages.length === 0) {
-    alert("請選擇至少一張圖片。");
+    showToast("請先新增照片，再輸出 PDF。", "warning");
     return;
   }
   showLoadingModal();
@@ -271,7 +272,7 @@ export const handleGeneratePDF = async () => {
     }
     hideLoadingModal();
     console.error("Error in PDF generation:", error);
-    alert("PDF 生成過程中出錯，請查看控制台以獲取詳細信息。");
+    showToast("產生 PDF 時發生問題，請重新整理頁面後再試一次。", "error", 6000);
   }
 };
 
