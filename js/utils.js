@@ -183,6 +183,101 @@ export const showDialog = ({
     document.addEventListener("keydown", handleKeydown, true);
   });
 
+/**
+ * 讓使用者輸入一行文字（例如重新命名）。按取消或 Esc 回傳 null。
+ */
+export const showPromptDialog = ({
+  title,
+  message = "",
+  value = "",
+  placeholder = "",
+  maxLength = 80,
+  confirmText = "確定",
+  cancelText = "取消",
+} = {}) =>
+  new Promise((resolve) => {
+    const previouslyFocused = document.activeElement;
+    const overlay = document.createElement("div");
+    overlay.className = "delete-confirm-overlay app-dialog-overlay";
+    const form = document.createElement("form");
+    form.className = "delete-confirm-dialog app-dialog app-prompt-dialog";
+    form.setAttribute("role", "dialog");
+    form.setAttribute("aria-modal", "true");
+    form.noValidate = true;
+
+    const titleId = `appPromptTitle${Date.now()}`;
+    const heading = document.createElement("h2");
+    heading.className = "delete-confirm-title";
+    heading.id = titleId;
+    heading.textContent = String(title ?? "");
+    form.setAttribute("aria-labelledby", titleId);
+    form.appendChild(heading);
+
+    if (message) {
+      const text = document.createElement("p");
+      text.className = "delete-confirm-message";
+      text.textContent = message;
+      form.appendChild(text);
+    }
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "zip-name-input app-prompt-input";
+    input.value = String(value ?? "");
+    input.placeholder = placeholder;
+    input.maxLength = maxLength;
+    input.autocomplete = "off";
+    input.setAttribute("aria-labelledby", titleId);
+    form.appendChild(input);
+
+    const buttons = document.createElement("div");
+    buttons.className = "delete-confirm-buttons";
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "delete-confirm-btn cancel";
+    cancelButton.textContent = cancelText;
+    const confirmButton = document.createElement("button");
+    confirmButton.type = "submit";
+    confirmButton.className = "delete-confirm-btn confirm";
+    confirmButton.textContent = confirmText;
+    buttons.append(cancelButton, confirmButton);
+    form.appendChild(buttons);
+
+    overlay.appendChild(form);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+      overlay.classList.add("show");
+      input.focus();
+      input.select();
+    });
+
+    const close = (result) => {
+      document.removeEventListener("keydown", handleKeydown, true);
+      overlay.classList.remove("show");
+      setTimeout(() => {
+        overlay.remove();
+        if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
+        resolve(result);
+      }, 180);
+    };
+    const handleKeydown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        close(null);
+      }
+    };
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      close(input.value);
+    });
+    cancelButton.addEventListener("click", () => close(null));
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) close(null);
+    });
+    document.addEventListener("keydown", handleKeydown, true);
+  });
+
 /** 只有一個「知道了」按鈕的提示對話框。 */
 export const showNotice = (options) =>
   showDialog({ confirmText: "知道了", cancelText: null, ...options });
