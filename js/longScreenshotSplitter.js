@@ -1,20 +1,21 @@
-import { state } from "./state.js?v=20261021-1";
+import { state } from "./state.js?v=20261021-2";
 import {
   IMAGE_SECURITY_LIMITS,
   buildImageRecord,
   replaceImageWithPreparedImages,
-} from "./imageHandler.js?v=20261021-1";
+  registerSplitHandler,
+} from "./imageHandler.js?v=20261021-2";
 import {
   getSplitGroupIntegrity,
   restoreSplitGroup,
-} from "./splitOrderManager.js?v=20261021-1";
+} from "./splitOrderManager.js?v=20261021-2";
 import {
   createObjectUrl,
   revokeObjectUrl,
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261021-1";
+} from "./utils.js?v=20261021-2";
 
 const TARGET_HEIGHT_RATIO = Object.freeze({ 2: 22 / 9, 4: 4 / 3 });
 const ANALYSIS_WIDTH = 256;
@@ -485,7 +486,7 @@ const cropSelectedImage = async () => {
 export const initLongScreenshotSplitter = () => {
   const { modal, confirm, process, count } = elements();
   if (!modal) return;
-  document.getElementById("splitImageBtn")?.addEventListener("click", openForSelectedImage);
+  registerSplitHandler(openForSelectedImage);
   document.getElementById("longScreenshotCloseBtn")?.addEventListener("click", closeModal);
   document.getElementById("longScreenshotCancelBtn")?.addEventListener("click", closeModal);
   document.getElementById("longScreenshotAnalyzeBtn")?.addEventListener("click", analyzeCuts);

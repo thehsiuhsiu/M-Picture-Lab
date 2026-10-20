@@ -1,13 +1,11 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261021-1";
+import { state } from "./state.js?v=20261021-2";
 import {
   handleImageSelection,
   handleViewModeChange,
   handleImageContainerEvents,
   updateCreateButtonState,
-  handleImageClick,
-  rotateImage,
   processFiles,
   replaceImageCollection,
   INTERNAL_IMAGE_DRAG_TYPE,
@@ -16,28 +14,28 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261021-1";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261021-1";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261021-1";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261021-1";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261021-1";
+} from "./imageHandler.js?v=20261021-2";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261021-2";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261021-2";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261021-2";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261021-2";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261021-1";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261021-1";
-import { initDocumentPreview } from "./documentPreview.js?v=20261021-1";
+} from "./projectPersistence.js?v=20261021-2";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261021-2";
+import { initDocumentPreview } from "./documentPreview.js?v=20261021-2";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261021-1";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261021-1";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261021-1";
+} from "./photoNumbering.js?v=20261021-2";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261021-2";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261021-2";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261021-1";
+} from "./splitOrderManager.js?v=20261021-2";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -706,10 +704,9 @@ const setupEventListeners = () => {
     "drop",
     "dragend",
   ].forEach((eventName) => {
-    imagePreview.addEventListener(eventName, handleImageContainerEvents);
+    // 用捕獲階段，讓卡片拖到另一張卡片的文字欄位上時也能排序
+    imagePreview.addEventListener(eventName, handleImageContainerEvents, true);
   });
-
-  imagePreview.addEventListener("click", handleImageClick);
 
   setupPhotoFileDrop();
 
@@ -812,58 +809,6 @@ const setupPhotoFileDrop = () => {
 
   window.addEventListener("blur", () => {
     setDropIndicator(false);
-  });
-};
-
-const setupEditTools = () => {
-  const rotateLeftBtn = document.getElementById("rotateLeftBtn");
-  const rotateRightBtn = document.getElementById("rotateRightBtn");
-
-  if (rotateLeftBtn) {
-    rotateLeftBtn.addEventListener("click", () => {
-      rotateImage(-90);
-    });
-  }
-
-  if (rotateRightBtn) {
-    rotateRightBtn.addEventListener("click", () => {
-      rotateImage(90);
-    });
-  }
-};
-
-const setupPhotoSizeSlider = () => {
-  const slider = document.getElementById("photoSizeSlider");
-  const sizeDecBtn = document.getElementById("sizeDecBtn");
-  const sizeIncBtn = document.getElementById("sizeIncBtn");
-
-  const updateImageSizes = () => {
-    document
-      .getElementById("imagePreview")
-      ?.style.setProperty("--photo-size", `${slider.value}px`);
-  };
-
-  slider.addEventListener("input", updateImageSizes);
-  updateImageSizes();
-
-  sizeDecBtn.addEventListener("click", () => {
-    const newValue = Math.max(
-      parseInt(slider.min),
-      parseInt(slider.value) - 40,
-    );
-    slider.value = newValue;
-    updateImageSizes();
-    notifyProjectChanged();
-  });
-
-  sizeIncBtn.addEventListener("click", () => {
-    const newValue = Math.min(
-      parseInt(slider.max),
-      parseInt(slider.value) + 40,
-    );
-    slider.value = newValue;
-    updateImageSizes();
-    notifyProjectChanged();
   });
 };
 
@@ -1346,7 +1291,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initLongScreenshotSplitter();
   initSplitOrderManager();
   setupEventListeners();
-  setupPhotoSizeSlider();
   setupSidebarInputs();
   setupDateModeSwitch();
   setupMultiPhotoSettings();
@@ -1360,7 +1304,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupConsentGate(() => {
     initProjectPersistence({ applyProject: applyProjectSnapshot });
   });
-  setupEditTools();
   setupThemeToggle();
   initGooglePhotosImport(processFiles);
 });

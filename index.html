@@ -49,7 +49,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20261021-1" />
+    <link rel="stylesheet" href="styles.css?v=20261021-2" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;600&amp;display=swap"
       rel="stylesheet"
@@ -60,7 +60,7 @@
     />
   </head>
 
-  <body>
+  <body class="view-list">
     <div id="navBackdrop" class="nav-backdrop" aria-hidden="true"></div>
     <nav class="app-nav" id="appNav" aria-label="專案">
       <div class="nav-header">
@@ -392,8 +392,12 @@
           </div>
         </div>
       </section>
-      <div class="view-switch-container">
-        <div class="photo-source-picker" id="photoSourcePicker">
+      <div class="photo-section-header">
+        <div class="photo-section-title-group">
+          <h2 class="photo-section-title">
+            照片 <span class="photo-count" id="photoCount">0 張</span>
+          </h2>
+          <div class="photo-source-picker" id="photoSourcePicker">
           <div class="photo-source-menu menu-panel" id="photoSourceMenu">
             <button
               type="button"
@@ -413,133 +417,40 @@
             </button>
           </div>
           <button
-            type="button"
-            class="fab-add-photo"
-            id="fabAddPhoto"
-            title="新增照片"
-            aria-label="新增照片"
-            aria-haspopup="menu"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">add</span>
-            <span class="fab-add-text">新增照片</span>
-          </button>
-        </div>
-        <div class="view-mode-controls" role="group" aria-label="檢視模式">
-          <button
-            type="button"
-            id="gridViewBtn"
-            class="view-btn active"
-            title="格狀檢視"
-            aria-label="格狀檢視"
-            aria-pressed="true"
-          >
-            <span class="material-symbols-outlined">grid_view</span>
-          </button>
-          <button
-            type="button"
-            id="listViewBtn"
-            class="view-btn"
-            title="列表檢視：填寫每張照片的資料"
-            aria-label="列表檢視"
-            aria-pressed="false"
-          >
-            <span class="material-symbols-outlined">view_list</span>
-          </button>
-        </div>
-        <span class="toolbar-divider"></span>
-        <div class="size-slider-container" role="group" aria-label="照片大小">
-          <button type="button" id="sizeDecBtn" class="size-btn" title="縮小照片" aria-label="縮小照片">
-            <span class="material-symbols-outlined" aria-hidden="true">photo_size_select_small</span>
-          </button>
-          <input
-            type="range"
-            id="photoSizeSlider"
-            aria-label="照片大小"
-            min="120"
-            max="600"
-            value="250"
-            step="20"
-          />
-          <button type="button" id="sizeIncBtn" class="size-btn" title="放大照片" aria-label="放大照片">
-            <span class="material-symbols-outlined" aria-hidden="true">photo_size_select_large</span>
-          </button>
-        </div>
-        <div class="edit-tools-container" role="group" aria-label="照片編輯">
-          <span class="edit-tools-hint">點選照片後可旋轉或分割</span>
-          <button
-            type="button"
-            id="rotateLeftBtn"
-            class="edit-tool-btn"
-            title="向左旋轉 90°"
-            aria-label="向左旋轉 90°"
-            disabled
-          >
-            <span class="material-symbols-outlined">rotate_left</span>
-          </button>
-          <button
-            type="button"
-            id="rotateRightBtn"
-            class="edit-tool-btn"
-            title="向右旋轉 90°"
-            aria-label="向右旋轉 90°"
-            disabled
-          >
-            <span class="material-symbols-outlined">rotate_right</span>
-          </button>
-          <button
-            type="button"
-            id="splitImageBtn"
-            class="edit-tool-btn"
-            title="分割選取的長截圖"
-            aria-label="分割選取的長截圖"
-            disabled
-          >
-            <span class="material-symbols-outlined">content_cut</span>
-          </button>
-        </div>
-        <div class="document-preview-controls" aria-label="版面預覽控制">
-          <div class="document-page-navigation" aria-label="預覽頁面切換">
-            <button
               type="button"
-              id="documentPrevPageBtn"
-              class="document-control-btn"
-              title="上一頁"
-              aria-label="上一頁"
+              class="fab-add-photo"
+              id="fabAddPhoto"
+              title="新增照片"
+              aria-haspopup="menu"
             >
-              <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-            <span id="documentPageStatus" role="status" aria-live="polite"
-              >第 0 / 0 頁</span
-            >
-            <button
-              type="button"
-              id="documentNextPageBtn"
-              class="document-control-btn"
-              title="下一頁"
-              aria-label="下一頁"
-            >
-              <span class="material-symbols-outlined">chevron_right</span>
+              <span class="material-symbols-outlined" aria-hidden="true">add</span>
+              <span class="fab-add-text">新增照片</span>
+              <span class="material-symbols-outlined fab-add-caret" aria-hidden="true">expand_more</span>
             </button>
           </div>
-          <div class="document-zoom-controls" aria-label="預覽縮放">
+        </div>
+        <div class="photo-section-tools">
+          <span class="photo-sort-hint" id="photoSortHint">拖曳卡片可調整順序</span>
+          <div class="view-mode-controls" role="group" aria-label="照片顯示方式">
             <button
               type="button"
-              id="documentZoomOutBtn"
-              class="document-control-btn"
-              title="縮小預覽"
-              aria-label="縮小預覽"
+              id="listViewBtn"
+              class="view-btn active"
+              title="卡片：照片旁填寫日期、地址與說明"
+              aria-pressed="true"
             >
-              <span class="material-symbols-outlined">remove</span>
+              <span class="material-symbols-outlined" aria-hidden="true">view_agenda</span>
+              <span class="view-btn-text">卡片</span>
             </button>
-            <span id="documentZoomStatus">75%</span>
             <button
               type="button"
-              id="documentZoomInBtn"
-              class="document-control-btn"
-              title="放大預覽"
-              aria-label="放大預覽"
+              id="gridViewBtn"
+              class="view-btn"
+              title="小圖排序：照片多時方便拖曳調整順序"
+              aria-pressed="false"
             >
-              <span class="material-symbols-outlined">add</span>
+              <span class="material-symbols-outlined" aria-hidden="true">grid_view</span>
+              <span class="view-btn-text">小圖排序</span>
             </button>
           </div>
         </div>
@@ -563,7 +474,7 @@
             <button type="button" data-action="dismiss">忽略</button>
           </div>
         </div>
-        <div id="imagePreview"></div>
+        <div id="imagePreview" class="list-view"></div>
         <div class="preview-workspace" id="previewWorkspace" hidden>
           <section
             id="documentPreview"
@@ -571,6 +482,52 @@
             aria-label="文件版面預覽"
             hidden
           >
+            <div class="document-preview-controls" aria-label="版面預覽控制">
+              <div class="document-page-navigation" aria-label="預覽頁面切換">
+                <button
+                  type="button"
+                  id="documentPrevPageBtn"
+                  class="document-control-btn"
+                  title="上一頁"
+                  aria-label="上一頁"
+                >
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <span id="documentPageStatus" role="status" aria-live="polite"
+                  >第 0 / 0 頁</span
+                >
+                <button
+                  type="button"
+                  id="documentNextPageBtn"
+                  class="document-control-btn"
+                  title="下一頁"
+                  aria-label="下一頁"
+                >
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              </div>
+              <div class="document-zoom-controls" aria-label="預覽縮放">
+                <button
+                  type="button"
+                  id="documentZoomOutBtn"
+                  class="document-control-btn"
+                  title="縮小預覽"
+                  aria-label="縮小預覽"
+                >
+                  <span class="material-symbols-outlined">remove</span>
+                </button>
+                <span id="documentZoomStatus">75%</span>
+                <button
+                  type="button"
+                  id="documentZoomInBtn"
+                  class="document-control-btn"
+                  title="放大預覽"
+                  aria-label="放大預覽"
+                >
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
             <p
               id="documentPreviewWarning"
               class="document-preview-warning"
@@ -1191,7 +1148,7 @@
       </div>
     </div>
 
-    <script type="module" src="js/main.js?v=20261021-1"></script>
+    <script type="module" src="js/main.js?v=20261021-2"></script>
 
 
     <div id="consentModal" class="modal consent-modal" aria-hidden="true">
@@ -1369,7 +1326,7 @@
         <section>
           <h3>如何新增照片？</h3>
           <p>
-            可從電腦檔案總管選取一張或多張照片，拖曳到頁面中的「照片顯示區」。出現藍色提示框後放開，照片就會新增至目前專案；在案件資料卡片或頂端列放開不會匯入。也可按工具列左側的「新增照片」，選擇「從裝置選擇照片」；選擇「Google
+            可從電腦檔案總管選取一張或多張照片，拖曳到頁面中的照片區。出現提示框後放開，照片就會新增至目前專案；在案件資料卡片或頂端列放開不會匯入。也可按「照片」標題旁的「新增照片」，選擇「從裝置選擇照片」；選擇「Google
             相簿」會開啟測試中的 Google
             授權與相簿選取流程，目前僅限測試人員使用。
           </p>
@@ -1378,28 +1335,28 @@
         <section>
           <h3>如何輸入每張照片的說明？</h3>
           <p>
-            切換到列表版面後，每張照片旁邊會出現日期、地址與說明欄位。未填寫的欄位會使用「案件資料」中的共用資料。
+            在「卡片」顯示方式中，每張照片旁邊就是日期、地址與說明欄位。未填寫的欄位會使用「案件資料」中的共用資料。
           </p>
         </section>
 
         <section>
           <h3>如何調整照片順序？</h3>
           <p>
-            在格狀或列表版面中拖曳已匯入的照片卡片，即可改變輸出順序，此操作不會重複新增照片。照片左上角的數字代表目前排序。
+            直接拖曳照片卡片即可改變輸出順序，此操作不會重複新增照片。照片多時，切換到「小圖排序」會比較好拖曳。照片旁的數字代表目前排序。
           </p>
         </section>
 
         <section>
           <h3>如何旋轉照片？</h3>
           <p>
-            點選一張照片後，工具列上的旋轉按鈕會啟用。再次點選同一張照片可取消選取。
+            把滑鼠移到照片上，右上角會出現向左、向右旋轉的按鈕（手機上一直顯示）。
           </p>
         </section>
 
         <section>
           <h3>如何分割長截圖？</h3>
           <p>
-            先點選照片顯示區中的一張長截圖，再點上方照片編輯工具列的剪刀按鈕。於分割視窗選擇「每頁
+            把滑鼠移到長截圖上，按右上角的剪刀按鈕。於分割視窗選擇「每頁
             2 張（加長比例）」或「每頁 4
             張」，檢查並拖曳調整切割線；確認切割位置後，按下「分割並取代原照片」。分割結果會在原照片的位置依序展開，也可以和一般照片混合使用。
           </p>
@@ -1480,7 +1437,7 @@
           <p>
             不一定。拍攝日期取決於照片來源、格式與原始 EXIF 資訊。開啟 Auto-fill
             EXIF
-            後，系統會列出缺少日期的照片編號；點選「前往填寫」可切換至列表模式，缺少日期的欄位下方會顯示橘色警語。手動輸入日期後，提醒會自動消失。
+            後，系統會列出缺少日期的照片編號；點選「前往填寫」可切換至卡片顯示，缺少日期的欄位下方會顯示橘色警語。手動輸入日期後，提醒會自動消失。
           </p>
         </section>
 
