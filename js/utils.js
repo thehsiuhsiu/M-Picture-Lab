@@ -293,7 +293,7 @@ export const EMPTY_STATE_HTML = `
         <span class="material-symbols-outlined">add_photo_alternate</span>
       </span>
       <h2>開始整理照片</h2>
-      <p>把照片拖曳到這裡，或按工具列的「新增照片」從裝置選擇。</p>
+      <p>把照片拖到這裡，或使用上方的「新增照片」，從裝置或 Google 相簿選擇。</p>
       <small>支援 JPG、PNG、WebP、HEIC 等常見格式</small>
     </div>
 `;

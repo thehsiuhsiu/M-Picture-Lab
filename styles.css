@@ -1297,114 +1297,13 @@ html:not([data-theme-mode]) .theme-toggle-icon .theme-icon-system {
   background: var(--danger);
 }
 
-/* 工具列 */
-.view-switch-container {
-  position: relative;
-  z-index: 20;
+.document-preview-controls {
   display: flex;
-  flex: 0 0 auto;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.toolbar-divider {
-  flex: 0 0 1px;
-  align-self: stretch;
-  margin: 4px 2px;
-  background: var(--border);
-}
-
-.fab-add-photo {
-  display: inline-flex;
-  height: var(--control-h);
-  align-items: center;
-  gap: 6px;
-  padding: 0 14px 0 10px;
-  border: 0;
-  border-radius: var(--r-sm);
-  background: var(--accent-soft);
-  color: var(--accent-ink);
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: background-color 0.15s ease;
-}
-
-.fab-add-photo:hover,
-.fab-add-photo[aria-expanded="true"] {
-  background: var(--accent);
-  color: var(--on-accent);
-}
-
-.photo-source-menu {
-  top: calc(100% + 8px);
-  left: 0;
-  min-width: 220px;
-}
-
-.view-mode-controls {
-  display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--r-sm);
-  background: var(--surface-3);
-}
-
-.view-mode-controls .view-btn {
-  width: 34px;
-  height: 32px;
-  border-radius: 6px;
-}
-
-.view-btn.active,
-.view-btn.active:hover {
-  background: var(--surface);
-  color: var(--accent-ink);
-  box-shadow: var(--shadow-sm);
-}
-
-.size-slider-container {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-#photoSizeSlider {
-  width: 96px;
-  height: 20px;
-  margin: 0 4px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.edit-tools-container {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.edit-tools-hint {
-  margin-right: 6px;
-  color: var(--text-3);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-body:not(.has-photos) .edit-tools-hint,
-body.has-selection .edit-tools-hint {
-  display: none;
-}
-
-.document-preview-controls {
-  display: none;
-  align-items: center;
+  justify-content: center;
   gap: 12px;
+  margin-bottom: 12px;
 }
 
 .document-page-navigation,
@@ -1430,34 +1329,6 @@ body.has-selection .edit-tools-hint {
   min-width: 76px;
 }
 
-.project-toolbar {
-  display: inline-flex;
-  align-items: center;
-  margin-left: auto;
-}
-
-.project-clear-btn:hover {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-
-/* 依檢視模式顯示的工具 */
-body.view-list .size-slider-container,
-body.document-preview-mode .size-slider-container,
-body.document-preview-mode .edit-tools-container,
-body.document-preview-mode .size-slider-container + .toolbar-divider {
-  display: none;
-}
-
-body.document-preview-mode .document-preview-controls {
-  display: inline-flex;
-}
-
-body.view-list .toolbar-divider,
-body.document-preview-mode .toolbar-divider {
-  display: block;
-}
-
 /* 照片區 */
 .container {
   position: relative;
@@ -1465,114 +1336,273 @@ body.document-preview-mode .toolbar-divider {
   min-height: 360px;
 }
 
-#imagePreview {
-  --tile-min: var(--photo-size, 240px);
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(var(--tile-min), 100%), 1fr));
-  align-content: start;
-  gap: 14px;
-  min-height: 100%;
-  padding: 16px;
+/* 照片標題列：照片 N 張、新增照片（左），提示與卡片／小圖排序切換（右） */
+.photo-section-header {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 4px 0;
 }
 
-/* 照片卡片：上方一列放編號與刪除，下方是固定比例的照片框 */
+body.document-preview-mode .photo-section-header {
+  display: none;
+}
+
+.photo-section-title-group,
+.photo-section-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.photo-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.photo-count {
+  color: var(--text-3);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.fab-add-photo {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.fab-add-photo:hover,
+.fab-add-photo[aria-expanded="true"] {
+  background: var(--accent-hover);
+}
+
+.fab-add-photo .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.fab-add-photo .fab-add-caret {
+  margin-left: -2px;
+  font-size: 18px;
+}
+
+.photo-source-menu {
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+}
+
+.photo-sort-hint {
+  color: var(--text-3);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+body:not(.has-photos) .photo-sort-hint,
+body:not(.has-photos) .view-mode-controls {
+  display: none;
+}
+
+.view-mode-controls {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+}
+
+.view-mode-controls .view-btn {
+  display: inline-flex;
+  width: auto;
+  height: 34px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.view-mode-controls .view-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.view-btn.active,
+.view-btn.active:hover {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 照片：預設是小圖排序；加上 .list-view 就是一列一張的照片卡片 */
+#imagePreview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  align-content: start;
+  gap: 12px;
+  min-height: 100%;
+  padding: 12px 0 16px;
+}
+
 .image-container {
   position: relative;
-  display: grid;
-  grid-template-areas:
-    "num . del"
-    "img img img";
-  grid-template-columns: auto 1fr auto;
-  align-content: start;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid var(--border);
+  display: block;
   border-radius: var(--r-md);
-  background: var(--surface);
   cursor: grab;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.image-container:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-sm);
 }
 
 .image-container:active {
   cursor: grabbing;
 }
 
+.image-frame {
+  position: relative;
+  grid-area: frame;
+  min-width: 0;
+}
+
 .image-container img {
-  grid-area: img;
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 3;
   object-fit: contain;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
+  border-radius: var(--r-md);
+  background: var(--surface-3);
   pointer-events: none;
   user-select: none;
+  transition: box-shadow 0.15s ease;
+}
+
+.image-container:hover img {
+  box-shadow: var(--shadow-md);
+}
+
+.image-side {
+  grid-area: side;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 小圖：編號疊在左上角，拖曳把手與欄位隱藏 */
+#imagePreview:not(.list-view) .image-side {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#imagePreview:not(.list-view) .drag-handle {
+  display: none;
 }
 
 .image-counter {
-  grid-area: num;
   display: inline-grid;
-  min-width: 28px;
-  height: 26px;
-  padding: 0 8px;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 7px;
   border-radius: var(--r-pill);
-  background: var(--surface-3);
+  background: var(--surface);
   color: var(--text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   place-items: center;
+  box-shadow: var(--shadow-sm);
 }
 
-.delete-button {
-  grid-area: del;
+.drag-handle {
+  color: var(--text-3);
+  font-size: 20px;
+  cursor: grab;
+}
+
+.image-container.drag-over .image-frame::after {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--accent-ink);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  content: "";
+  pointer-events: none;
+}
+
+/* 照片上的工具：滑鼠移上去（或用鍵盤移到）才出現 */
+.photo-tools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(31, 30, 29, 0.78);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.image-container:hover .photo-tools,
+.image-container:focus-within .photo-tools {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.photo-tool-btn {
   display: inline-grid;
-  width: 28px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 0;
-  border-radius: var(--r-sm);
+  border-radius: 7px;
   background: transparent;
-  color: var(--text-3);
-  font-size: 0;
+  color: #ffffff;
   place-items: center;
 }
 
-.delete-button::before {
-  font-family: "Material Symbols Outlined";
-  font-size: 19px;
-  content: "delete";
+.photo-tool-btn:hover,
+.photo-tool-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
 }
 
-.delete-button:hover,
-.delete-button:focus-visible {
-  background: var(--danger-soft);
-  color: var(--danger);
+.photo-tool-btn.is-danger {
+  color: #ffb4a8;
 }
 
-.image-container.editing {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 0 0 1px var(--accent);
+.photo-tool-btn .material-symbols-outlined {
+  font-size: 18px;
 }
 
-.image-container.editing .image-counter {
-  background: var(--accent);
-  color: var(--on-accent);
+#imagePreview:not(.list-view) .photo-tool-btn {
+  width: 28px;
+  height: 28px;
 }
 
-.image-container.drag-over {
-  border-color: var(--accent);
-  border-style: dashed;
-  background: var(--accent-soft);
+/* 觸控裝置沒有滑鼠移入：工具一直顯示 */
+@media (hover: none) {
+  .photo-tools {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .image-description {
@@ -1580,37 +1610,65 @@ body.document-preview-mode .toolbar-divider {
   display: none;
   min-width: 0;
   flex-direction: column;
-  gap: 8px;
-}
-
-/* 列表檢視：一列一張，右側填寫資料 */
-#imagePreview.list-view {
-  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
-#imagePreview.list-view .image-container {
-  grid-template-areas: "num img desc del";
-  grid-template-columns: auto minmax(140px, 220px) minmax(0, 1fr) auto;
-  align-items: start;
+/* 照片卡片：一列一張，照片在左、欄位在右 */
+#imagePreview.list-view {
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
-  padding: 12px;
-  cursor: default;
 }
 
-#imagePreview.list-view .image-container .image-counter,
-#imagePreview.list-view .image-container .delete-button {
-  margin-top: 2px;
+#imagePreview.list-view .image-container {
+  display: grid;
+  grid-template-areas: "side frame desc";
+  grid-template-columns: auto minmax(180px, 280px) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  cursor: default;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+#imagePreview.list-view .image-container:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+#imagePreview.list-view .image-container:hover img {
+  box-shadow: none;
+}
+
+#imagePreview.list-view .image-side {
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+#imagePreview.list-view .image-counter {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  box-shadow: none;
 }
 
 #imagePreview.list-view .image-description {
   display: flex;
 }
 
+#imagePreview.list-view.dragging-card .image-container {
+  cursor: grabbing;
+}
+
 #imagePreview .image-description-textarea {
   min-height: 84px;
   resize: vertical;
 }
+
 
 /* 各版型需要的欄位 */
 .image-description-textarea,
@@ -2652,21 +2710,6 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   }
 }
 
-@media (max-width: 1160px) and (min-width: 821px) {
-  .edit-tools-hint {
-    display: none;
-  }
-
-  /* 工作區較窄時，照片至少排兩欄 */
-  #imagePreview {
-    --tile-min: min(var(--photo-size, 240px), 200px);
-  }
-
-  #photoSizeSlider {
-    width: 72px;
-  }
-}
-
 /* ---------- 手機 ---------- */
 
 @media (max-width: 820px) {
@@ -2748,23 +2791,11 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
     flex: 1 1 auto;
   }
 
-  .view-switch-container {
-    gap: 6px;
+  .photo-sort-hint {
+    display: none;
   }
 
-  .fab-add-photo {
-    padding: 0 12px 0 8px;
-  }
-
-  .size-slider-container,
-  .size-slider-container + .toolbar-divider,
-  .edit-tools-hint {
-    display: none !important;
-  }
-
-  body.document-preview-mode .document-preview-controls {
-    order: 10;
-    flex: 1 1 100%;
+  .document-preview-controls {
     justify-content: space-between;
   }
 
@@ -2772,23 +2803,21 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
     min-height: 60dvh;
   }
 
-  #imagePreview {
-    --tile-min: 150px;
-    gap: 10px;
-    padding: 2px 0 12px;
-  }
-
   #imagePreview.list-view .image-container {
+    grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
-      "num . del"
-      "img img img"
-      "desc desc desc";
-    grid-template-columns: auto 1fr auto;
+      "side frame"
+      "desc desc";
     padding: 10px;
   }
 
-  #imagePreview.list-view .image-container img {
-    max-height: 360px;
+  #imagePreview.list-view .image-side {
+    flex-direction: column;
+  }
+
+  #imagePreview:not(.list-view) {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
   }
 
   .toast-container {
@@ -2879,16 +2908,8 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 }
 
 @media (max-width: 560px) {
-  .fab-add-text {
+  .view-btn-text {
     display: none;
-  }
-
-  .fab-add-photo {
-    width: var(--control-h);
-    justify-content: center;
-    padding: 0;
-    background: var(--accent);
-    color: var(--on-accent);
   }
 
   .toggle-container .label {
@@ -2948,23 +2969,6 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
     --control-h: 34px;
   }
 
-  .view-mode-controls .view-btn {
-    width: 30px;
-    height: 30px;
-  }
-
-  .edit-tool-btn {
-    width: 32px;
-  }
-
-  .view-switch-container > .toolbar-divider {
-    display: none !important;
-  }
-
-  .view-switch-container {
-    gap: 4px;
-    padding: 6px;
-  }
 }
 
 /* 手機橫放等「寬但很矮」的觸控螢幕：整頁捲動，不固定工作區高度 */
@@ -2986,9 +2990,10 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
     min-height: 46px;
   }
 
-  .delete-button {
-    width: 34px;
-    height: 30px;
+  .photo-tool-btn,
+  #imagePreview:not(.list-view) .photo-tool-btn {
+    width: 36px;
+    height: 36px;
   }
 
   .project-more-btn {

@@ -6,7 +6,7 @@ export const state = {
   isGenerating: false,
   isInitialized: false,
   selectedFormat: "left", // 'left': 刑事案件, 'middle': 交通事故, 'right': 多格照片
-  viewMode: "grid", // 'grid', 'list' or 'preview'
+  viewMode: "list", // 'grid', 'list' or 'preview'
   photoStartNumber: 1, // 本次第一張照片的顯示編號
   pdfPageNumberEnabled: false, // PDF 是否顯示頁碼
   pdfPageStartNumber: 1, // PDF 第一頁的顯示頁碼

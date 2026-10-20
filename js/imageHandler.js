@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261021-1";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261021-2";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,18 +14,18 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261021-1";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261021-1";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261021-1";
+} from "./utils.js?v=20261021-2";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261021-2";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261021-2";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261021-1";
+} from "./photoNumbering.js?v=20261021-2";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261021-1";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261021-1";
+} from "./splitGroupLogic.js?v=20261021-2";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261021-2";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -595,6 +595,59 @@ export const replaceImageWithPreparedImages = (
 /**
  * 將圖片加入預覽區
  */
+/** 滑鼠移到照片上時出現的工具：旋轉、分割長截圖、刪除。 */
+const PHOTO_TOOLS = [
+  { action: "rotate-left", icon: "rotate_left", label: "向左旋轉 90°" },
+  { action: "rotate-right", icon: "rotate_right", label: "向右旋轉 90°" },
+  { action: "split", icon: "content_cut", label: "分割長截圖" },
+  { action: "delete", icon: "delete", label: "刪除照片", danger: true },
+];
+
+let splitHandler = null;
+/** 由長截圖分割模組註冊，避免兩個模組互相匯入。 */
+export const registerSplitHandler = (handler) => {
+  splitHandler = handler;
+};
+
+const createPhotoTools = (imageId) => {
+  const tools = document.createElement("div");
+  tools.className = "photo-tools";
+  PHOTO_TOOLS.forEach((tool) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `photo-tool-btn${tool.danger ? " is-danger" : ""}`;
+    button.dataset.photoTool = tool.action;
+    button.title = tool.label;
+    button.setAttribute("aria-label", tool.label);
+    button.draggable = false;
+    const icon = document.createElement("span");
+    icon.className = "material-symbols-outlined";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = tool.icon;
+    button.appendChild(icon);
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      runPhotoTool(tool.action, imageId);
+    });
+    tools.appendChild(button);
+  });
+  return tools;
+};
+
+const runPhotoTool = async (action, imageId) => {
+  if (action === "rotate-left") return rotateImage(-90, imageId);
+  if (action === "rotate-right") return rotateImage(90, imageId);
+  if (action === "delete") return removeImage(imageId);
+  if (action === "split" && splitHandler) {
+    state.editingImageId = imageId;
+    try {
+      await splitHandler();
+    } finally {
+      if (state.editingImageId === imageId) state.editingImageId = null;
+    }
+  }
+};
+
 const addImageToPreview = (imageData, counter) => {
   const preview = document.getElementById("imagePreview");
   const imageContainer = document.createElement("div");
@@ -602,18 +655,30 @@ const addImageToPreview = (imageData, counter) => {
   imageContainer.dataset.id = imageData.id;
   imageContainer.draggable = true;
 
+  const side = document.createElement("div");
+  side.className = "image-side";
   const counterElement = document.createElement("div");
   counterElement.className = "image-counter";
   counterElement.textContent = getPhotoNumber(Math.max(0, counter - 1));
-  imageContainer.appendChild(counterElement);
+  const dragHandle = document.createElement("span");
+  dragHandle.className = "drag-handle material-symbols-outlined";
+  dragHandle.setAttribute("aria-hidden", "true");
+  dragHandle.title = "拖曳調整順序";
+  dragHandle.textContent = "drag_indicator";
+  side.append(counterElement, dragHandle);
+  imageContainer.appendChild(side);
 
+  const frame = document.createElement("div");
+  frame.className = "image-frame";
   const img = document.createElement("img");
   img.src = imageData.previewUrl;
   img.alt = imageData.name;
   img.title = imageData.name;
   // 防止瀏覽器啟動 <img> 的原生圖片拖曳，排序只由外層卡片處理。
   img.draggable = false;
-  imageContainer.appendChild(img);
+  frame.appendChild(img);
+  frame.appendChild(createPhotoTools(imageData.id));
+  imageContainer.appendChild(frame);
 
   const descriptionDiv = document.createElement("div");
   descriptionDiv.className = "image-description";
@@ -735,25 +800,16 @@ const addImageToPreview = (imageData, counter) => {
   descriptionDiv.appendChild(accidentTagsContainer);
   imageContainer.appendChild(descriptionDiv);
 
-  const deleteButton = document.createElement("button");
-  deleteButton.type = "button";
-  deleteButton.className = "delete-button";
-  deleteButton.textContent = "×";
-  deleteButton.setAttribute("aria-label", `刪除照片 ${counterElement.textContent}`);
-  deleteButton.title = "刪除這張照片";
-  deleteButton.onclick = () => removeImage(imageData.id);
-  imageContainer.appendChild(deleteButton);
-
   preview.appendChild(imageContainer);
   console.log("Image preview added:", imageData.name);
 };
 
 /** 「照片」與「版面預覽」來回切換時，回到上次使用的照片顯示方式。 */
-let lastPhotoViewMode = "grid";
+let lastPhotoViewMode = "list";
 export const getLastPhotoViewMode = () => lastPhotoViewMode;
 
 export const handleViewModeChange = (mode) => {
-  const nextMode = ["grid", "list", "preview"].includes(mode) ? mode : "grid";
+  const nextMode = ["grid", "list", "preview"].includes(mode) ? mode : "list";
   state.viewMode = nextMode;
   if (nextMode !== "preview") lastPhotoViewMode = nextMode;
   const preview = document.getElementById("imagePreview");
@@ -782,6 +838,12 @@ export const handleViewModeChange = (mode) => {
     String(nextMode === "preview"),
   );
 
+  const hint = document.getElementById("photoSortHint");
+  if (hint) {
+    hint.textContent =
+      nextMode === "grid" ? "直接拖曳小圖調整順序，編號會自動更新" : "拖曳卡片可調整順序";
+  }
+
   ["grid", "list", "preview"].forEach((viewMode) => {
     document.body.classList.toggle(`view-${viewMode}`, nextMode === viewMode);
   });
@@ -793,7 +855,9 @@ export const handleImageContainerEvents = (e) => {
   if (!e.target || !(e.target instanceof Element)) {
     return;
   }
-  if (e.target.tagName === "TEXTAREA") return;
+  const isTextField = ["TEXTAREA", "INPUT"].includes(e.target.tagName);
+  // 在文字欄位裡拖曳選取的文字時，不要當成拖曳整張卡片。
+  if (isTextField && e.type === "dragstart") return;
 
   const container = e.target.closest(".image-container");
   if (!container) return;
@@ -807,6 +871,8 @@ export const handleImageContainerEvents = (e) => {
 
   const dragTypes = Array.from(e.dataTransfer.types || []);
   const isInternalImageDrag = dragTypes.includes(INTERNAL_IMAGE_DRAG_TYPE);
+  // 卡片可以放在別張卡片的欄位上；其他拖進文字欄位的東西照舊交給欄位處理。
+  if (isTextField && !isInternalImageDrag) return;
 
   // 只有純外部檔案拖入才交給匯入處理；內部排序識別碼具有優先權。
   if (
@@ -1148,6 +1214,8 @@ export const updateCreateButtonState = () => {
   }
   const isEnabled = state.selectedImages.length > 0;
   const isMultiPhoto = state.selectedFormat === "right";
+  const photoCount = document.getElementById("photoCount");
+  if (photoCount) photoCount.textContent = `${state.selectedImages.length} 張`;
   document.body.classList.toggle("has-photos", isEnabled);
 
   createButton.classList.remove("create-btn-disabled");
@@ -1207,17 +1275,15 @@ export const cancelEditing = () => {
   setEditingImage(null);
 };
 
-export const rotateImage = async (degrees) => {
-  if (!state.editingImageId) return;
+export const rotateImage = async (degrees, imageId = state.editingImageId) => {
+  if (!imageId) return;
 
-  const imageData = state.selectedImages.find(
-    (img) => img.id === state.editingImageId,
-  );
+  const imageData = state.selectedImages.find((img) => img.id === imageId);
   if (!imageData) return;
 
-  const currentRotation = state.imageRotations[state.editingImageId] || 0;
+  const currentRotation = state.imageRotations[imageId] || 0;
   const newRotation = (currentRotation + degrees + 360) % 360;
-  state.imageRotations[state.editingImageId] = newRotation;
+  state.imageRotations[imageId] = newRotation;
 
   const rotatedData = await rotateImageData(imageData.blob, degrees);
 
@@ -1231,7 +1297,7 @@ export const rotateImage = async (degrees) => {
   imageData.previewUrl = rotatedData.previewUrl;
 
   const container = document.querySelector(
-    `.image-container[data-id="${state.editingImageId}"]`,
+    `.image-container[data-id="${imageId}"]`,
   );
   if (container) {
     const img = container.querySelector("img");
@@ -1363,25 +1429,3 @@ const rotateImageData = async (blob, degrees) => {
   }
 };
 
-export const handleImageClick = (e) => {
-  if (
-    e.target.tagName === "BUTTON" ||
-    e.target.tagName === "INPUT" ||
-    e.target.tagName === "TEXTAREA" ||
-    e.target.closest(".delete-button") ||
-    e.target.closest(".accident-tag-label")
-  ) {
-    return;
-  }
-
-  const container = e.target.closest(".image-container");
-  if (!container) return;
-
-  const imageId = parseFloat(container.dataset.id);
-
-  if (state.editingImageId === imageId) {
-    cancelEditing();
-  } else {
-    setEditingImage(imageId);
-  }
-};
