@@ -25,7 +25,7 @@ import {
   shouldWarnBeforeUnload,
 } from "./projectPersistence.js?v=20260905-14";
 import { notifyProjectChanged } from "./projectEvents.js";
-import { initDocumentPreview } from "./documentPreview.js?v=20260903-13";
+import { initDocumentPreview } from "./documentPreview.js?v=20261020-1";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,

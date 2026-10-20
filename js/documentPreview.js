@@ -11,9 +11,11 @@ import {
 } from "./pageNumbering.js";
 
 const PREVIEW_UPDATE_DELAY_MS = 220;
-const MIN_ZOOM = 0.5;
+const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 1;
 const ZOOM_STEP = 0.05;
+const DEFAULT_ZOOM = 0.75;
+const A4_PAGE_WIDTH_PX = 794;
 
 const FONT_CLASS_BY_VALUE = Object.freeze({
   kai: "font-preview-kai",
@@ -26,7 +28,9 @@ const FONT_CLASS_BY_VALUE = Object.freeze({
 });
 
 let currentPage = 0;
-let zoom = 0.75;
+let zoom = DEFAULT_ZOOM;
+// 使用者按過縮放按鈕後就保留其設定；否則依預覽區寬度自動縮放，避免手機上頁面被裁切。
+let userAdjustedZoom = false;
 let updateTimer = null;
 let renderToken = 0;
 let initialized = false;
@@ -305,10 +309,31 @@ const detectOverflow = (token) => {
   });
 };
 
+const getFitZoom = (stage) => {
+  const styles = getComputedStyle(stage);
+  const available =
+    stage.clientWidth -
+    (parseFloat(styles.paddingLeft) || 0) -
+    (parseFloat(styles.paddingRight) || 0);
+  if (!(available > 0)) return DEFAULT_ZOOM;
+  const fit = Math.floor((available / A4_PAGE_WIDTH_PX) * 100) / 100;
+  return Math.min(DEFAULT_ZOOM, Math.max(MIN_ZOOM, fit));
+};
+
+const applyAutoZoom = (stage) => {
+  if (userAdjustedZoom || !stage) return false;
+  const nextZoom = getFitZoom(stage);
+  if (nextZoom === zoom) return false;
+  zoom = nextZoom;
+  stage.style.setProperty("--document-preview-zoom", String(zoom));
+  return true;
+};
+
 const renderPreview = () => {
   if (state.viewMode !== "preview") return;
   const stage = document.getElementById("documentPreviewStage");
   if (!stage) return;
+  applyAutoZoom(stage);
 
   const token = ++renderToken;
   const pageCount = getPageCount();
@@ -398,6 +423,7 @@ const changePage = (offset) => {
 };
 
 const changeZoom = (offset) => {
+  userAdjustedZoom = true;
   zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Number((zoom + offset).toFixed(2))));
   renderPreview();
 };
@@ -420,6 +446,14 @@ export const initDocumentPreview = () => {
   );
 
   document.addEventListener(PROJECT_CHANGED_EVENT, () => scheduleRender(0));
+
+  const stage = document.getElementById("documentPreviewStage");
+  if (stage && "ResizeObserver" in window) {
+    new ResizeObserver(() => {
+      if (state.viewMode !== "preview") return;
+      if (applyAutoZoom(stage)) updateControls(getPageCount());
+    }).observe(stage);
+  }
   document.addEventListener("input", (event) => {
     if (
       event.target instanceof Element &&

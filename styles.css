@@ -1104,7 +1104,8 @@ html[data-theme="dark"] .project-save-status[data-status="pending"] {
   --document-preview-zoom: 0.75;
   display: flex;
   min-height: 420px;
-  justify-content: center;
+  /* 以 .document-page 的自動邊距置中：頁面比容器寬時不會被裁掉左側。 */
+  justify-content: flex-start;
   align-items: flex-start;
   padding: 16px 18px 24px;
   overflow: auto;
@@ -1116,6 +1117,7 @@ html[data-theme="dark"] .project-save-status[data-status="pending"] {
   flex: 0 0 auto;
   width: 794px;
   height: 1123px;
+  margin: 0 auto;
   padding: 44px 48px;
   overflow: hidden;
   zoom: var(--document-preview-zoom);
@@ -4436,6 +4438,10 @@ textarea:focus-visible,
   font-size: 40px;
   letter-spacing: 0.05em;
   color: var(--brand-title);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 a .zip-controls {
   gap: 8px;
@@ -5199,7 +5205,7 @@ footer {
   }
 
   .brand-block h1 {
-    font-size: 34px;
+    font-size: clamp(22px, 7.5vw, 34px);
   }
 
   .zip-controls {
@@ -5918,5 +5924,82 @@ body.long-shot-open {
   .sidebar-backdrop,
   .sidebar-toggle-divider {
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* 平板與小筆電寬度（側邊欄展開時工作區較窄）：工具列放不下時換行，
+   而不是把右側按鈕裁掉；工作區改為填滿剩餘高度，工具列變兩行也不會擠出頁尾。 */
+@media (min-width: 821px) and (max-width: 1160px) {
+  .view-switch-container {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    overflow: visible;
+  }
+
+  .view-mode-controls,
+  .size-slider-container,
+  .edit-tools-container,
+  .preview-project-toolbar {
+    flex: 0 0 auto;
+  }
+
+  .preview-project-toolbar {
+    margin-left: auto;
+  }
+
+  .main-content {
+    height: calc(
+      100vh - var(--app-header-height) - var(--footer-height) -
+        var(--layout-gap) * 2
+    );
+    height: calc(
+      100dvh - var(--app-header-height) - var(--footer-height) -
+        var(--layout-gap) * 2
+    );
+  }
+
+  .main-content > .container {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+  }
+}
+
+/* 手機橫放等「寬但很矮」的觸控螢幕：保留左右並排，但取消工作區固定高度，
+   改成整頁捲動，避免照片區只剩一小條、頁尾壓在照片上。 */
+@media (min-width: 821px) and (max-height: 560px) and (pointer: coarse) {
+  .main-content {
+    height: auto;
+  }
+
+  .main-content > .container {
+    flex: 0 0 auto;
+  }
+
+  .sidebar {
+    bottom: var(--layout-gap);
+  }
+
+  .container {
+    height: auto;
+    min-height: calc(100vh - var(--app-header-height) - var(--layout-gap) * 2);
+    min-height: calc(100dvh - var(--app-header-height) - var(--layout-gap) * 2);
+    overflow: visible;
+  }
+
+  footer {
+    position: relative;
+    margin: var(--layout-gap) var(--layout-gap) var(--layout-gap)
+      calc(272px + var(--layout-gap) + var(--layout-gap));
+  }
+
+  body.settings-collapsed footer {
+    margin-left: var(--layout-gap);
+  }
+}
+
+@media (min-width: 1161px) and (max-height: 560px) and (pointer: coarse) {
+  footer {
+    margin-left: calc(300px + var(--layout-gap) + var(--layout-gap));
   }
 }
