@@ -1600,11 +1600,22 @@ body:not(.has-photos) .view-mode-controls {
   height: 28px;
 }
 
-/* 觸控裝置沒有滑鼠移入：工具一直顯示 */
+/* 小圖較窄時，工具不可以超出照片 */
+#imagePreview:not(.list-view) .photo-tools {
+  max-width: calc(100% - 12px);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* 觸控裝置沒有滑鼠移入：卡片上的工具一直顯示；小圖排序只用來拖曳，不顯示工具 */
 @media (hover: none) {
-  .photo-tools {
+  #imagePreview.list-view .photo-tools {
     opacity: 1;
     pointer-events: auto;
+  }
+
+  #imagePreview:not(.list-view) .photo-tools {
+    display: none;
   }
 }
 
