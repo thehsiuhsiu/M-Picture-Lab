@@ -1,6 +1,6 @@
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261020-4";
-import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261020-4";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261020-4";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261021-1";
+import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261021-1";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261021-1";
 import {
   createObjectUrl,
   revokeObjectUrl,
@@ -8,9 +8,9 @@ import {
   showNotice,
   showPromptDialog,
   showToast,
-} from "./utils.js?v=20261020-4";
-import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261020-4";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261020-4";
+} from "./utils.js?v=20261021-1";
+import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261021-1";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261021-1";
 
 const DATABASE_NAME = "mpicture-local-projects-v1";
 const DATABASE_VERSION = 3;
@@ -869,11 +869,23 @@ const normalizeProjectRecord = async (record) => {
   };
 };
 
-const setStorageStatus = (message, status = "idle") => {
-  const element = document.getElementById("projectSaveStatus");
+/** 儲存狀態顯示在左側清單「目前專案」的第二行。 */
+let storageStatus = { message: "新專案", status: "idle" };
+
+const getStatusText = () =>
+  storageStatus.status === "idle" && !currentProject?.isStored
+    ? "新增照片後自動儲存"
+    : storageStatus.message;
+
+const applyStatusToElement = (element) => {
   if (!element) return;
-  element.textContent = message;
-  element.dataset.status = status;
+  element.textContent = getStatusText();
+  element.dataset.status = storageStatus.status;
+};
+
+const setStorageStatus = (message, status = "idle") => {
+  storageStatus = { message, status };
+  applyStatusToElement(document.querySelector(".project-list-item.is-current .project-save-status"));
 };
 
 const requestPersistentStorage = async () => {
@@ -1700,12 +1712,25 @@ const createProjectListItem = (meta) => {
   name.textContent = getDisplayName(meta);
   const detail = document.createElement("span");
   detail.className = "project-link-detail";
-  detail.textContent = `${meta.imageCount || 0} 張照片・${formatRelativeTime(meta.updatedAt)}`;
+  if (isCurrent) {
+    detail.classList.add("project-save-status");
+    detail.setAttribute("role", "status");
+    detail.setAttribute("aria-live", "polite");
+    applyStatusToElement(detail);
+  } else {
+    detail.textContent = `${meta.imageCount || 0} 張照片・${formatRelativeTime(meta.updatedAt)}`;
+  }
   openButton.append(name, detail);
   openButton.addEventListener("click", () => {
     closeNavOnMobile();
+    if (isCurrent) return;
     openProject(meta.id);
   });
+  if (!meta.isStored) {
+    // 尚未儲存的新專案：只標示目前位置，沒有改名或刪除可做
+    item.append(openButton);
+    return item;
+  }
 
   const moreButton = document.createElement("button");
   moreButton.type = "button";
@@ -1741,10 +1766,20 @@ const renderProjectList = () => {
   const pinned = sorted.filter((item) => item.pinned);
   const recent = sorted.filter((item) => !item.pinned);
   pinnedList.replaceChildren(...pinned.map(createProjectListItem));
-  recentList.replaceChildren(...recent.map(createProjectListItem));
+  const recentItems = recent.map(createProjectListItem);
+  if (currentProject && !currentProject.isStored) {
+    recentItems.unshift(
+      createProjectListItem({
+        ...currentProject,
+        customName: currentProject.customName || "新專案",
+        isStored: false,
+      }),
+    );
+  }
+  recentList.replaceChildren(...recentItems);
   if (pinnedSection) pinnedSection.hidden = pinned.length === 0;
-  if (recentSection) recentSection.hidden = recent.length === 0 && pinned.length > 0;
-  if (emptyHint) emptyHint.hidden = sorted.length > 0;
+  if (recentSection) recentSection.hidden = recentItems.length === 0 && pinned.length > 0;
+  if (emptyHint) emptyHint.hidden = recentItems.length > 0 || pinned.length > 0;
 };
 
 const refreshProjectList = async () => {

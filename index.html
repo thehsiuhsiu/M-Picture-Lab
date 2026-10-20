@@ -49,7 +49,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20261020-4" />
+    <link rel="stylesheet" href="styles.css?v=20261021-1" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;600&amp;display=swap"
       rel="stylesheet"
@@ -65,13 +65,6 @@
     <nav class="app-nav" id="appNav" aria-label="專案">
       <div class="nav-header">
         <a class="brand-link" href="./" title="M-Picture">
-          <img
-            class="brand-mark"
-            src="images/icons/brand-mark.png"
-            alt=""
-            width="46"
-            height="26"
-          />
           <span class="brand-name">M-Picture</span>
         </a>
         <button
@@ -113,64 +106,22 @@
         </section>
       </div>
       <div class="nav-footer">
-        <p class="nav-storage" id="storageUsage">專案只存在這台裝置的瀏覽器中</p>
-        <p class="nav-footer-links">
-          <button type="button" id="privacyPolicyBtn" class="footer-link-btn">隱私權政策</button>
-          <span aria-hidden="true">・</span>
-          <span>© 2024 M-Picture</span>
-        </p>
-      </div>
-    </nav>
-
-    <header class="app-header">
-      <button
-        type="button"
-        id="navOpenBtn"
-        class="icon-btn nav-open-btn"
-        aria-controls="appNav"
-        aria-label="開啟專案清單"
-        title="開啟專案清單"
-      >
-        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
-      </button>
-      <div class="project-title-wrap">
-        <button
-          type="button"
-          id="projectTitleBtn"
-          class="project-title-btn"
-          aria-haspopup="menu"
-          aria-expanded="false"
-          aria-controls="projectMenu"
-          title="專案動作"
-        >
-          <span id="projectTitleText">新專案</span>
-          <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
-        </button>
-        <span
-          id="projectSaveStatus"
-          class="project-save-status"
-          data-status="idle"
-          role="status"
-          aria-live="polite"
-          >新專案</span
-        >
-      </div>
-
-      <div class="zip-controls">
+        <div class="nav-footer-actions">
         <button
           type="button"
           id="faqBtn"
-          class="icon-btn faq-btn"
+          class="nav-item faq-btn"
           title="常見問題"
           aria-label="常見問題"
         >
           <span class="material-symbols-outlined" aria-hidden="true">help</span>
+          <span class="nav-label">常見問題</span>
         </button>
         <div class="theme-selector">
           <button
             type="button"
             id="themeToggleBtn"
-            class="icon-btn theme-toggle-icon"
+            class="nav-item theme-toggle-icon"
             title="切換深淺色"
             aria-label="切換深淺色"
             aria-controls="themeMenu"
@@ -179,6 +130,7 @@
             <span class="material-symbols-outlined theme-icon-light" aria-hidden="true">light_mode</span>
             <span class="material-symbols-outlined theme-icon-dark" aria-hidden="true">dark_mode</span>
             <span class="material-symbols-outlined theme-icon-system" aria-hidden="true">contrast</span>
+            <span class="nav-label">外觀</span>
           </button>
           <div class="theme-menu menu-panel" id="themeMenu">
             <button type="button" class="theme-option menu-item" data-theme="light">
@@ -195,18 +147,80 @@
             </button>
           </div>
         </div>
+        </div>
+        <p class="nav-storage" id="storageUsage">專案只存在這台裝置的瀏覽器中</p>
+        <p class="nav-footer-links">
+          <button type="button" id="privacyPolicyBtn" class="footer-link-btn">隱私權政策</button>
+          <span aria-hidden="true">・</span>
+          <span>© 2024 M-Picture</span>
+        </p>
+      </div>
+    </nav>
+
+    <div class="project-menu menu-panel" id="projectMenu" role="menu" aria-label="專案動作">
+      <button type="button" class="menu-item" role="menuitem" data-project-action="rename">
+        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+        <span class="menu-label">重新命名</span>
+      </button>
+      <button type="button" class="menu-item" role="menuitem" data-project-action="pin">
+        <span class="material-symbols-outlined" aria-hidden="true">keep</span>
+        <span class="menu-label">釘選</span>
+      </button>
+      <button type="button" class="menu-item menu-item-danger" role="menuitem" data-project-action="delete">
+        <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+        <span class="menu-label">刪除專案</span>
+      </button>
+    </div>
+    <main class="main-content">
+      <div class="workspace-bar">
         <button
           type="button"
-          id="mobileSettingsBtn"
-          class="panel-toggle-btn"
-          aria-controls="projectSettings"
-          aria-expanded="true"
-          aria-label="隱藏文件資料"
-          title="顯示或隱藏文件資料"
+          id="navOpenBtn"
+          class="icon-btn nav-open-btn"
+          aria-controls="appNav"
+          aria-label="開啟專案清單"
+          title="開啟專案清單"
         >
-          <span class="material-symbols-outlined" aria-hidden="true">tune</span>
-          <span class="panel-toggle-text">文件資料</span>
+          <span class="material-symbols-outlined" aria-hidden="true">menu</span>
         </button>
+        <div class="toggle-container" role="group" aria-label="文件版型" data-state="left">
+          <div class="labels">
+            <button type="button" class="label" data-value="left" aria-pressed="true" title="刑事案件照片黏貼表">
+              <span class="material-symbols-outlined format-icon" aria-hidden="true">gavel</span>
+              <span class="label-text">刑事案件</span>
+            </button>
+            <button type="button" class="label" data-value="middle" aria-pressed="false" title="交通事故照片黏貼紀錄表">
+              <span class="material-symbols-outlined format-icon" aria-hidden="true">car_crash</span>
+              <span class="label-text">交通事故</span>
+            </button>
+            <button type="button" class="label" data-value="right" aria-pressed="false" title="每頁多張照片">
+              <span class="material-symbols-outlined format-icon" aria-hidden="true">grid_view</span>
+              <span class="label-text">多格照片</span>
+            </button>
+          </div>
+        </div>
+        <div class="workspace-view-toggle" role="group" aria-label="檢視">
+          <button
+            type="button"
+            id="photoViewBtn"
+            class="workspace-view-btn active"
+            aria-pressed="true"
+            title="照片：排序與填寫說明"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">photo_library</span>
+            <span class="workspace-view-text">照片</span>
+          </button>
+          <button
+            type="button"
+            id="documentPreviewBtn"
+            class="workspace-view-btn"
+            aria-pressed="false"
+            title="版面預覽：查看輸出的 A4 頁面"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">preview</span>
+            <span class="workspace-view-text">版面預覽</span>
+          </button>
+        </div>
         <div class="download-dropdown">
           <button
             type="button"
@@ -260,401 +274,124 @@
           </div>
         </div>
       </div>
-    </header>
-
-    <div class="project-menu menu-panel" id="projectMenu" role="menu" aria-label="專案動作">
-      <button type="button" class="menu-item" role="menuitem" data-project-action="rename">
-        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-        <span class="menu-label">重新命名</span>
-      </button>
-      <button type="button" class="menu-item" role="menuitem" data-project-action="pin">
-        <span class="material-symbols-outlined" aria-hidden="true">keep</span>
-        <span class="menu-label">釘選</span>
-      </button>
-      <button type="button" class="menu-item menu-item-danger" role="menuitem" data-project-action="delete">
-        <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-        <span class="menu-label">刪除專案</span>
-      </button>
-    </div>
-    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
-    <aside class="sidebar" id="projectSettings" aria-label="文件資料">
-      <div class="sidebar-heading">
-        <div>
-          <h2>文件資料</h2>
-          <p>填寫後會套用到輸出的每一頁</p>
+      <section class="case-card" id="caseCard" aria-labelledby="caseCardTitle">
+        <div class="case-card-header">
+          <h2 id="caseCardTitle">案件資料</h2>
+          <span class="case-card-summary" id="caseCardSummary" aria-hidden="true"></span>
+          <button
+            type="button"
+            id="caseCardToggle"
+            class="case-card-toggle"
+            aria-expanded="true"
+            aria-controls="caseCardBody"
+          >
+            <span class="case-card-toggle-text">收合</span>
+            <span class="material-symbols-outlined" aria-hidden="true">expand_less</span>
+          </button>
         </div>
-        <button
-          type="button"
-          id="mobileSettingsCloseBtn"
-          class="icon-btn mobile-settings-close"
-          aria-label="關閉文件資料"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true"
-            >close</span
-          >
-        </button>
-      </div>
-      <div class="form-group" data-format="left">
-        <label for="docTitleLeft">文件標題</label>
-        <input
-          type="text"
-          id="docTitleLeft"
-          class="sidebar-input"
-          maxlength="120"
-          placeholder="照片黏貼表"
-          value="照片黏貼表"
-        />
-      </div>
-      <div class="form-group" data-format="middle">
-        <label for="docTitleMiddle">文件標題</label>
-        <input
-          type="text"
-          id="docTitleMiddle"
-          class="sidebar-input"
-          maxlength="120"
-          placeholder="照片黏貼表"
-          value="照片黏貼表"
-        />
-      </div>
-      <div class="form-group" data-format="right">
-        <label for="docTitleRight">文件標題</label>
-        <input
-          type="text"
-          id="docTitleRight"
-          class="sidebar-input"
-          maxlength="120"
-          placeholder="照片黏貼表"
-          value="照片黏貼表"
-        />
-      </div>
-      <div
-        class="form-group photo-numbering-setting"
-        data-format="left middle right"
-      >
-        <label for="photoStartNumber">照片起始編號</label>
-        <input
-          type="number"
-          id="photoStartNumber"
-          class="sidebar-input"
-          min="1"
-          max="999"
-          step="1"
-          inputmode="numeric"
-          value="1"
-          aria-describedby="photoStartNumberHelp photoStartNumberWarning"
-        />
-        <small id="photoStartNumberHelp" class="sidebar-field-help">
-          例如接續上次編號20，請輸入21。
-        </small>
-        <small
-          id="photoStartNumberWarning"
-          class="sidebar-field-warning"
-          hidden
-        ></small>
-      </div>
-      <div class="multi-photo-settings" data-format="right">
-        <div class="multi-photo-setting-group">
-          <span class="sidebar-label">每頁張數</span>
-          <div
-            class="multi-photo-options"
-            role="radiogroup"
-            aria-label="每頁張數"
-          >
-            <label class="multi-photo-option">
+        <div class="case-card-body" id="caseCardBody">
+          <div class="form-group case-field-wide" data-format="left">
+            <label for="docTitleLeft">文件標題</label>
+            <input
+              type="text"
+              id="docTitleLeft"
+              class="sidebar-input"
+              maxlength="120"
+              placeholder="照片黏貼表"
+              value="照片黏貼表"
+            />
+          </div>
+          <div class="form-group case-field-wide" data-format="middle">
+            <label for="docTitleMiddle">文件標題</label>
+            <input
+              type="text"
+              id="docTitleMiddle"
+              class="sidebar-input"
+              maxlength="120"
+              placeholder="照片黏貼表"
+              value="照片黏貼表"
+            />
+          </div>
+          <div class="form-group case-field-wide" data-format="right">
+            <label for="docTitleRight">文件標題</label>
+            <input
+              type="text"
+              id="docTitleRight"
+              class="sidebar-input"
+              maxlength="120"
+              placeholder="照片黏貼表"
+              value="照片黏貼表"
+            />
+          </div>
+          <div class="form-group" data-format="left">
+            <label for="zipPrefix">案由</label>
+            <input
+              type="text"
+              id="zipPrefix"
+              class="sidebar-input"
+              maxlength="200"
+              placeholder="例：竊盜案"
+            />
+          </div>
+          <div class="form-group" data-format="left">
+            <label for="caseUni">單位</label>
+            <input
+              type="text"
+              id="caseUni"
+              class="sidebar-input"
+              maxlength="200"
+              placeholder="例：○○派出所"
+            />
+          </div>
+
+          <div class="case-date-field" data-format="left middle">
+          <div class="form-group-row" data-format="left middle">
+            <label for="caseDate" id="dateLabelText">攝影日期</label>
+            <label class="switch">
               <input
-                type="radio"
-                name="multiPhotoCount"
-                value="2"
-                class="multi-layout-input"
+                type="checkbox"
+                id="dateModeSwitch"
+                role="switch"
+                aria-label="自動帶入照片日期"
               />
-              <span>2 張</span>
+              <span class="slider"></span>
             </label>
-            <label class="multi-photo-option">
-              <input
-                type="radio"
-                name="multiPhotoCount"
-                value="4"
-                class="multi-layout-input"
-                checked
-              />
-              <span>4 張</span>
-            </label>
+            <span id="dateModeLabel"></span>
+          </div>
+          <div class="form-group" data-format="left middle">
+            <input
+              type="text"
+              id="caseDate"
+              class="sidebar-input"
+              maxlength="80"
+              placeholder="例：115/05/16 09:18"
+            />
+          </div>
+          </div>
+
+          <div class="form-group case-field-span2" data-format="left" id="addressGroup">
+            <label for="caseAddress" id="addressLabelText">攝影地址</label>
+            <input
+              type="text"
+              id="caseAddress"
+              class="sidebar-input"
+              maxlength="500"
+              placeholder="例：○○市○○區○○路 1 號"
+            />
+          </div>
+
+          <div class="form-group" data-format="left" id="personGroup">
+            <label for="caseNumber" id="personLabelText">攝影人員</label>
+            <input
+              type="text"
+              id="caseNumber"
+              class="sidebar-input"
+              maxlength="200"
+              placeholder="姓名"
+            />
           </div>
         </div>
-        <div class="multi-photo-setting-group" id="multiPhotoOrderGroup">
-          <span class="sidebar-label">排序方式</span>
-          <div
-            class="multi-photo-options"
-            role="radiogroup"
-            aria-label="照片排序方式"
-          >
-            <label class="multi-photo-option">
-              <input
-                type="radio"
-                name="multiPhotoOrder"
-                value="horizontal"
-                class="multi-layout-input"
-                checked
-              />
-              <span>水平</span>
-            </label>
-            <label class="multi-photo-option">
-              <input
-                type="radio"
-                name="multiPhotoOrder"
-                value="vertical"
-                class="multi-layout-input"
-              />
-              <span>垂直</span>
-            </label>
-          </div>
-        </div>
-      </div>
-      <h3 class="sidebar-section-title" data-format="left middle">案件資料</h3>
-      <div class="form-group" data-format="left">
-        <label for="zipPrefix">案由</label>
-        <input
-          type="text"
-          id="zipPrefix"
-          class="sidebar-input"
-          maxlength="200"
-          placeholder="例：竊盜案"
-        />
-      </div>
-      <div class="form-group" data-format="left">
-        <label for="caseUni">單位</label>
-        <input
-          type="text"
-          id="caseUni"
-          class="sidebar-input"
-          maxlength="200"
-          placeholder="例：○○派出所"
-        />
-      </div>
-
-      <div class="form-group-row" data-format="left middle">
-        <label for="caseDate" id="dateLabelText">攝影日期</label>
-        <label class="switch">
-          <input
-            type="checkbox"
-            id="dateModeSwitch"
-            role="switch"
-            aria-label="自動帶入照片日期"
-          />
-          <span class="slider"></span>
-        </label>
-        <span id="dateModeLabel"></span>
-      </div>
-      <div class="form-group" data-format="left middle">
-        <input
-          type="text"
-          id="caseDate"
-          class="sidebar-input"
-          maxlength="80"
-          placeholder="例：115/05/16 09:18"
-        />
-      </div>
-
-      <div class="form-group" data-format="left" id="addressGroup">
-        <label for="caseAddress" id="addressLabelText">攝影地址</label>
-        <input
-          type="text"
-          id="caseAddress"
-          class="sidebar-input"
-          maxlength="500"
-          placeholder="例：○○市○○區○○路 1 號"
-        />
-      </div>
-
-      <div class="form-group" data-format="left" id="personGroup">
-        <label for="caseNumber" id="personLabelText">攝影人員</label>
-        <input
-          type="text"
-          id="caseNumber"
-          class="sidebar-input"
-          maxlength="200"
-          placeholder="姓名"
-        />
-      </div>
-      <section class="sidebar-section" aria-labelledby="pdfSettingsTitle">
-        <h3 class="sidebar-section-title" id="pdfSettingsTitle">PDF 輸出設定</h3>
-        <div class="form-group-row pdf-page-number-row">
-          <label for="pdfPageNumberEnabled" class="sidebar-label">顯示頁碼</label>
-          <label class="switch">
-            <input type="checkbox" id="pdfPageNumberEnabled" role="switch" />
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="form-group pdf-page-start-setting" id="pdfPageStartSetting" hidden>
-          <label for="pdfPageStartNumber">頁碼起始編號</label>
-          <input
-            type="number"
-            id="pdfPageStartNumber"
-            class="sidebar-input"
-            min="1"
-            max="9999"
-            step="1"
-            inputmode="numeric"
-            value="1"
-          />
-        </div>
-        <div class="form-group download-font-setting">
-          <label for="pdfFontTrigger">PDF 字型</label>
-              <select
-                id="pdfFontSelect"
-                class="native-font-select"
-                aria-hidden="true"
-                tabindex="-1"
-              >
-                <option value="kai" class="font-preview-kai">標楷體</option>
-                <option value="noto-serif-tc" class="font-preview-noto-serif">
-                  思源宋體 / Noto Serif TC
-                </option>
-                <option value="noto-sans-tc" class="font-preview-noto-sans">
-                  思源黑體 / Noto Sans TC
-                </option>
-                <option
-                  value="jf-openhuninn"
-                  class="font-preview-jf-openhuninn"
-                >
-                  jf open 粉圓
-                </option>
-                <option value="iansui" class="font-preview-iansui">
-                  芫荽 / Iansui
-                </option>
-                <option value="gen-ryumin" class="font-preview-gen-ryumin">
-                  源流明體
-                </option>
-                <option
-                  value="chen-yuluoyan"
-                  class="font-preview-chen-yuluoyan"
-                >
-                  辰宇落雁體
-                </option>
-              </select>
-              <div class="pdf-font-dropdown" id="pdfFontDropdown">
-                <button
-                  type="button"
-                  class="pdf-font-trigger font-preview-kai"
-                  id="pdfFontTrigger"
-                  aria-haspopup="listbox"
-                  aria-expanded="false"
-                  aria-controls="pdfFontMenu"
-                >
-                  <span class="pdf-font-trigger-text">標楷體</span>
-                </button>
-                <div
-                  class="pdf-font-backdrop"
-                  id="pdfFontBackdrop"
-                  aria-hidden="true"
-                ></div>
-                <div
-                  class="pdf-font-menu"
-                  id="pdfFontMenu"
-                  role="listbox"
-                  aria-label="僅套用 PDF 字型"
-                  aria-hidden="true"
-                >
-                  <div class="pdf-font-sheet-header" role="presentation">
-                    <span>選擇 PDF 字型</span>
-                    <button
-                      type="button"
-                      id="pdfFontCloseBtn"
-                      class="pdf-font-close-btn"
-                      aria-label="關閉字型選單"
-                    >
-                      <span class="material-symbols-outlined" aria-hidden="true"
-                        >close</span
-                      >
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    class="pdf-font-option font-preview-kai is-selected"
-                    role="option"
-                    aria-selected="true"
-                    data-value="kai"
-                  >
-                    <span class="pdf-font-option-name">標楷體</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="pdf-font-option font-preview-noto-serif"
-                    role="option"
-                    aria-selected="false"
-                    data-value="noto-serif-tc"
-                  >
-                    <span class="pdf-font-option-name">思源宋體</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="pdf-font-option font-preview-noto-sans"
-                    role="option"
-                    aria-selected="false"
-                    data-value="noto-sans-tc"
-                  >
-                    <span class="pdf-font-option-name">思源黑體</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="pdf-font-option font-preview-jf-openhuninn"
-                    role="option"
-                    aria-selected="false"
-                    data-value="jf-openhuninn"
-                  >
-                    <span class="pdf-font-option-name">jf open 粉圓</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="pdf-font-option font-preview-iansui"
-                    role="option"
-                    aria-selected="false"
-                    data-value="iansui"
-                  >
-                    <span class="pdf-font-option-name">芫荽</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="pdf-font-option font-preview-gen-ryumin"
-                    role="option"
-                    aria-selected="false"
-                    data-value="gen-ryumin"
-                  >
-                    <span class="pdf-font-option-name">源流明體</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="pdf-font-option font-preview-chen-yuluoyan"
-                    role="option"
-                    aria-selected="false"
-                    data-value="chen-yuluoyan"
-                  >
-                    <span class="pdf-font-option-name">辰宇落雁體</span>
-                  </button>
-                </div>
-              </div>
-            </div>
       </section>
-    </aside>
-    <main class="main-content">
-      <div class="workspace-bar">
-        <div class="toggle-container" role="group" aria-label="文件版型" data-state="left">
-          <div class="labels">
-            <button type="button" class="label" data-value="left" aria-pressed="true" title="刑事案件照片黏貼表">
-              <span class="material-symbols-outlined format-icon" aria-hidden="true">gavel</span>
-              <span class="label-text">刑事案件</span>
-            </button>
-            <button type="button" class="label" data-value="middle" aria-pressed="false" title="交通事故照片黏貼紀錄表">
-              <span class="material-symbols-outlined format-icon" aria-hidden="true">car_crash</span>
-              <span class="label-text">交通事故</span>
-            </button>
-            <button type="button" class="label" data-value="right" aria-pressed="false" title="每頁多張照片">
-              <span class="material-symbols-outlined format-icon" aria-hidden="true">grid_view</span>
-              <span class="label-text">多格照片</span>
-            </button>
-          </div>
-        </div>
-      </div>
       <div class="view-switch-container">
         <div class="photo-source-picker" id="photoSourcePicker">
           <div class="photo-source-menu menu-panel" id="photoSourceMenu">
@@ -707,16 +444,6 @@
             aria-pressed="false"
           >
             <span class="material-symbols-outlined">view_list</span>
-          </button>
-          <button
-            type="button"
-            id="documentPreviewBtn"
-            class="view-btn"
-            title="版面預覽：查看輸出的 A4 頁面"
-            aria-label="版面預覽"
-            aria-pressed="false"
-          >
-            <span class="material-symbols-outlined">preview</span>
           </button>
         </div>
         <span class="toolbar-divider"></span>
@@ -837,22 +564,269 @@
           </div>
         </div>
         <div id="imagePreview"></div>
-        <section
-          id="documentPreview"
-          class="document-preview"
-          aria-label="文件版面預覽"
-          hidden
-        >
-          <p
-            id="documentPreviewWarning"
-            class="document-preview-warning"
+        <div class="preview-workspace" id="previewWorkspace" hidden>
+          <section
+            id="documentPreview"
+            class="document-preview"
+            aria-label="文件版面預覽"
             hidden
-          ></p>
-          <div id="documentPreviewStage" class="document-preview-stage"></div>
-          <p class="document-preview-note">
-            此預覽僅供顯示排版；輸出之文件實際排版、分頁可能因字型與版本略有差異。
-          </p>
-        </section>
+          >
+            <p
+              id="documentPreviewWarning"
+              class="document-preview-warning"
+              hidden
+            ></p>
+            <div id="documentPreviewStage" class="document-preview-stage"></div>
+            <p class="document-preview-note">
+              此預覽僅供顯示排版；輸出之文件實際排版、分頁可能因字型與版本略有差異。
+            </p>
+          </section>
+          <aside class="layout-settings" id="layoutSettings" aria-labelledby="layoutSettingsTitle">
+            <h2 class="layout-settings-title" id="layoutSettingsTitle">排版設定</h2>
+            <div
+              class="form-group photo-numbering-setting"
+              data-format="left middle right"
+            >
+              <label for="photoStartNumber">照片起始編號</label>
+              <input
+                type="number"
+                id="photoStartNumber"
+                class="sidebar-input"
+                min="1"
+                max="999"
+                step="1"
+                inputmode="numeric"
+                value="1"
+                aria-describedby="photoStartNumberHelp photoStartNumberWarning"
+              />
+              <small id="photoStartNumberHelp" class="sidebar-field-help">
+                例如接續上次編號20，請輸入21。
+              </small>
+              <small
+                id="photoStartNumberWarning"
+                class="sidebar-field-warning"
+                hidden
+              ></small>
+            </div>
+            <div class="multi-photo-settings" data-format="right">
+              <div class="multi-photo-setting-group">
+                <span class="sidebar-label">每頁張數</span>
+                <div
+                  class="multi-photo-options"
+                  role="radiogroup"
+                  aria-label="每頁張數"
+                >
+                  <label class="multi-photo-option">
+                    <input
+                      type="radio"
+                      name="multiPhotoCount"
+                      value="2"
+                      class="multi-layout-input"
+                    />
+                    <span>2 張</span>
+                  </label>
+                  <label class="multi-photo-option">
+                    <input
+                      type="radio"
+                      name="multiPhotoCount"
+                      value="4"
+                      class="multi-layout-input"
+                      checked
+                    />
+                    <span>4 張</span>
+                  </label>
+                </div>
+              </div>
+              <div class="multi-photo-setting-group" id="multiPhotoOrderGroup">
+                <span class="sidebar-label">排序方式</span>
+                <div
+                  class="multi-photo-options"
+                  role="radiogroup"
+                  aria-label="照片排序方式"
+                >
+                  <label class="multi-photo-option">
+                    <input
+                      type="radio"
+                      name="multiPhotoOrder"
+                      value="horizontal"
+                      class="multi-layout-input"
+                      checked
+                    />
+                    <span>水平</span>
+                  </label>
+                  <label class="multi-photo-option">
+                    <input
+                      type="radio"
+                      name="multiPhotoOrder"
+                      value="vertical"
+                      class="multi-layout-input"
+                    />
+                    <span>垂直</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="layout-settings-group" role="group" aria-labelledby="pdfSettingsTitle">
+              <h3 class="layout-settings-subtitle" id="pdfSettingsTitle">PDF</h3>
+              <div class="form-group-row pdf-page-number-row">
+                <label for="pdfPageNumberEnabled" class="sidebar-label">顯示頁碼</label>
+                <label class="switch">
+                  <input type="checkbox" id="pdfPageNumberEnabled" role="switch" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="form-group pdf-page-start-setting" id="pdfPageStartSetting" hidden>
+                <label for="pdfPageStartNumber">頁碼起始編號</label>
+                <input
+                  type="number"
+                  id="pdfPageStartNumber"
+                  class="sidebar-input"
+                  min="1"
+                  max="9999"
+                  step="1"
+                  inputmode="numeric"
+                  value="1"
+                />
+              </div>
+              <div class="form-group download-font-setting">
+                <label for="pdfFontTrigger">PDF 字型</label>
+                    <select
+                      id="pdfFontSelect"
+                      class="native-font-select"
+                      aria-hidden="true"
+                      tabindex="-1"
+                    >
+                      <option value="kai" class="font-preview-kai">標楷體</option>
+                      <option value="noto-serif-tc" class="font-preview-noto-serif">
+                        思源宋體 / Noto Serif TC
+                      </option>
+                      <option value="noto-sans-tc" class="font-preview-noto-sans">
+                        思源黑體 / Noto Sans TC
+                      </option>
+                      <option
+                        value="jf-openhuninn"
+                        class="font-preview-jf-openhuninn"
+                      >
+                        jf open 粉圓
+                      </option>
+                      <option value="iansui" class="font-preview-iansui">
+                        芫荽 / Iansui
+                      </option>
+                      <option value="gen-ryumin" class="font-preview-gen-ryumin">
+                        源流明體
+                      </option>
+                      <option
+                        value="chen-yuluoyan"
+                        class="font-preview-chen-yuluoyan"
+                      >
+                        辰宇落雁體
+                      </option>
+                    </select>
+                    <div class="pdf-font-dropdown" id="pdfFontDropdown">
+                      <button
+                        type="button"
+                        class="pdf-font-trigger font-preview-kai"
+                        id="pdfFontTrigger"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        aria-controls="pdfFontMenu"
+                      >
+                        <span class="pdf-font-trigger-text">標楷體</span>
+                      </button>
+                      <div
+                        class="pdf-font-backdrop"
+                        id="pdfFontBackdrop"
+                        aria-hidden="true"
+                      ></div>
+                      <div
+                        class="pdf-font-menu"
+                        id="pdfFontMenu"
+                        role="listbox"
+                        aria-label="僅套用 PDF 字型"
+                        aria-hidden="true"
+                      >
+                        <div class="pdf-font-sheet-header" role="presentation">
+                          <span>選擇 PDF 字型</span>
+                          <button
+                            type="button"
+                            id="pdfFontCloseBtn"
+                            class="pdf-font-close-btn"
+                            aria-label="關閉字型選單"
+                          >
+                            <span class="material-symbols-outlined" aria-hidden="true"
+                              >close</span
+                            >
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          class="pdf-font-option font-preview-kai is-selected"
+                          role="option"
+                          aria-selected="true"
+                          data-value="kai"
+                        >
+                          <span class="pdf-font-option-name">標楷體</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="pdf-font-option font-preview-noto-serif"
+                          role="option"
+                          aria-selected="false"
+                          data-value="noto-serif-tc"
+                        >
+                          <span class="pdf-font-option-name">思源宋體</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="pdf-font-option font-preview-noto-sans"
+                          role="option"
+                          aria-selected="false"
+                          data-value="noto-sans-tc"
+                        >
+                          <span class="pdf-font-option-name">思源黑體</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="pdf-font-option font-preview-jf-openhuninn"
+                          role="option"
+                          aria-selected="false"
+                          data-value="jf-openhuninn"
+                        >
+                          <span class="pdf-font-option-name">jf open 粉圓</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="pdf-font-option font-preview-iansui"
+                          role="option"
+                          aria-selected="false"
+                          data-value="iansui"
+                        >
+                          <span class="pdf-font-option-name">芫荽</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="pdf-font-option font-preview-gen-ryumin"
+                          role="option"
+                          aria-selected="false"
+                          data-value="gen-ryumin"
+                        >
+                          <span class="pdf-font-option-name">源流明體</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="pdf-font-option font-preview-chen-yuluoyan"
+                          role="option"
+                          aria-selected="false"
+                          data-value="chen-yuluoyan"
+                        >
+                          <span class="pdf-font-option-name">辰宇落雁體</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+            </div>
+          </aside>
+        </div>
         <div
           id="photoDropOverlay"
           class="photo-drop-overlay"
@@ -1217,7 +1191,7 @@
       </div>
     </div>
 
-    <script type="module" src="js/main.js?v=20261020-4"></script>
+    <script type="module" src="js/main.js?v=20261021-1"></script>
 
 
     <div id="consentModal" class="modal consent-modal" aria-hidden="true">
@@ -1395,7 +1369,7 @@
         <section>
           <h3>如何新增照片？</h3>
           <p>
-            可從電腦檔案總管選取一張或多張照片，拖曳到頁面中的「照片顯示區」。出現藍色提示框後放開，照片就會新增至目前專案；在文件資料欄或頁首放開不會匯入。也可按工具列左側的「新增照片」，選擇「從裝置選擇照片」；選擇「Google
+            可從電腦檔案總管選取一張或多張照片，拖曳到頁面中的「照片顯示區」。出現藍色提示框後放開，照片就會新增至目前專案；在案件資料卡片或頂端列放開不會匯入。也可按工具列左側的「新增照片」，選擇「從裝置選擇照片」；選擇「Google
             相簿」會開啟測試中的 Google
             授權與相簿選取流程，目前僅限測試人員使用。
           </p>
@@ -1404,7 +1378,7 @@
         <section>
           <h3>如何輸入每張照片的說明？</h3>
           <p>
-            切換到列表版面後，每張照片旁邊會出現日期、地址與說明欄位。未填寫的欄位會使用「文件資料」中的共用資料。
+            切換到列表版面後，每張照片旁邊會出現日期、地址與說明欄位。未填寫的欄位會使用「案件資料」中的共用資料。
           </p>
         </section>
 
@@ -1470,14 +1444,14 @@
         <section>
           <h3>如何管理專案清單？</h3>
           <p>
-            按左側的「新專案」開始新的工作，原本的專案會留在清單中。把滑鼠移到專案上（手機上直接點）右側的「⋯」，可以重新命名、釘選到清單最上方，或刪除專案；點頂端的專案名稱也有同樣的選單。刪除後無法復原，需要保留請先匯出加密專案。
+            按左側的「新專案」開始新的工作，原本的專案會留在清單中。把滑鼠移到專案上（手機上直接點）右側的「⋯」，可以重新命名、釘選到清單最上方，或刪除專案。刪除後無法復原，需要保留請先匯出加密專案。
           </p>
         </section>
 
         <section>
           <h3>為什麼顯示「儲存失敗」？</h3>
           <p>
-            可能原因包括裝置或瀏覽器儲存空間不足、瀏覽器停用或限制網站資料、使用無痕或私密瀏覽模式、其他分頁暫時占用專案資料庫，或瀏覽器不支援本機儲存功能。請先關閉本網站的其他分頁、確認瀏覽器允許儲存網站資料並釋放空間，再重新整理網頁。若仍無法儲存，請立即從右上角「輸出」選單匯出加密專案檔，以免資料遺失。
+            可能原因包括裝置或瀏覽器儲存空間不足、瀏覽器停用或限制網站資料、使用無痕或私密瀏覽模式、其他分頁暫時占用專案資料庫，或瀏覽器不支援本機儲存功能。請先關閉本網站的其他分頁、確認瀏覽器允許儲存網站資料並釋放空間，再重新整理網頁。若仍無法儲存，請立即從頂端列右側的「輸出」選單匯出加密專案檔，以免資料遺失。
           </p>
         </section>
 
@@ -1490,7 +1464,7 @@
 
         <section>
           <h3>可以輸出哪些格式？</h3>
-          <p>右上角「輸出」選單可建立 Word 文件（.docx）、列印或另存 PDF，或將目前照片打包成 ZIP。</p>
+          <p>頂端列右側的「輸出」選單可建立 Word 文件（.docx）、列印或另存 PDF，或將目前照片打包成 ZIP。</p>
         </section>
 
         <section>
