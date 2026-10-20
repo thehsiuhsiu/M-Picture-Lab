@@ -341,28 +341,19 @@ img {
   gap: 10px;
 }
 
+/* 標誌使用網站的 favicon（已裁掉上下透明留白） */
 .brand-mark {
-  display: inline-flex;
+  display: block;
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: 46px;
+  height: 26px;
+  object-fit: contain;
 }
 
-.brand-mark svg {
-  width: 100%;
-  height: 100%;
-}
-
-.brand-mark rect {
-  fill: var(--accent);
-}
-
-.brand-mark path {
-  fill: none;
-  stroke: var(--on-accent);
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* 深色模式下深藍底色會融進頁首，加一圈淡邊讓輪廓清楚 */
+html[data-theme="dark"] .brand-mark {
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .brand-block h1 {
@@ -2519,11 +2510,13 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 374px) {
   .brand-mark {
     display: none;
   }
+}
 
+@media (max-width: 420px) {
   .create-btn {
     padding: 0 8px 0 10px;
   }
