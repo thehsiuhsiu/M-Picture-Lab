@@ -1,6 +1,6 @@
 ﻿// pdfGenerator.js - PDF 生成模組
 
-import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261021-3";
+import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261021-4";
 import {
   showLoadingModal,
   hideLoadingModal,
@@ -8,16 +8,16 @@ import {
   revokeObjectUrl,
   resizeImageForDoc,
   showToast,
-} from "./utils.js?v=20261021-3";
+} from "./utils.js?v=20261021-4";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261021-3";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261021-3";
+} from "./multiPhotoLayout.js?v=20261021-4";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261021-4";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js?v=20261021-3";
+} from "./pageNumbering.js?v=20261021-4";
 
 const PDF_PRINT_IMAGE_MAX_DIMENSION = 1800;
 
@@ -113,6 +113,89 @@ const escapeHtml = (value) => {
     .replace(/'/g, "&#39;");
 };
 
+const isAppleTouchDevice = () =>
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+/**
+ * 在目前頁面列印：文件放進 Shadow DOM（樣式不會和網頁互相影響），
+ * 列印時用 @media print 只顯示文件，列印完畢後移除。
+ */
+const printInMainDocument = async (printContent, title, printUrls) => {
+  const parsed = new DOMParser().parseFromString(printContent, "text/html");
+  const styleText = [...parsed.querySelectorAll("style")]
+    .map((style) => style.textContent)
+    .join("\n");
+  const pageRules = (styleText.match(/@page\s*\{[^}]*\}/g) || []).join("\n");
+  const fontFaces = (styleText.match(/@font-face\s*\{[^}]*\}/g) || []).join("\n");
+  const shadowCss = styleText
+    .replace(/@page\s*\{[^}]*\}/g, "")
+    .replace(/(^|[\s}])body\s*\{/g, "$1:host {");
+
+  document.getElementById("mainPrintRoot")?.remove();
+  document.getElementById("mainPrintStyle")?.remove();
+
+  const root = document.createElement("div");
+  root.id = "mainPrintRoot";
+  root.setAttribute("aria-hidden", "true");
+  const shadow = root.attachShadow({ mode: "open" });
+  shadow.innerHTML = `<style>:host{display:block;background:#fff;color:#000}${shadowCss}</style>${parsed.body.innerHTML}`;
+
+  const pageStyle = document.createElement("style");
+  pageStyle.id = "mainPrintStyle";
+  pageStyle.textContent = `
+    @media screen { #mainPrintRoot { display: none !important; } }
+    @media print {
+      html, body { min-height: 0 !important; background: #fff !important; }
+      body > *:not(#mainPrintRoot) { display: none !important; }
+      #mainPrintRoot { display: block !important; }
+    }
+    ${pageRules}
+    ${fontFaces}
+  `;
+  const fontLinks = [...parsed.querySelectorAll('link[rel="stylesheet"]')].map((link) => {
+    const clone = document.createElement("link");
+    clone.rel = "stylesheet";
+    clone.href = link.href;
+    clone.dataset.mainPrint = "true";
+    return clone;
+  });
+  document.head.append(pageStyle, ...fontLinks);
+  document.body.appendChild(root);
+
+  const previousTitle = document.title;
+  document.title = title;
+
+  await Promise.all(
+    [...shadow.querySelectorAll("img")].map((img) =>
+      img.decode ? img.decode().catch(() => {}) : Promise.resolve(),
+    ),
+  );
+  try {
+    await document.fonts?.ready;
+  } catch (error) {
+    console.warn("PDF 字型載入等待失敗，改用瀏覽器備援字型:", error);
+  }
+
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    root.remove();
+    pageStyle.remove();
+    fontLinks.forEach((link) => link.remove());
+    document.title = previousTitle;
+    printUrls.forEach(revokeObjectUrl);
+  };
+  // Safari 可能在列印畫面出現前就觸發 afterprint，所以不在那時清除；
+  // 文件在螢幕上本來就是隱藏的，等使用者回到網頁操作時再移除。
+  window.setTimeout(() => {
+    window.addEventListener("pointerdown", cleanup, { once: true });
+  }, 2000);
+
+  window.print();
+};
+
 export const handleGeneratePDF = async () => {
   if (state.selectedImages.length === 0) {
     showToast("請先新增照片，再輸出 PDF。", "warning");
@@ -191,6 +274,12 @@ export const handleGeneratePDF = async () => {
     printContent += "</body></html>";
 
     hideLoadingModal();
+
+    // iPhone／iPad 的 Safari 列印隱藏 iframe 時會改印整個網頁，改在本頁直接列印
+    if (isAppleTouchDevice()) {
+      await printInMainDocument(printContent, title, printUrls);
+      return;
+    }
 
     printFrame = document.createElement("iframe");
     printFrame.title = "PDF 列印預覽";
