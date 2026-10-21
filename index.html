@@ -49,7 +49,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20261021-5" />
+    <link rel="stylesheet" href="styles.css?v=20261021-6" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;600&amp;display=swap"
       rel="stylesheet"
@@ -984,8 +984,26 @@
               aria-label="切割位置放大檢查"
             >
               <canvas id="longScreenshotSeamCanvas" aria-hidden="true"></canvas>
-              <span>點一下切割線，這裡會放大顯示</span>
+              <span>點一下切割線可選取，這裡會放大顯示</span>
             </div>
+            <button
+              type="button"
+              id="longScreenshotRemoveCutBtn"
+              class="long-shot-secondary long-shot-danger"
+              hidden
+            >
+              移除這條切割線
+            </button>
+            <p id="longScreenshotRemoveHint" class="long-shot-cut-hint" hidden>
+              至少要保留一條切割線（分成兩段）。不想分割請按「取消」。
+            </p>
+            <button
+              type="button"
+              id="longScreenshotAddCutBtn"
+              class="long-shot-secondary"
+            >
+              ＋ 新增切割線
+            </button>
             <button
               type="button"
               id="longScreenshotAnalyzeBtn"
@@ -1148,7 +1166,7 @@
       </div>
     </div>
 
-    <script type="module" src="js/main.js?v=20261021-5"></script>
+    <script type="module" src="js/main.js?v=20261021-6"></script>
 
 
     <div id="consentModal" class="modal consent-modal" aria-hidden="true">
@@ -1359,6 +1377,15 @@
             把滑鼠移到長截圖上，按右上角的剪刀按鈕。於分割視窗選擇「每頁
             2 張（加長比例）」或「每頁 4
             張」，檢查並拖曳調整切割線；確認切割位置後，按下「分割並取代原照片」。分割結果會在原照片的位置依序展開，也可以和一般照片混合使用。
+          </p>
+        </section>
+
+        <section>
+          <h3>可以自己新增或移除切割線嗎？</h3>
+          <p>
+            可以。點長截圖上的空白處，就會在那個高度新增一條切割線；也可以按「＋
+            新增切割線」，加在最長那一段的中間。點一下切割線會選取它，再按「移除這條切割線」（電腦也可以按
+            Delete 鍵）即可移除，但至少要保留一條。新增、移除或拖曳後，需要重新按「確認切割位置」。手動調整過再按「重新自動分析」或改版型時，會先詢問是否放棄手動調整。
           </p>
         </section>
 
