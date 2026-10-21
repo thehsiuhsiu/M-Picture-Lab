@@ -3605,6 +3605,45 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   background: #3d3e2c;
 }
 
+/* 點長截圖空白處可新增切割線 */
+.long-shot-image-wrap {
+  cursor: crosshair;
+}
+
+/* 選取中的切割線：加粗並加上外框，方便看出要移除哪一條 */
+.long-shot-cut-line.is-selected {
+  height: 7px;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px #1f1e1d;
+  z-index: 2;
+}
+
+.long-shot-cut-line.is-selected span {
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.long-shot-danger {
+  color: var(--danger);
+}
+
+.long-shot-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.long-shot-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.long-shot-cut-hint {
+  margin-top: 8px !important;
+  color: var(--text-3) !important;
+  font-size: 13px !important;
+  line-height: 1.5;
+}
+
 .long-shot-legend {
   display: grid;
   gap: 8px;

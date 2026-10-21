@@ -1,21 +1,21 @@
-import { state } from "./state.js?v=20261021-5";
+import { state } from "./state.js?v=20261021-6";
 import {
   IMAGE_SECURITY_LIMITS,
   buildImageRecord,
   replaceImageWithPreparedImages,
   registerSplitHandler,
-} from "./imageHandler.js?v=20261021-5";
+} from "./imageHandler.js?v=20261021-6";
 import {
   getSplitGroupIntegrity,
   restoreSplitGroup,
-} from "./splitOrderManager.js?v=20261021-5";
+} from "./splitOrderManager.js?v=20261021-6";
 import {
   createObjectUrl,
   revokeObjectUrl,
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261021-5";
+} from "./utils.js?v=20261021-6";
 
 const TARGET_HEIGHT_RATIO = Object.freeze({ 2: 22 / 9, 4: 4 / 3 });
 const ANALYSIS_WIDTH = 256;
@@ -41,7 +41,105 @@ const elements = () => ({
   summary: document.getElementById("longScreenshotSummary"),
   seam: document.getElementById("longScreenshotSeamPreview"),
   seamCanvas: document.getElementById("longScreenshotSeamCanvas"),
+  addCut: document.getElementById("longScreenshotAddCutBtn"),
+  removeCut: document.getElementById("longScreenshotRemoveCutBtn"),
+  removeHint: document.getElementById("longScreenshotRemoveHint"),
 });
+
+/** 兩條切割線（或切割線與上下邊緣）之間至少要留的高度，單位為原圖像素。 */
+const getMinimumGap = (record) => Math.round(Math.min(0.08, 40 / record.height) * record.height);
+
+const sortCuts = () => {
+  currentItem.cuts.sort((a, b) => a.y - b.y);
+};
+
+/** 手動新增、移除或拖曳後：需要重新確認，並記住有手動調整過。 */
+const markManualChange = () => {
+  currentItem.confirmed = false;
+  currentItem.manualEdited = true;
+};
+
+/** 檢查某個高度能不能放新的切割線；不行時回傳原因。 */
+const findCutConflict = (y) => {
+  const { record, cuts } = currentItem;
+  const gap = getMinimumGap(record);
+  if (y < gap || y > record.height - gap) return "太靠近長截圖的上下邊緣，切出的分段會太短";
+  const nearIndex = cuts.findIndex((cut) => Math.abs(cut.y - y) < gap);
+  if (nearIndex >= 0) return `太靠近第 ${nearIndex + 1} 條切割線，切出的分段會太短`;
+  if (cuts.length >= MAX_SEGMENTS - 1) return `最多只能分成 ${MAX_SEGMENTS} 段`;
+  return "";
+};
+
+const addCutAt = (y) => {
+  if (!currentItem || currentItem.analyzing || isProcessing) return;
+  const position = Math.round(y);
+  const conflict = findCutConflict(position);
+  if (conflict) {
+    showToast(conflict, "warning");
+    return;
+  }
+  const cut = { y: position, confidence: "manual" };
+  currentItem.cuts.push(cut);
+  sortCuts();
+  currentItem.selectedCut = cut;
+  markManualChange();
+  renderCutLines();
+  updateSeamPreview(cut);
+  updateControls();
+};
+
+/** 「新增切割線」按鈕：加在最長那一段的正中間。 */
+const addCutInLongestSegment = () => {
+  if (!currentItem) return;
+  const boundaries = [0, ...currentItem.cuts.map((cut) => cut.y), currentItem.record.height];
+  let start = 0;
+  let longest = -1;
+  for (let index = 0; index < boundaries.length - 1; index += 1) {
+    const length = boundaries[index + 1] - boundaries[index];
+    if (length > longest) {
+      longest = length;
+      start = boundaries[index];
+    }
+  }
+  addCutAt(start + longest / 2);
+};
+
+const removeSelectedCut = () => {
+  if (!currentItem?.selectedCut || currentItem.analyzing || isProcessing) return;
+  if (currentItem.cuts.length <= 1) return;
+  currentItem.cuts = currentItem.cuts.filter((cut) => cut !== currentItem.selectedCut);
+  currentItem.selectedCut = null;
+  markManualChange();
+  const { seam } = elements();
+  seam?.classList.remove("has-image");
+  renderCutLines();
+  updateControls();
+};
+
+const selectCut = (cut) => {
+  currentItem.selectedCut = cut;
+  elements()
+    .lines?.querySelectorAll(".long-shot-cut-line")
+    .forEach((line, index) => {
+      const isSelected = currentItem.cuts[index] === cut;
+      line.classList.toggle("is-selected", isSelected);
+      line.setAttribute("aria-pressed", String(isSelected));
+    });
+  updateSeamPreview(cut);
+  updateControls();
+};
+
+/** 自動產生切割線前，若有手動調整過就先詢問。 */
+const confirmDiscardManualCuts = async () => {
+  if (!currentItem?.manualEdited) return true;
+  return showDialog({
+    title: "要放棄手動調整嗎？",
+    message: "重新產生切割線後，你新增、移除或拖曳過的切割線都會被取代。",
+    tone: "warning",
+    confirmText: "放棄並重新產生",
+    cancelText: "保留目前的切割線",
+  });
+};
 
 const getLayoutCount = () => Number(elements().count?.value || 4);
 
@@ -76,6 +174,19 @@ const updateControls = () => {
   }
   const segmentCount = currentItem.cuts.length + 1;
   if (summary) summary.textContent = `${currentItem.record.name}｜預計分成 ${segmentCount} 張`;
+  const { addCut, removeCut, removeHint } = elements();
+  const isBusy = currentItem.analyzing || isProcessing;
+  const hasSelection = currentItem.cuts.includes(currentItem.selectedCut);
+  const isLastCut = currentItem.cuts.length <= 1;
+  if (addCut) addCut.disabled = isBusy || currentItem.cuts.length >= MAX_SEGMENTS - 1;
+  if (removeCut) {
+    removeCut.hidden = !hasSelection;
+    removeCut.disabled = isBusy || isLastCut;
+    if (hasSelection) {
+      removeCut.textContent = `移除第 ${currentItem.cuts.indexOf(currentItem.selectedCut) + 1} 條切割線`;
+    }
+  }
+  if (removeHint) removeHint.hidden = !(hasSelection && isLastCut);
   if (confirm) {
     confirm.hidden = false;
     confirm.disabled = currentItem.analyzing || isProcessing;
@@ -147,8 +258,11 @@ const renderCutLines = () => {
     line.type = "button";
     line.className = `long-shot-cut-line confidence-${cut.confidence}`;
     line.style.top = `${(cut.y / currentItem.record.height) * 100}%`;
-    line.title = "拖曳以調整切割位置";
+    line.title = "拖曳以調整切割位置，點一下可選取";
     line.setAttribute("aria-label", `第 ${index + 1} 條切割線`);
+    const isSelected = currentItem.selectedCut === cut;
+    line.classList.toggle("is-selected", isSelected);
+    line.setAttribute("aria-pressed", String(isSelected));
     const badge = document.createElement("span");
     badge.textContent = String(index + 1);
     line.appendChild(badge);
@@ -156,7 +270,7 @@ const renderCutLines = () => {
     line.addEventListener("pointerdown", (event) => {
       dragCutIndex = index;
       line.setPointerCapture(event.pointerId);
-      updateSeamPreview(cut);
+      selectCut(cut);
       event.preventDefault();
     });
     line.addEventListener("pointermove", (event) => {
@@ -172,16 +286,19 @@ const renderCutLines = () => {
       const ratio = Math.min(next, Math.max(previous, (event.clientY - bounds.top) / bounds.height));
       cut.y = Math.round(ratio * currentItem.record.height);
       cut.confidence = "manual";
-      currentItem.confirmed = false;
+      markManualChange();
       line.style.top = `${ratio * 100}%`;
-      line.className = "long-shot-cut-line confidence-manual";
+      line.className = "long-shot-cut-line confidence-manual is-selected";
       updateSeamPreview(cut);
       updateControls();
     });
     line.addEventListener("pointerup", () => {
       dragCutIndex = -1;
     });
-    line.addEventListener("click", () => updateSeamPreview(cut));
+    line.addEventListener("click", (event) => {
+      event.stopPropagation();
+      selectCut(cut);
+    });
     lines.appendChild(line);
   });
 };
@@ -197,7 +314,8 @@ const renderSelectedImage = () => {
     seam.classList.remove("has-image");
   }
   if (status) {
-    status.textContent = "綠色較安全、橘色請檢查、紅色可能切到內容；可直接拖曳切割線。";
+    status.textContent =
+      "綠色較安全、橘色請檢查、紅色可能切到內容。可直接拖曳切割線；點長截圖的空白處可新增，點切割線可選取或移除。";
   }
   renderCutLines();
   updateControls();
@@ -226,6 +344,8 @@ const analyzeCuts = async () => {
     const nominalCuts = buildNominalCuts(itemAtStart.record);
     const searchRadius = Math.max(8, Math.round(itemAtStart.record.width * 0.16 * scale));
 
+    itemAtStart.selectedCut = null;
+    itemAtStart.manualEdited = false;
     itemAtStart.cuts = nominalCuts.map((nominal) => {
       const center = Math.round(nominal.y * scale);
       let bestY = center;
@@ -263,6 +383,8 @@ const analyzeCuts = async () => {
   } catch (error) {
     console.warn("長截圖切割位置分析失敗，改用等距切割:", error);
     itemAtStart.cuts = buildNominalCuts(itemAtStart.record);
+    itemAtStart.selectedCut = null;
+    itemAtStart.manualEdited = false;
   } finally {
     if (loaded?.url) revokeObjectUrl(loaded.url);
     if (currentItem === itemAtStart) {
@@ -330,6 +452,8 @@ const openForSelectedImage = async () => {
     cuts: buildNominalCuts(record),
     confirmed: false,
     analyzing: false,
+    manualEdited: false,
+    selectedCut: null,
   };
   previouslyFocusedElement = document.activeElement;
   document.body.classList.add("long-shot-open");
@@ -489,15 +613,41 @@ export const initLongScreenshotSplitter = () => {
   registerSplitHandler(openForSelectedImage);
   document.getElementById("longScreenshotCloseBtn")?.addEventListener("click", closeModal);
   document.getElementById("longScreenshotCancelBtn")?.addEventListener("click", closeModal);
-  document.getElementById("longScreenshotAnalyzeBtn")?.addEventListener("click", analyzeCuts);
+  document.getElementById("longScreenshotAnalyzeBtn")?.addEventListener("click", async () => {
+    if (!currentItem || currentItem.analyzing) return;
+    if (!(await confirmDiscardManualCuts())) return;
+    analyzeCuts();
+  });
+  const { addCut, removeCut, image } = elements();
+  addCut?.addEventListener("click", addCutInLongestSegment);
+  removeCut?.addEventListener("click", removeSelectedCut);
+  // 點長截圖的空白處（不是切割線）就在那個高度新增切割線；捲動不會觸發 click
+  image?.closest(".long-shot-image-wrap")?.addEventListener("click", (event) => {
+    if (!currentItem || event.target.closest(".long-shot-cut-line")) return;
+    const bounds = image.getBoundingClientRect();
+    if (!bounds.height) return;
+    const ratio = (event.clientY - bounds.top) / bounds.height;
+    addCutAt(ratio * currentItem.record.height);
+  });
   confirm?.addEventListener("click", () => {
     if (!currentItem) return;
     currentItem.confirmed = true;
     updateControls();
   });
   process?.addEventListener("click", cropSelectedImage);
-  count?.addEventListener("change", () => {
+  let previousLayoutCount = count?.value;
+  count?.addEventListener("focus", () => {
+    previousLayoutCount = count.value;
+  });
+  count?.addEventListener("change", async () => {
     if (!currentItem) return;
+    if (!(await confirmDiscardManualCuts())) {
+      count.value = previousLayoutCount;
+      return;
+    }
+    previousLayoutCount = count.value;
+    currentItem.selectedCut = null;
+    currentItem.manualEdited = false;
     currentItem.cuts = buildNominalCuts(currentItem.record);
     currentItem.confirmed = false;
     renderSelectedImage();
@@ -507,7 +657,14 @@ export const initLongScreenshotSplitter = () => {
     if (event.target === modal) closeModal();
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && modal.getAttribute("aria-hidden") === "false") closeModal();
+    if (modal.getAttribute("aria-hidden") !== "false") return;
+    if (document.querySelector(".app-dialog-overlay.show")) return;
+    if (event.key === "Escape") closeModal();
+    const isTyping = ["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName);
+    if ((event.key === "Delete" || event.key === "Backspace") && !isTyping && currentItem?.selectedCut) {
+      event.preventDefault();
+      removeSelectedCut();
+    }
   });
   updateControls();
 };
