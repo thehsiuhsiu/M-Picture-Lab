@@ -1,21 +1,21 @@
-import { state } from "./state.js?v=20261021-4";
+import { state } from "./state.js?v=20261021-5";
 import {
   IMAGE_SECURITY_LIMITS,
   buildImageRecord,
   replaceImageWithPreparedImages,
   registerSplitHandler,
-} from "./imageHandler.js?v=20261021-4";
+} from "./imageHandler.js?v=20261021-5";
 import {
   getSplitGroupIntegrity,
   restoreSplitGroup,
-} from "./splitOrderManager.js?v=20261021-4";
+} from "./splitOrderManager.js?v=20261021-5";
 import {
   createObjectUrl,
   revokeObjectUrl,
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261021-4";
+} from "./utils.js?v=20261021-5";
 
 const TARGET_HEIGHT_RATIO = Object.freeze({ 2: 22 / 9, 4: 4 / 3 });
 const ANALYSIS_WIDTH = 256;
@@ -275,7 +275,7 @@ const analyzeCuts = async () => {
 const openForSelectedImage = async () => {
   let record = state.selectedImages.find((image) => image.id === state.editingImageId);
   if (!record) {
-    showToast("請先點選一張要分割的照片", "warning");
+    showToast("找不到要分割的照片，請重新整理後再試一次", "warning");
     return;
   }
 
