@@ -3290,10 +3290,11 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   width: min(1380px, 96vw);
   height: min(880px, 94vh);
   overflow: hidden;
-  border-radius: 18px;
-  background: var(--container-bg);
-  color: var(--text-primary);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
 }
 
 .long-shot-header,
@@ -3303,7 +3304,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   align-items: center;
   gap: 18px;
   padding: 14px 20px;
-  border-bottom: 1px solid var(--shadow-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .long-shot-header {
@@ -3312,13 +3313,16 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   height: auto;
   box-sizing: border-box;
   flex: 0 0 auto;
-  background: var(--container-bg);
+  padding-top: 16px;
+  padding-bottom: 14px;
+  background: var(--surface);
   box-shadow: none;
 }
 
 .long-shot-header h2 {
-  margin: 0 0 4px;
-  font-size: 22px;
+  margin: 0 0 2px;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .long-shot-header p,
@@ -3327,25 +3331,38 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 .long-shot-review-panel p {
   margin: 0;
   font-size: 14px;
-  color: var(--input-placeholder);
+  color: var(--text-2);
 }
 
 .long-shot-icon-btn {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
   margin-left: auto;
   border: 0;
-  border-radius: 50%;
-  background: var(--input-bg);
-  color: var(--text-primary);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
   place-items: center;
   cursor: pointer;
 }
 
+.long-shot-icon-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
 .long-shot-settings {
   flex-wrap: wrap;
-  background: var(--input-bg);
+  background: var(--surface);
+}
+
+.long-shot-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent-strong);
 }
 
 .long-shot-settings label {
@@ -3356,11 +3373,20 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 
 .long-shot-settings select,
 .long-shot-mode-select {
-  min-height: 34px;
-  border: 1px solid var(--shadow-secondary);
-  border-radius: 8px;
-  background: var(--container-bg);
-  color: var(--text-primary);
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.long-shot-settings select:focus,
+.long-shot-mode-select:focus {
+  border-color: var(--accent-strong);
+  outline: none;
+  box-shadow: var(--ring);
 }
 
 .long-shot-settings .long-shot-secondary {
@@ -3379,23 +3405,24 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   min-width: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  padding: 16px;
-  background: var(--input-bg);
-  scrollbar-color: #7d96b2 transparent;
+  padding: 18px;
+  background: var(--surface-2);
+  scrollbar-color: var(--border-strong) transparent;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
 
 .long-shot-queue-panel {
-  border-right: 1px solid var(--shadow-secondary);
+  border-right: 1px solid var(--border);
 }
 
 .long-shot-review-panel {
-  border-left: 1px solid var(--shadow-secondary);
+  border-left: 1px solid var(--border);
 }
 
 .long-shot-panel-title {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -3410,17 +3437,17 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   width: 100%;
   padding: 10px;
   overflow: hidden;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: var(--container-bg);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
   text-align: left;
   cursor: pointer;
 }
 
 .long-shot-queue-item.active {
-  border-color: #1976d2;
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.14);
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 1px var(--accent-strong);
 }
 
 .long-shot-queue-name {
@@ -3432,7 +3459,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 }
 
 .long-shot-queue-status {
-  color: var(--input-placeholder);
+  color: var(--text-3);
   font-size: 12px;
 }
 
@@ -3448,21 +3475,10 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-color: #7d96b2 rgba(255, 255, 255, 0.42);
+  scrollbar-color: var(--border-strong) transparent;
   scrollbar-gutter: stable both-edges;
   scrollbar-width: thin;
-  background-color: #d7dce2;
-  background-image:
-    linear-gradient(45deg, #c8ced5 25%, transparent 25%),
-    linear-gradient(-45deg, #c8ced5 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #c8ced5 75%),
-    linear-gradient(-45deg, transparent 75%, #c8ced5 75%);
-  background-position:
-    0 0,
-    0 8px,
-    8px -8px,
-    -8px 0;
-  background-size: 16px 16px;
+  background: var(--surface-3);
 }
 
 .long-shot-preview-panel::-webkit-scrollbar,
@@ -3477,7 +3493,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 .long-shot-review-panel::-webkit-scrollbar-track {
   margin: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.42);
+  background: transparent;
 }
 
 .long-shot-preview-panel::-webkit-scrollbar-thumb,
@@ -3486,14 +3502,14 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   min-height: 42px;
   border: 3px solid transparent;
   border-radius: 999px;
-  background: #7d96b2;
+  background: var(--border-strong);
   background-clip: padding-box;
 }
 
 .long-shot-preview-panel::-webkit-scrollbar-thumb:hover,
 .long-shot-queue-panel::-webkit-scrollbar-thumb:hover,
 .long-shot-review-panel::-webkit-scrollbar-thumb:hover {
-  background: #4f739a;
+  background: var(--text-3);
   background-clip: padding-box;
 }
 
@@ -3509,7 +3525,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   justify-content: center;
   flex-direction: column;
   padding: 30px;
-  color: #4f5964;
+  color: var(--text-2);
   text-align: center;
 }
 
@@ -3532,7 +3548,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   margin: 0 auto;
   line-height: 0;
   background: #fff;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
+  box-shadow: var(--shadow-md);
 }
 
 .long-shot-image-wrap img {
@@ -3586,7 +3602,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   background: #e4473c;
 }
 .long-shot-cut-line.confidence-manual {
-  background: #1976d2;
+  background: #3d3e2c;
 }
 
 .long-shot-legend {
@@ -3624,10 +3640,10 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   display: grid;
   height: 150px;
   overflow: hidden;
-  border: 1px solid var(--shadow-secondary);
-  border-radius: 10px;
-  background-color: #cfd5db;
-  color: #59636e;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background-color: var(--surface-3);
+  color: var(--text-3);
   font-size: 12px;
   line-height: 1.4;
   text-align: center;
@@ -3651,7 +3667,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   right: 0;
   left: 0;
   height: 3px;
-  background: #1976d2;
+  background: #3d3e2c;
   box-shadow: 0 0 0 1px #fff;
   content: "";
 }
@@ -3662,17 +3678,26 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 
 .long-shot-primary,
 .long-shot-secondary {
-  min-height: 38px;
-  padding: 8px 14px;
-  border-radius: 9px;
-  font-weight: 600;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .long-shot-primary {
-  border: 1px solid #1976d2;
-  background: #1976d2;
-  color: #fff;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.long-shot-primary:hover:not(:disabled) {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 
 .long-shot-primary:disabled {
@@ -3681,9 +3706,14 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 }
 
 .long-shot-secondary {
-  border: 1px solid var(--shadow-secondary);
-  background: var(--container-bg);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.long-shot-secondary:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
 }
 
 .long-shot-review-panel button {
@@ -3702,9 +3732,9 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   width: auto;
   box-sizing: border-box;
   flex: 0 0 auto;
-  border-top: 1px solid var(--shadow-secondary);
+  border-top: 1px solid var(--border);
   border-bottom: 0;
-  background: var(--container-bg);
+  background: var(--surface);
   text-align: left;
 }
 
@@ -3721,16 +3751,17 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--overlay);
 }
 
 .split-order-dialog {
   width: min(620px, 96vw);
   padding: 22px;
-  border-radius: 14px;
-  background: var(--container-bg);
-  color: var(--text-primary);
-  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
 }
 
 .split-order-dialog h2 {
@@ -3763,9 +3794,9 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   margin-top: 22px;
 }
 .split-order-export-actions .primary {
-  border-color: #1976d2;
-  background: #1976d2;
-  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 
@@ -3785,7 +3816,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   .long-shot-queue-panel,
   .long-shot-review-panel {
     border: 0;
-    border-bottom: 1px solid var(--shadow-secondary);
+    border-bottom: 1px solid var(--border);
   }
   .long-shot-queue {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -3821,7 +3852,7 @@ body.long-shot-open {
   .long-shot-modal {
     align-items: stretch;
     padding: 0;
-    background: var(--container-bg);
+    background: var(--surface);
   }
 
   .long-shot-dialog {
@@ -3939,7 +3970,7 @@ body.long-shot-open {
     padding: 16px max(14px, env(safe-area-inset-right)) 18px
       max(14px, env(safe-area-inset-left));
     border: 0;
-    border-top: 1px solid var(--shadow-secondary);
+    border-top: 1px solid var(--border);
   }
 
   .long-shot-legend {
