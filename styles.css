@@ -388,13 +388,17 @@ html[data-theme="dark"] .brand-mark {
   text-overflow: ellipsis;
 }
 
-.nav-toggle-btn .icon-nav-open,
-body.nav-collapsed .nav-toggle-btn .icon-nav-close {
-  display: none;
+/* 收合左欄的圖示：細線、圓角、淺色 */
+.nav-toggle-btn {
+  color: var(--text-3);
 }
 
-body.nav-collapsed .nav-toggle-btn .icon-nav-open {
-  display: inline;
+.nav-toggle-btn:hover {
+  color: var(--text-2);
+}
+
+.nav-toggle-icon {
+  display: block;
 }
 
 .nav-actions {
@@ -2788,8 +2792,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
       visibility 0s linear;
   }
 
-  .nav-toggle-btn .icon-nav-close,
-  .nav-toggle-btn .icon-nav-open {
+  .nav-toggle-icon {
     display: none !important;
   }
 
