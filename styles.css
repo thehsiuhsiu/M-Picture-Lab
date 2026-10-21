@@ -1300,6 +1300,11 @@ html:not([data-theme-mode]) .theme-toggle-icon .theme-icon-system {
   background: var(--danger);
 }
 
+/* 沒有照片時沒有頁面可以切換或縮放 */
+body:not(.has-photos) .document-preview-controls {
+  display: none;
+}
+
 .document-preview-controls {
   display: flex;
   flex-wrap: wrap;
@@ -1955,6 +1960,9 @@ body.format-right .exif-date-warning {
   display: grid;
   justify-items: center;
   gap: 6px;
+  /* 左右置中，靠近上方 */
+  margin: 40px auto 0;
+  align-self: flex-start;
   padding: 48px 24px;
   color: var(--text-2);
   text-align: center;

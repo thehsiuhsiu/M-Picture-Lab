@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261021-6";
+import { state } from "./state.js?v=20261021-7";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,28 +14,28 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261021-6";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261021-6";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261021-6";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261021-6";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261021-6";
+} from "./imageHandler.js?v=20261021-7";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261021-7";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261021-7";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261021-7";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261021-7";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261021-6";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261021-6";
-import { initDocumentPreview } from "./documentPreview.js?v=20261021-6";
+} from "./projectPersistence.js?v=20261021-7";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261021-7";
+import { initDocumentPreview } from "./documentPreview.js?v=20261021-7";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261021-6";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261021-6";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261021-6";
+} from "./photoNumbering.js?v=20261021-7";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261021-7";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261021-7";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261021-6";
+} from "./splitOrderManager.js?v=20261021-7";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -945,7 +945,8 @@ const setupPdfFontPreview = () => {
   options.forEach((option) => {
     option.addEventListener("click", () => {
       fontSelect.value = option.dataset.value;
-      fontSelect.dispatchEvent(new Event("change"));
+      // bubbles：讓版面預覽與自動儲存都收到字型變更
+      fontSelect.dispatchEvent(new Event("change", { bubbles: true }));
       closeMenu();
       trigger.focus();
     });
