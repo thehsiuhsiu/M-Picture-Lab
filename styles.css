@@ -941,20 +941,21 @@ html:not([data-theme-mode]) .theme-toggle-icon .theme-icon-system {
 }
 
 /* 開關 */
+/* 開關高度和 13px 標籤文字差不多；點擊範圍另外往外擴大，手機也好按 */
 .switch {
   position: relative;
   display: inline-flex;
   flex: 0 0 auto;
-  width: 40px;
-  height: 24px;
+  width: 30px;
+  height: 18px;
 }
 
 .switch input {
   position: absolute;
-  inset: 0;
+  inset: -8px -6px;
   z-index: 1;
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
   margin: 0;
   opacity: 0;
   cursor: pointer;
@@ -970,10 +971,10 @@ html:not([data-theme-mode]) .theme-toggle-icon .theme-icon-system {
 
 .switch .slider::before {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 18px;
-  height: 18px;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
@@ -986,7 +987,7 @@ html:not([data-theme-mode]) .theme-toggle-icon .theme-icon-system {
 }
 
 .switch input:checked + .slider::before {
-  transform: translateX(16px);
+  transform: translateX(12px);
 }
 
 .switch input:focus-visible + .slider {
