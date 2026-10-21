@@ -2550,6 +2550,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px 16px;
+  align-items: end;
   padding: 0 20px 20px;
 }
 
@@ -2571,9 +2572,12 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   gap: 6px;
 }
 
+/* 開關比標籤文字高；把這一列固定成和其他標籤一樣高，下方輸入框才會對齊 */
 .case-date-field .form-group-row {
-  min-height: 20px;
+  height: 19.5px;
+  min-height: 0;
   margin-bottom: 0;
+  overflow: visible;
 }
 
 /* ---------- 版面預覽＋排版設定 ---------- */
