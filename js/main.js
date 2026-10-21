@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261021-8";
+import { state } from "./state.js?v=20261021-9";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,28 +14,28 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261021-8";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261021-8";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261021-8";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261021-8";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261021-8";
+} from "./imageHandler.js?v=20261021-9";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261021-9";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261021-9";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261021-9";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261021-9";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261021-8";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261021-8";
-import { initDocumentPreview } from "./documentPreview.js?v=20261021-8";
+} from "./projectPersistence.js?v=20261021-9";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261021-9";
+import { initDocumentPreview } from "./documentPreview.js?v=20261021-9";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261021-8";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261021-8";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261021-8";
+} from "./photoNumbering.js?v=20261021-9";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261021-9";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261021-9";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261021-8";
+} from "./splitOrderManager.js?v=20261021-9";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
