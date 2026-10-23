@@ -1,4 +1,4 @@
-import { getPhotoNumber } from "./photoNumbering.js?v=20261023-4";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261023-5";
 
 export const normalizeMultiPhotoCount = (value) =>
   Number(value) === 2 ? 2 : 4;

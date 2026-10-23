@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261023-4";
-import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-4";
+import { state } from "./state.js?v=20261023-5";
+import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-5";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
@@ -13,6 +13,7 @@ export const ANNOTATION_TYPES = Object.freeze([
   "text",
   "label",
   "mask",
+  "zoom",
 ]);
 /** 常用色票（編輯視窗上方那一排）；也可以從色盤自訂任何顏色。 */
 export const PRESET_COLORS = Object.freeze([
@@ -95,6 +96,25 @@ export const normalizeAnnotations = (raw) => {
         y1: clampRatio(item.y1, "箭頭起點"),
         x2: clampRatio(item.x2, "箭頭終點"),
         y2: clampRatio(item.y2, "箭頭終點"),
+      };
+    }
+    if (type === "zoom") {
+      // 局部放大：s* 是來源框，x/y/w/h 是放大框（兩者寬高比相同）
+      const sx = clampRatio(item.sx, "來源框位置");
+      const sy = clampRatio(item.sy, "來源框位置");
+      const x = clampRatio(item.x, "放大框位置");
+      const y = clampRatio(item.y, "放大框位置");
+      return {
+        ...base,
+        sx,
+        sy,
+        sw: Math.max(0.001, Math.min(1 - sx, clampRatio(item.sw, "來源框寬度"))),
+        sh: Math.max(0.001, Math.min(1 - sy, clampRatio(item.sh, "來源框高度"))),
+        x,
+        y,
+        w: Math.max(0.001, Math.min(1 - x, clampRatio(item.w, "放大框寬度"))),
+        h: Math.max(0.001, Math.min(1 - y, clampRatio(item.h, "放大框高度"))),
+        connector: item.connector !== false,
       };
     }
     if (type === "text" || type === "label") {
@@ -259,6 +279,106 @@ const drawTextLike = (ctx, item, width, height, metrics) => {
   };
 };
 
+/** 中心連線與矩形邊框的交點（從中心往方向 (dx, dy) 走到邊框）。 */
+const edgePoint = (cx, cy, halfW, halfH, dx, dy) => {
+  const tx = dx ? halfW / Math.abs(dx) : Number.POSITIVE_INFINITY;
+  const ty = dy ? halfH / Math.abs(dy) : Number.POSITIVE_INFINITY;
+  const t = Math.min(tx, ty);
+  return [cx + dx * t, cy + dy * t];
+};
+
+/**
+ * 局部放大：放大框內容取自「照片＋遮蔽」的底圖（原始解析度），
+ * 所以輸出時細節清楚，遮蔽也一樣蓋住。
+ */
+const drawZoom = (ctx, base, item, width, height, metrics) => {
+  const color = normalizeColor(item.color);
+  const stroke = metrics.stroke(item.size);
+  const sx = item.sx * width;
+  const sy = item.sy * height;
+  const sw = item.sw * width;
+  const sh = item.sh * height;
+  const tx = item.x * width;
+  const ty = item.y * height;
+  const tw = item.w * width;
+  const th = item.h * height;
+
+  if (item.connector) {
+    const scx = sx + sw / 2;
+    const scy = sy + sh / 2;
+    const tcx = tx + tw / 2;
+    const tcy = ty + th / 2;
+    const length = Math.hypot(tcx - scx, tcy - scy);
+    if (length > 1) {
+      const dx = (tcx - scx) / length;
+      const dy = (tcy - scy) / length;
+      const [x1, y1] = edgePoint(scx, scy, sw / 2, sh / 2, dx, dy);
+      const [x2, y2] = edgePoint(tcx, tcy, tw / 2, th / 2, -dx, -dy);
+      // 兩框重疊時不畫線
+      if ((x2 - x1) * dx + (y2 - y1) * dy > 0) {
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = stroke + Math.max(2, stroke * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = stroke;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // 來源框
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = stroke + Math.max(2, stroke * 0.6);
+  ctx.strokeRect(sx, sy, sw, sh);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = stroke;
+  ctx.strokeRect(sx, sy, sw, sh);
+
+  // 放大框：白色外圈＋放大的影像＋彩色邊框
+  const baseWidth = base.width;
+  const baseHeight = base.height;
+  const ring = Math.max(2, stroke * 0.8);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(tx - stroke / 2 - ring, ty - stroke / 2 - ring, tw + stroke + ring * 2, th + stroke + ring * 2);
+  ctx.save();
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(
+    base,
+    item.sx * baseWidth,
+    item.sy * baseHeight,
+    Math.max(1, item.sw * baseWidth),
+    Math.max(1, item.sh * baseHeight),
+    tx,
+    ty,
+    tw,
+    th,
+  );
+  ctx.restore();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = stroke;
+  ctx.strokeRect(tx, ty, tw, th);
+};
+
+/** 局部放大用的底圖：原始解析度的照片，加上遮蔽。 */
+const buildZoomBase = (source, annotations) => {
+  const width = source.naturalWidth || source.width;
+  const height = source.naturalHeight || source.height;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(source, 0, 0, width, height);
+  const metrics = metricsFor(width, height);
+  annotations
+    .filter((item) => item.type === "mask")
+    .forEach((item) => drawMask(ctx, source, item, width, height, metrics));
+  return canvas;
+};
+
 /**
  * 在 ctx 上畫出照片與所有標記。遮蔽先畫（只遮照片本身），其他標記疊在上面。
  * 回傳每個文字／編號標籤的範圍，以 id 為 key。
@@ -270,10 +390,15 @@ export const drawAnnotatedImage = (ctx, source, annotations, width, height) => {
   annotations
     .filter((item) => item.type === "mask")
     .forEach((item) => drawMask(ctx, source, item, width, height, metrics));
+  const zoomBase = annotations.some((item) => item.type === "zoom")
+    ? buildZoomBase(source, annotations)
+    : null;
   annotations.forEach((item) => {
     if (item.type === "mask") return;
     ctx.save();
-    if (item.type === "arrow") {
+    if (item.type === "zoom") {
+      drawZoom(ctx, zoomBase, item, width, height, metrics);
+    } else if (item.type === "arrow") {
       drawArrow(ctx, item, width, height, metrics);
     } else if (item.type === "text" || item.type === "label") {
       boxes[item.id] = drawTextLike(ctx, item, width, height, metrics);
@@ -294,6 +419,10 @@ export const drawAnnotatedImage = (ctx, source, annotations, width, height) => {
     }
     ctx.restore();
   });
+  if (zoomBase) {
+    zoomBase.width = 1;
+    zoomBase.height = 1;
+  }
   return boxes;
 };
 
@@ -393,6 +522,23 @@ export const rotateAnnotations = (annotations, degrees) => {
     if (item.type === "text" || item.type === "label") {
       const [x, y] = rotatePoint(item.x, item.y);
       return { ...item, x, y };
+    }
+    if (item.type === "zoom") {
+      const [sax, say] = rotatePoint(item.sx, item.sy);
+      const [sbx, sby] = rotatePoint(item.sx + item.sw, item.sy + item.sh);
+      const [tax, tay] = rotatePoint(item.x, item.y);
+      const [tbx, tby] = rotatePoint(item.x + item.w, item.y + item.h);
+      return {
+        ...item,
+        sx: Math.min(sax, sbx),
+        sy: Math.min(say, sby),
+        sw: Math.abs(sbx - sax),
+        sh: Math.abs(sby - say),
+        x: Math.min(tax, tbx),
+        y: Math.min(tay, tby),
+        w: Math.abs(tbx - tax),
+        h: Math.abs(tby - tay),
+      };
     }
     const [ax, ay] = rotatePoint(item.x, item.y);
     const [bx, by] = rotatePoint(item.x + item.w, item.y + item.h);
