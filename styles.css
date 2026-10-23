@@ -4336,10 +4336,63 @@ body.annotate-open {
   box-shadow: 0 0 0 2px var(--text);
 }
 
-.swatch-red { background: #e03b2e; }
-.swatch-yellow { background: #f5c518; }
-.swatch-white { background: #ffffff; }
-.swatch-black { background: #1f1e1d; }
+/* 自訂顏色：彩色外圈＋白色「+」；選了自訂顏色後外圈內顯示該色 */
+.annotate-swatch-custom {
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 auto;
+  background: conic-gradient(#e03b2e, #f5c518, #2e9d57, #2f6fdb, #8a4fd3, #e03b2e);
+  cursor: pointer;
+  place-items: center;
+}
+
+.annotate-swatch-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.annotate-custom-plus {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  border-radius: 99px;
+  background: var(--chosen-color, #ffffff);
+  color: #1f1e1d;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  place-items: center;
+}
+
+.annotate-swatch-custom.has-color .annotate-custom-plus {
+  color: transparent;
+}
+
+.annotate-swatch-custom[aria-checked="true"] {
+  box-shadow: 0 0 0 2px var(--text);
+}
+
+.annotate-swatch {
+  flex: 0 0 auto;
+}
+
+.annotate-tools-divider {
+  height: 1px;
+  flex: 0 0 auto;
+  margin: 4px 6px;
+  background: var(--border);
+}
+
+.annotate-tools-spacer {
+  flex: 1 1 auto;
+}
 
 .annotate-segmented {
   display: flex;
@@ -4586,8 +4639,8 @@ body.annotate-open {
   }
 
   .annotate-swatch {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
   }
 
   .annotate-danger-btn {
@@ -4600,20 +4653,65 @@ body.annotate-open {
     display: none;
   }
 
+  /* 工具較多：一排可以左右滑動，按鈕維持好按的大小 */
   .annotate-tools {
-    display: grid;
+    display: flex;
     width: auto;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    flex-direction: row;
     gap: 2px;
     padding: 6px 6px 4px;
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: hidden;
     border-top: 1px solid var(--border);
     border-right: 0;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .annotate-tools::-webkit-scrollbar {
+    display: none;
   }
 
   .annotate-tool-btn {
+    width: 58px;
     min-height: 54px;
+    flex: 0 0 auto;
     font-size: 11px;
+  }
+
+  .annotate-tools-spacer {
+    display: none;
+  }
+
+  .annotate-tools-divider {
+    width: 1px;
+    height: auto;
+    margin: 10px 4px;
+  }
+
+  .annotate-stylebar {
+    flex-wrap: nowrap;
+  }
+
+  .annotate-stylebar .annotate-style-group:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .annotate-swatches {
+    min-width: 0;
+    overflow-x: auto;
+    padding: 3px 2px;
+    scrollbar-width: none;
+  }
+
+  .annotate-swatches::-webkit-scrollbar {
+    display: none;
+  }
+
+  .annotate-size-btn {
+    min-width: 32px;
+    padding: 0 4px;
   }
 
   .annotate-footer {
@@ -4681,4 +4779,35 @@ body.annotate-open {
   color: var(--text-3);
   font-size: 12px;
   line-height: 1.5;
+}
+
+/* 照片工具列的「編輯」按鈕：圖示＋文字 */
+.photo-tool-btn.has-text {
+  display: inline-flex;
+  width: auto;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+#imagePreview:not(.list-view) .photo-tool-btn.has-text {
+  width: auto;
+  padding: 0 8px 0 6px;
+  font-size: 12px;
+}
+
+/* 從編輯視窗進入長截圖分割：改成全螢幕，像同一個視窗換畫面 */
+.long-shot-modal.is-fullscreen {
+  padding: 0;
+}
+
+.long-shot-modal.is-fullscreen .long-shot-dialog {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
