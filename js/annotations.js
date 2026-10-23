@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261023-11";
-import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-11";
+import { state } from "./state.js?v=20261023-12";
+import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-12";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
