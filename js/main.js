@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261023-12";
+import { state } from "./state.js?v=20261023-13";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,30 +14,30 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261023-12";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261023-12";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261023-12";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261023-12";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261023-12";
+} from "./imageHandler.js?v=20261023-13";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261023-13";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261023-13";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261023-13";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261023-13";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261023-12";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261023-12";
-import { initAnnotationEditor } from "./annotationEditor.js?v=20261023-12";
-import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261023-12";
-import { initDocumentPreview } from "./documentPreview.js?v=20261023-12";
+} from "./projectPersistence.js?v=20261023-13";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261023-13";
+import { initAnnotationEditor } from "./annotationEditor.js?v=20261023-13";
+import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261023-13";
+import { initDocumentPreview } from "./documentPreview.js?v=20261023-13";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261023-12";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261023-12";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261023-12";
+} from "./photoNumbering.js?v=20261023-13";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261023-13";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261023-13";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261023-12";
+} from "./splitOrderManager.js?v=20261023-13";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -183,7 +183,11 @@ const downloadImagesAsZip = async ({ zipFileName, photoFileName, includeOriginal
     const prefix = prefixInput ? prefixInput.value.trim() : "";
     for (let i = 0; i < state.selectedImages.length; i++) {
       const img = state.selectedImages[i];
-      const originalExt = img.name.split(".").pop();
+      const nameExt = img.name.includes(".") ? img.name.split(".").pop() : "";
+      // 副檔名只接受英數字，避免檔名裡的特殊字元變成壓縮檔內的路徑
+      const originalExt = /^[a-z0-9]{1,5}$/i.test(nameExt)
+        ? nameExt
+        : (img.blob?.type || "").split("/")[1]?.replace("jpeg", "jpg").replace(/[^a-z0-9]/gi, "") || "jpg";
       const basePhotoName = sanitizeZipFileName(photoFileName || prefix);
       const baseName = `${basePhotoName}-編號${getPhotoNumber(i)}`;
       if (hasAnnotations(img.id)) {
