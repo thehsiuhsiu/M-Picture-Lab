@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261023-2";
-import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-2";
+import { state } from "./state.js?v=20261023-3";
+import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-3";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
@@ -14,12 +14,35 @@ export const ANNOTATION_TYPES = Object.freeze([
   "label",
   "mask",
 ]);
-export const ANNOTATION_COLORS = Object.freeze({
-  red: "#e03b2e",
-  yellow: "#f5c518",
-  white: "#ffffff",
-  black: "#1f1e1d",
-});
+/** 常用色票（編輯視窗上方那一排）；也可以從色盤自訂任何顏色。 */
+export const PRESET_COLORS = Object.freeze([
+  { key: "red", label: "紅色", hex: "#e03b2e" },
+  { key: "orange", label: "橙色", hex: "#f08a24" },
+  { key: "yellow", label: "黃色", hex: "#f5c518" },
+  { key: "green", label: "綠色", hex: "#2e9d57" },
+  { key: "blue", label: "藍色", hex: "#2f6fdb" },
+  { key: "purple", label: "紫色", hex: "#8a4fd3" },
+  { key: "white", label: "白色", hex: "#ffffff" },
+  { key: "black", label: "黑色", hex: "#1f1e1d" },
+]);
+export const DEFAULT_COLOR = "#e03b2e";
+const COLOR_BY_KEY = Object.fromEntries(PRESET_COLORS.map((color) => [color.key, color.hex]));
+
+/** 標記顏色一律存成 #rrggbb；舊版的顏色名稱（red、yellow…）自動轉換。 */
+export const normalizeColor = (value) => {
+  if (typeof value !== "string") return DEFAULT_COLOR;
+  if (COLOR_BY_KEY[value]) return COLOR_BY_KEY[value];
+  return /^#[0-9a-f]{6}$/i.test(value) ? value.toLowerCase() : DEFAULT_COLOR;
+};
+
+/** 顏色是否偏亮（決定外框線與編號文字要用深色還是白色）。 */
+export const isLightColor = (hex) => {
+  const value = normalizeColor(hex);
+  const r = parseInt(value.slice(1, 3), 16);
+  const g = parseInt(value.slice(3, 5), 16);
+  const b = parseInt(value.slice(5, 7), 16);
+  return 0.299 * r + 0.587 * g + 0.114 * b > 186;
+};
 export const ANNOTATION_SIZES = Object.freeze(["thin", "medium", "thick"]);
 export const MASK_STYLES = Object.freeze(["mosaic", "black"]);
 export const MAX_ANNOTATIONS_PER_IMAGE = 200;
@@ -62,7 +85,7 @@ export const normalizeAnnotations = (raw) => {
     const base = {
       id: cleanText(item.id || `a${index}`, 40) || `a${index}`,
       type,
-      color: pickEnum(item.color, Object.keys(ANNOTATION_COLORS), "red"),
+      color: normalizeColor(item.color),
       size: pickEnum(item.size, ANNOTATION_SIZES, "medium"),
     };
     if (type === "arrow") {
@@ -112,8 +135,8 @@ const metricsFor = (width, height) => {
   };
 };
 
-const contrastingInk = (colorKey) =>
-  colorKey === "white" || colorKey === "yellow" ? "#1f1e1d" : "#ffffff";
+const contrastingInk = (color) => (isLightColor(color) ? "#1f1e1d" : "#ffffff");
+const outlineFor = (color) => (isLightColor(color) ? "#1f1e1d" : "#ffffff");
 
 const drawMask = (ctx, source, item, width, height, metrics) => {
   const x = Math.round(item.x * width);
@@ -166,7 +189,7 @@ const drawArrow = (ctx, item, width, height, metrics) => {
   const stroke = metrics.stroke(item.size);
   const head = stroke * 4.5;
   const angle = Math.atan2(y2 - y1, x2 - x1);
-  ctx.strokeStyle = ANNOTATION_COLORS[item.color];
+  ctx.strokeStyle = normalizeColor(item.color);
   ctx.lineWidth = stroke;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
@@ -195,10 +218,10 @@ const drawTextLike = (ctx, item, width, height, metrics) => {
     const radius = diameter / 2;
     ctx.beginPath();
     ctx.roundRect(x - boxWidth / 2, y - radius, boxWidth, diameter, radius);
-    ctx.fillStyle = ANNOTATION_COLORS[item.color];
+    ctx.fillStyle = normalizeColor(item.color);
     ctx.fill();
     ctx.lineWidth = Math.max(2, diameter * 0.08);
-    ctx.strokeStyle = item.color === "white" ? "#1f1e1d" : "#ffffff";
+    ctx.strokeStyle = item.color === "#ffffff" ? "#1f1e1d" : "#ffffff";
     ctx.stroke();
     ctx.fillStyle = contrastingInk(item.color);
     ctx.textAlign = "center";
@@ -222,9 +245,9 @@ const drawTextLike = (ctx, item, width, height, metrics) => {
     const lineY = y + index * lineHeight;
     ctx.lineJoin = "round";
     ctx.lineWidth = fontSize * 0.2;
-    ctx.strokeStyle = item.color === "white" ? "#1f1e1d" : "#ffffff";
+    ctx.strokeStyle = outlineFor(item.color);
     ctx.strokeText(line, x, lineY);
-    ctx.fillStyle = ANNOTATION_COLORS[item.color];
+    ctx.fillStyle = normalizeColor(item.color);
     ctx.fillText(line, x, lineY);
     maxWidth = Math.max(maxWidth, ctx.measureText(line).width);
   });
@@ -259,7 +282,7 @@ export const drawAnnotatedImage = (ctx, source, annotations, width, height) => {
       const y = item.y * height;
       const w = item.w * width;
       const h = item.h * height;
-      ctx.strokeStyle = ANNOTATION_COLORS[item.color];
+      ctx.strokeStyle = normalizeColor(item.color);
       ctx.lineWidth = metrics.stroke(item.size);
       ctx.beginPath();
       if (item.type === "ellipse") {

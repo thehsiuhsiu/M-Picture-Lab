@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-2";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-3";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,25 +14,25 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261023-2";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261023-2";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-2";
+} from "./utils.js?v=20261023-3";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261023-3";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-3";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261023-2";
+} from "./photoNumbering.js?v=20261023-3";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261023-2";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-2";
+} from "./splitGroupLogic.js?v=20261023-3";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-3";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261023-2";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-2";
+} from "./annotations.js?v=20261023-3";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-3";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -606,11 +606,9 @@ export const replaceImageWithPreparedImages = (
  * 將圖片加入預覽區
  */
 /** 滑鼠移到照片上時出現的工具：旋轉、分割長截圖、刪除。 */
+/** 照片上的工具：「編輯」（旋轉、標記、長截圖分割都在編輯視窗裡）與「刪除」。 */
 const PHOTO_TOOLS = [
-  { action: "annotate", icon: "draw", label: "標記" },
-  { action: "rotate-left", icon: "rotate_left", label: "向左旋轉 90°" },
-  { action: "rotate-right", icon: "rotate_right", label: "向右旋轉 90°" },
-  { action: "split", icon: "content_cut", label: "分割長截圖" },
+  { action: "edit", icon: "edit", label: "編輯", text: "編輯" },
   { action: "delete", icon: "delete", label: "刪除照片", danger: true },
 ];
 
@@ -626,7 +624,7 @@ const createPhotoTools = (imageId) => {
   PHOTO_TOOLS.forEach((tool) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `photo-tool-btn${tool.danger ? " is-danger" : ""}`;
+    button.className = `photo-tool-btn${tool.danger ? " is-danger" : ""}${tool.text ? " has-text" : ""}`;
     button.dataset.photoTool = tool.action;
     button.title = tool.label;
     button.setAttribute("aria-label", tool.label);
@@ -636,6 +634,12 @@ const createPhotoTools = (imageId) => {
     icon.setAttribute("aria-hidden", "true");
     icon.textContent = tool.icon;
     button.appendChild(icon);
+    if (tool.text) {
+      const text = document.createElement("span");
+      text.className = "photo-tool-text";
+      text.textContent = tool.text;
+      button.appendChild(text);
+    }
     button.addEventListener("click", (event) => {
       event.stopPropagation();
       runPhotoTool(tool.action, imageId);
@@ -671,9 +675,14 @@ const updateCardImage = async (image) => {
   }
 };
 
-const saveAnnotations = async (imageId, annotations) => {
+/** 編輯視窗按「完成」：先套用旋轉（標記已在視窗裡轉好），再保存標記。 */
+const saveEdits = async (imageId, annotations, turns = 0) => {
   const image = state.selectedImages.find((item) => item.id === imageId);
   if (!image) return;
+  const normalizedTurns = ((turns % 4) + 4) % 4;
+  if (normalizedTurns) {
+    await rotateImage(normalizedTurns * 90, imageId, { rotateMarks: false });
+  }
   if (annotations.length) state.imageAnnotations[imageId] = annotations;
   else delete state.imageAnnotations[imageId];
   try {
@@ -684,19 +693,29 @@ const saveAnnotations = async (imageId, annotations) => {
   notifyProjectChanged();
 };
 
-const runPhotoTool = async (action, imageId) => {
-  if (action === "annotate") return openAnnotationEditor(imageId, saveAnnotations);
-  if (action === "rotate-left") return rotateImage(-90, imageId);
-  if (action === "rotate-right") return rotateImage(90, imageId);
-  if (action === "delete") return removeImage(imageId);
-  if (action === "split" && splitHandler) {
+const editorHandlers = {
+  save: saveEdits,
+  // 編輯視窗的「分割」：先保存旋轉與標記，再開啟長截圖分割；取消分割時回到編輯視窗
+  split: async (imageId, edits) => {
+    if (edits.changed) await saveEdits(imageId, edits.annotations, edits.turns);
+    if (!splitHandler) return;
     state.editingImageId = imageId;
     try {
-      await splitHandler();
+      await splitHandler({
+        fromEditor: true,
+        onCancel: () => openEditor(imageId),
+      });
     } finally {
       if (state.editingImageId === imageId) state.editingImageId = null;
     }
-  }
+  },
+};
+
+const openEditor = (imageId) => openAnnotationEditor(imageId, editorHandlers);
+
+const runPhotoTool = async (action, imageId) => {
+  if (action === "edit") return openEditor(imageId);
+  if (action === "delete") return removeImage(imageId);
 };
 
 const addImageToPreview = (imageData, counter) => {
@@ -1335,7 +1354,11 @@ export const cancelEditing = () => {
   setEditingImage(null);
 };
 
-export const rotateImage = async (degrees, imageId = state.editingImageId) => {
+export const rotateImage = async (
+  degrees,
+  imageId = state.editingImageId,
+  { rotateMarks = true } = {},
+) => {
   if (!imageId) return;
 
   const imageData = state.selectedImages.find((img) => img.id === imageId);
@@ -1355,7 +1378,7 @@ export const rotateImage = async (degrees, imageId = state.editingImageId) => {
     revokeObjectUrl(imageData.previewUrl);
   }
   imageData.previewUrl = rotatedData.previewUrl;
-  if (hasAnnotations(imageId)) {
+  if (rotateMarks && hasAnnotations(imageId)) {
     state.imageAnnotations[imageId] = rotateAnnotations(state.imageAnnotations[imageId], degrees);
   }
 

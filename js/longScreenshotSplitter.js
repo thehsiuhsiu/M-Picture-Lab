@@ -1,22 +1,22 @@
-import { state } from "./state.js?v=20261023-2";
+import { state } from "./state.js?v=20261023-3";
 import {
   IMAGE_SECURITY_LIMITS,
   buildImageRecord,
   replaceImageWithPreparedImages,
   registerSplitHandler,
-} from "./imageHandler.js?v=20261023-2";
+} from "./imageHandler.js?v=20261023-3";
 import {
   getSplitGroupIntegrity,
   restoreSplitGroup,
-} from "./splitOrderManager.js?v=20261023-2";
-import { hasAnnotations } from "./annotations.js?v=20261023-2";
+} from "./splitOrderManager.js?v=20261023-3";
+import { hasAnnotations } from "./annotations.js?v=20261023-3";
 import {
   createObjectUrl,
   revokeObjectUrl,
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261023-2";
+} from "./utils.js?v=20261023-3";
 
 const TARGET_HEIGHT_RATIO = Object.freeze({ 2: 22 / 9, 4: 4 / 3 });
 const ANALYSIS_WIDTH = 256;
@@ -395,11 +395,17 @@ const analyzeCuts = async () => {
   }
 };
 
-const openForSelectedImage = async () => {
+// 從編輯視窗開啟時：取消（或在提醒視窗按取消）要回到編輯視窗
+let cancelHandler = null;
+
+const openForSelectedImage = async ({ fromEditor = false, onCancel = null } = {}) => {
+  const abort = () => {
+    onCancel?.();
+  };
   let record = state.selectedImages.find((image) => image.id === state.editingImageId);
   if (!record) {
     showToast("找不到要分割的照片，請重新整理後再試一次", "warning");
-    return;
+    return abort();
   }
 
   if (hasAnnotations(record.id)) {
@@ -410,7 +416,7 @@ const openForSelectedImage = async () => {
       confirmText: "清除標記並繼續",
       cancelText: "取消",
     });
-    if (!shouldContinue) return;
+    if (!shouldContinue) return abort();
   }
 
   if (record.splitGroupId) {
@@ -421,7 +427,7 @@ const openForSelectedImage = async () => {
         message: `目前只有 ${integrity.existingCount}/${integrity.expectedCount} 段，無法再次分割。請重新匯入原始長截圖，或先補齊分段。`,
         tone: "warning",
       });
-      return;
+      return abort();
     }
     if (!integrity.contiguous || !integrity.ordered) {
       const shouldRestore = await showDialog({
@@ -431,10 +437,10 @@ const openForSelectedImage = async () => {
         confirmText: "恢復順序並繼續",
         cancelText: "取消",
       });
-      if (!shouldRestore) return;
+      if (!shouldRestore) return abort();
       restoreSplitGroup(record.splitGroupId);
       record = state.selectedImages.find((image) => image.id === state.editingImageId);
-      if (!record) return;
+      if (!record) return abort();
     }
   }
 
@@ -451,7 +457,7 @@ const openForSelectedImage = async () => {
       confirmText: "繼續分割",
       cancelText: "取消",
     });
-    if (!shouldContinue) return;
+    if (!shouldContinue) return abort();
   }
 
   const { modal, count } = elements();
@@ -468,6 +474,9 @@ const openForSelectedImage = async () => {
     selectedCut: null,
   };
   previouslyFocusedElement = document.activeElement;
+  cancelHandler = onCancel;
+  // 從編輯視窗進來時改成全螢幕，看起來是同一個視窗換成分割畫面
+  modal.classList.toggle("is-fullscreen", fromEditor);
   document.body.classList.add("long-shot-open");
   modal.style.display = "flex";
   modal.setAttribute("aria-hidden", "false");
@@ -476,8 +485,10 @@ const openForSelectedImage = async () => {
   await analyzeCuts();
 };
 
-const closeModal = () => {
+const closeModal = ({ completed = false } = {}) => {
   if (isProcessing) return;
+  const returnToEditor = completed ? null : cancelHandler;
+  cancelHandler = null;
   const { modal, lines, seam } = elements();
   modal.style.display = "none";
   modal.setAttribute("aria-hidden", "true");
@@ -494,6 +505,8 @@ const closeModal = () => {
     previouslyFocusedElement.focus();
   }
   previouslyFocusedElement = null;
+  modal.classList.remove("is-fullscreen");
+  returnToEditor?.();
 };
 
 const cropSelectedImage = async () => {
@@ -604,7 +617,7 @@ const cropSelectedImage = async () => {
     }
     isProcessing = false;
     showToast(`已將原照片分割成 ${records.length} 張`, "success");
-    closeModal();
+    closeModal({ completed: true });
   } catch (error) {
     records.forEach((record) => {
       if (!state.selectedImages.includes(record)) revokeObjectUrl(record.previewUrl);

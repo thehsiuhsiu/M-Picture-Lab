@@ -1,16 +1,19 @@
-// annotationEditor.js - 標記視窗：在照片上圈選、框選、加箭頭、文字、編號標籤與遮蔽
+// annotationEditor.js - 編輯視窗：旋轉、標記（圈選、方框、箭頭、文字、編號、遮蔽）與進入長截圖分割
 
-import { state } from "./state.js?v=20261023-2";
+import { state } from "./state.js?v=20261023-3";
 import {
-  ANNOTATION_COLORS,
+  DEFAULT_COLOR,
   MAX_ANNOTATIONS_PER_IMAGE,
   MAX_LABEL_LENGTH,
   MAX_TEXT_LENGTH,
   createAnnotationId,
   drawAnnotatedImage,
   normalizeAnnotations,
-} from "./annotations.js?v=20261023-2";
-import { showDialog, showToast } from "./utils.js?v=20261023-2";
+  normalizeColor,
+  PRESET_COLORS,
+  rotateAnnotations,
+} from "./annotations.js?v=20261023-3";
+import { showDialog, showToast } from "./utils.js?v=20261023-3";
 
 const TOOL_HINTS = {
   select: "點選標記可移動；拖曳角落可縮放；點兩下文字可修改",
@@ -26,7 +29,8 @@ const MIN_SHAPE_PX = 6;
 const HANDLE_PX = 10;
 
 let session = null;
-let onSave = null;
+// save(imageId, annotations, turns)、split(imageId, edits)：由照片模組提供
+let handlers = {};
 
 const $ = (id) => document.getElementById(id);
 
@@ -34,8 +38,8 @@ const isTouchPointer = (event) => event.pointerType === "touch" || event.pointer
 
 /* ---------- 開啟與關閉 ---------- */
 
-/** 由照片卡片的「標記」按鈕呼叫。saveHandler(imageId, annotations) 負責保存。 */
-export const openAnnotationEditor = async (imageId, saveHandler) => {
+/** 由照片卡片的「編輯」按鈕呼叫。 */
+export const openAnnotationEditor = async (imageId, editorHandlers) => {
   const image = state.selectedImages.find((item) => item.id === imageId);
   if (!image) return;
   const source = new Image();
@@ -46,15 +50,17 @@ export const openAnnotationEditor = async (imageId, saveHandler) => {
     showToast("無法開啟這張照片", "error");
     return;
   }
-  onSave = saveHandler;
+  handlers = editorHandlers || {};
   const initial = JSON.stringify(state.imageAnnotations[imageId] || []);
   session = {
     imageId,
+    originalSource: source,
     source,
+    turns: 0, // 尚未套用的旋轉（每單位 90° 順時針），按「完成」才生效
     annotations: JSON.parse(initial),
     initial,
     tool: "ellipse",
-    color: "red",
+    color: DEFAULT_COLOR,
     size: "medium",
     maskStyle: "mosaic",
     selectedId: null,
@@ -67,7 +73,7 @@ export const openAnnotationEditor = async (imageId, saveHandler) => {
   };
   const index = state.selectedImages.indexOf(image);
   const title = $("annotateTitle");
-  if (title) title.textContent = `標記照片 ${index + 1}`;
+  if (title) title.textContent = `編輯照片 ${index + 1}`;
   const modal = $("annotateModal");
   modal.style.display = "flex";
   modal.setAttribute("aria-hidden", "false");
@@ -94,15 +100,15 @@ const closeEditor = () => {
 };
 
 const hasUnsavedChanges = () =>
-  session && JSON.stringify(session.annotations) !== session.initial;
+  session && (session.turns !== 0 || JSON.stringify(session.annotations) !== session.initial);
 
 const requestCancel = async () => {
   if (!session) return;
   commitTextInput();
   if (hasUnsavedChanges()) {
     const discard = await showDialog({
-      title: "放棄這次的標記修改？",
-      message: "按「完成」才會保存；放棄後會回到開啟前的樣子。",
+      title: "放棄這次的修改？",
+      message: "旋轉與標記按「完成」才會保存；放棄後會回到開啟前的樣子。",
       tone: "warning",
       confirmText: "放棄修改",
       cancelText: "繼續編輯",
@@ -112,16 +118,67 @@ const requestCancel = async () => {
   closeEditor();
 };
 
-const finish = async () => {
-  if (!session) return;
+const collectEdits = () => {
   commitTextInput();
-  const cleaned = normalizeAnnotations(
+  const annotations = normalizeAnnotations(
     session.annotations.filter((item) => item.type !== "text" || item.text.trim()),
   );
-  const imageId = session.imageId;
-  const changed = JSON.stringify(cleaned) !== session.initial;
+  return {
+    imageId: session.imageId,
+    annotations,
+    turns: session.turns,
+    changed: session.turns !== 0 || JSON.stringify(annotations) !== session.initial,
+  };
+};
+
+const finish = async () => {
+  if (!session) return;
+  const edits = collectEdits();
   closeEditor();
-  if (changed && onSave) await onSave(imageId, cleaned);
+  if (edits.changed && handlers.save) {
+    await handlers.save(edits.imageId, edits.annotations, edits.turns);
+  }
+};
+
+/** 「分割」工具：旋轉先套用，接著在同一個全螢幕畫面切換成長截圖分割。 */
+const startSplit = async () => {
+  if (!session || !handlers.split) return;
+  const edits = collectEdits();
+  closeEditor();
+  await handlers.split(edits.imageId, edits);
+};
+
+/** 依尚未套用的旋轉，產生要顯示的照片（原圖不變）。 */
+const rebuildSource = () => {
+  const original = session.originalSource;
+  const turns = ((session.turns % 4) + 4) % 4;
+  if (!turns) {
+    session.source = original;
+    return;
+  }
+  const width = original.naturalWidth;
+  const height = original.naturalHeight;
+  const canvas = document.createElement("canvas");
+  const swap = turns % 2 === 1;
+  canvas.width = swap ? height : width;
+  canvas.height = swap ? width : height;
+  const ctx = canvas.getContext("2d");
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate((turns * Math.PI) / 2);
+  ctx.drawImage(original, -width / 2, -height / 2);
+  session.source = canvas;
+};
+
+const rotateView = (direction) => {
+  if (!session) return;
+  commitTextInput();
+  pushHistory();
+  session.turns = (((session.turns + direction) % 4) + 4) % 4;
+  session.annotations = rotateAnnotations(session.annotations, direction * 90);
+  rebuildSource();
+  layoutCanvas();
+  syncControls();
+  render();
 };
 
 /* ---------- 畫布大小與座標 ---------- */
@@ -136,8 +193,8 @@ const layoutCanvas = () => {
     stage.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight);
   const availableHeight =
     stage.clientHeight - parseFloat(styles.paddingTop) - parseFloat(styles.paddingBottom);
-  const naturalWidth = session.source.naturalWidth;
-  const naturalHeight = session.source.naturalHeight;
+  const naturalWidth = session.source.naturalWidth || session.source.width;
+  const naturalHeight = session.source.naturalHeight || session.source.height;
   const scale = Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight);
   const width = Math.max(1, Math.floor(naturalWidth * scale));
   const height = Math.max(1, Math.floor(naturalHeight * scale));
@@ -282,7 +339,18 @@ const hitAnnotation = (point, tolerance) => {
 
 /* ---------- 修改與復原 ---------- */
 
-const snapshot = () => JSON.stringify(session.annotations);
+const snapshot = () => JSON.stringify({ a: session.annotations, t: session.turns });
+
+const restoreSnapshot = (value) => {
+  const data = JSON.parse(value);
+  const turnsChanged = data.t !== session.turns;
+  session.annotations = data.a;
+  session.turns = data.t;
+  if (turnsChanged) {
+    rebuildSource();
+    layoutCanvas();
+  }
+};
 
 const pushHistory = () => {
   session.undo.push(snapshot());
@@ -294,7 +362,7 @@ const undo = () => {
   if (!session?.undo.length) return;
   commitTextInput();
   session.redo.push(snapshot());
-  session.annotations = JSON.parse(session.undo.pop());
+  restoreSnapshot(session.undo.pop());
   if (!getSelected()) session.selectedId = null;
   syncControls();
   render();
@@ -304,7 +372,7 @@ const redo = () => {
   if (!session?.redo.length) return;
   commitTextInput();
   session.undo.push(snapshot());
-  session.annotations = JSON.parse(session.redo.pop());
+  restoreSnapshot(session.redo.pop());
   if (!getSelected()) session.selectedId = null;
   syncControls();
   render();
@@ -379,7 +447,7 @@ const openTextInput = (item, { isNew }) => {
   input.maxLength = item.type === "label" ? MAX_LABEL_LENGTH : MAX_TEXT_LENGTH;
   input.value = item.text || "";
   input.classList.toggle("is-label", item.type === "label");
-  input.style.color = ANNOTATION_COLORS[item.color];
+  input.style.color = normalizeColor(item.color);
   if (item.type === "label") {
     input.style.left = `${item.x * width - 30}px`;
     input.style.top = `${item.y * height - 18}px`;
@@ -629,10 +697,21 @@ const syncControls = () => {
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
-  const color = selected?.color || session.color;
+  const color = normalizeColor(selected?.color || session.color);
+  let matchedPreset = false;
   document.querySelectorAll("[data-annotate-color]").forEach((button) => {
-    button.setAttribute("aria-checked", String(button.dataset.annotateColor === color));
+    const checked = button.dataset.annotateColor === color;
+    matchedPreset ||= checked;
+    button.setAttribute("aria-checked", String(checked));
   });
+  const custom = $("annotateCustomSwatch");
+  if (custom) {
+    custom.setAttribute("aria-checked", String(!matchedPreset));
+    custom.classList.toggle("has-color", !matchedPreset);
+    custom.style.setProperty("--chosen-color", matchedPreset ? "#ffffff" : color);
+    const picker = $("annotateCustomColor");
+    if (picker && !matchedPreset) picker.value = color;
+  }
   const size = selected?.size || session.size;
   document.querySelectorAll("[data-annotate-size]").forEach((button) => {
     button.setAttribute("aria-checked", String(button.dataset.annotateSize === size));
@@ -678,6 +757,18 @@ export const initAnnotationEditor = () => {
     button.addEventListener("click", () => applyStyle("maskStyle", button.dataset.annotateMask)),
   );
 
+  // 自訂顏色：從色盤選完（change）才套用，避免拖曳色盤時記下一大串復原步驟
+  $("annotateCustomColor")?.addEventListener("change", (event) =>
+    applyStyle("color", normalizeColor(event.target.value)),
+  );
+  document.querySelectorAll("[data-annotate-action]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const action = button.dataset.annotateAction;
+      if (action === "rotate-left") rotateView(-1);
+      else if (action === "rotate-right") rotateView(1);
+      else if (action === "split") startSplit();
+    }),
+  );
   $("annotateUndoBtn").addEventListener("click", undo);
   $("annotateRedoBtn").addEventListener("click", redo);
   $("annotateDeleteBtn").addEventListener("click", deleteSelected);
