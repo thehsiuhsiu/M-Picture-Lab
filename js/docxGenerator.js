@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-11";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-12";
 import {
   resizeImageForDoc,
   getFormattedDate,
@@ -8,23 +8,25 @@ import {
   hideLoadingModal,
   blobToArrayBuffer,
   showToast,
-} from "./utils.js?v=20261023-11";
-import { createAnnotatedBlob } from "./annotations.js?v=20261023-11";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261023-11";
+} from "./utils.js?v=20261023-12";
+import { createAnnotatedBlob } from "./annotations.js?v=20261023-12";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261023-12";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261023-11";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261023-11";
+} from "./multiPhotoLayout.js?v=20261023-12";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261023-12";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
   globalThis.navigator?.platform ||
   globalThis.navigator?.userAgent ||
   "";
+// Windows 用中文名稱「標楷體」：新版 Word 認得英文名 DFKai-SB，
+// 但 Word 2003／2007 只認中文名，寫英文名會被換成別的字型。
 const DOCX_KAI_FONT = /Mac|iPhone|iPad|iPod/i.test(platformName)
   ? "BiauKaiTC"
-  : "DFKai-SB";
+  : "標楷體";
 
 const sanitizeDownloadFileName = (fileName) => {
   const cleanedName = String(fileName ?? "")

@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261023-11";
+import { state } from "./state.js?v=20261023-12";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,30 +14,30 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261023-11";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261023-11";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261023-11";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261023-11";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261023-11";
+} from "./imageHandler.js?v=20261023-12";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261023-12";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261023-12";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261023-12";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261023-12";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261023-11";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261023-11";
-import { initAnnotationEditor } from "./annotationEditor.js?v=20261023-11";
-import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261023-11";
-import { initDocumentPreview } from "./documentPreview.js?v=20261023-11";
+} from "./projectPersistence.js?v=20261023-12";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261023-12";
+import { initAnnotationEditor } from "./annotationEditor.js?v=20261023-12";
+import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261023-12";
+import { initDocumentPreview } from "./documentPreview.js?v=20261023-12";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261023-11";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261023-11";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261023-11";
+} from "./photoNumbering.js?v=20261023-12";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261023-12";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261023-12";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261023-11";
+} from "./splitOrderManager.js?v=20261023-12";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");

@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-11";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-12";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,25 +14,25 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261023-11";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261023-11";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-11";
+} from "./utils.js?v=20261023-12";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261023-12";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-12";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261023-11";
+} from "./photoNumbering.js?v=20261023-12";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261023-11";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-11";
+} from "./splitGroupLogic.js?v=20261023-12";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-12";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261023-11";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-11";
+} from "./annotations.js?v=20261023-12";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-12";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
