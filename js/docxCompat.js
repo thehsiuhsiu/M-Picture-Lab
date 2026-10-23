@@ -19,8 +19,9 @@ const RPR_ORDER = [
   "rtl", "cs", "em", "lang", "eastAsianLayout", "specVanish", "oMath",
 ];
 
+// 只改標籤裡的屬性，不會動到使用者輸入的文字
 const fixPercentages = (xml) =>
-  xml.replace(/(\sw:w=")(\d+(?:\.\d+)?)%"/g, (_, prefix, value) =>
+  xml.replace(/(<w:[A-Za-z]+\b[^<>]*?\sw:w=")(\d+(?:\.\d+)?)%"/g, (_, prefix, value) =>
     `${prefix}${Math.round(Number(value) * 50)}"`,
   );
 
