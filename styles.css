@@ -4811,3 +4811,11 @@ body.annotate-open {
   border-radius: 0;
   box-shadow: none;
 }
+
+/* 手機上「連接線」文字也要看得到（其他樣式標籤在手機上隱藏） */
+@media (max-width: 820px) {
+  .annotate-connector-label {
+    display: inline;
+    white-space: nowrap;
+  }
+}

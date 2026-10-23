@@ -49,7 +49,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20261023-4" />
+    <link rel="stylesheet" href="styles.css?v=20261023-5" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;600&amp;display=swap"
       rel="stylesheet"
@@ -1114,6 +1114,10 @@
             <span class="material-symbols-outlined" aria-hidden="true">blur_on</span>
             <span class="annotate-tool-label">遮蔽</span>
           </button>
+          <button type="button" class="annotate-tool-btn" data-annotate-tool="zoom" aria-pressed="false" title="局部放大">
+            <span class="material-symbols-outlined" aria-hidden="true">zoom_in</span>
+            <span class="annotate-tool-label">放大</span>
+          </button>
           <span class="annotate-tools-divider" aria-hidden="true"></span>
           <button type="button" class="annotate-tool-btn" data-annotate-action="split" title="長截圖分割">
             <span class="material-symbols-outlined" aria-hidden="true">content_cut</span>
@@ -1163,6 +1167,13 @@
                   <button type="button" class="annotate-mask-btn" role="radio" aria-checked="true" data-annotate-mask="mosaic">馬賽克</button>
                   <button type="button" class="annotate-mask-btn" role="radio" aria-checked="false" data-annotate-mask="black">塗黑</button>
                 </div>
+              </div>
+              <div class="annotate-style-group" id="annotateConnectorGroup" hidden>
+                <label class="annotate-style-label annotate-connector-label" for="annotateConnectorSwitch">連接線</label>
+                <label class="switch">
+                  <input type="checkbox" id="annotateConnectorSwitch" role="switch" checked />
+                  <span class="slider"></span>
+                </label>
               </div>
               <span class="annotate-hint" id="annotateHint" aria-live="polite"></span>
               <button type="button" id="annotateDeleteBtn" class="annotate-danger-btn" disabled>
@@ -1306,7 +1317,7 @@
       </div>
     </div>
 
-    <script type="module" src="js/main.js?v=20261023-4"></script>
+    <script type="module" src="js/main.js?v=20261023-5"></script>
 
 
     <div id="consentModal" class="modal consent-modal" aria-hidden="true">
@@ -1515,6 +1526,13 @@
           <h3>如何在照片上圈出重點或遮蔽個資？</h3>
           <p>
             把滑鼠移到照片上，按右上角的「編輯」開啟編輯視窗。可以使用圈選、方框、箭頭、文字、編號標籤，以及遮蔽（馬賽克或塗黑）來遮住無關民眾的臉或車牌；顏色有紅、橙、黃、綠、藍、紫、白、黑，也可以按最後的「＋」從色盤選任何顏色；粗細有三種。選取工具可以移動、縮放或刪除標記，也可以復原和重做，按「完成」才會保存。標記不會改變原圖，之後隨時可以修改或移除；有標記的照片會顯示「已標記」。旋轉照片時標記會跟著轉；分割長截圖前會提醒標記將被清除。輸出 Word、PDF 與打包照片時會使用含標記的照片；打包照片時可勾選「同時附上原圖」，原圖會另外放在「原圖」資料夾。
+          </p>
+        </section>
+
+        <section>
+          <h3>可以把車牌等局部放大貼在照片上嗎？</h3>
+          <p>
+            可以。在編輯視窗選左側的「放大」，在照片上框出要放大的區域（來源框），放大框會自動出現在旁邊、約放大 3 倍。用「選取」工具可以拖曳放大框到任何位置、拉放大框角落改變倍率（比例固定不變形），也能移動或縮放來源框。上方的「連接線」開關可以決定要不要畫出兩框之間的連線。來源區域有遮蔽時，放大框也會遮住；輸出時放大內容取自原始照片，細節會比畫面上更清楚。
           </p>
         </section>
 

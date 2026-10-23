@@ -1,6 +1,6 @@
 // annotationEditor.js - 編輯視窗：旋轉、標記（圈選、方框、箭頭、文字、編號、遮蔽）與進入長截圖分割
 
-import { state } from "./state.js?v=20261023-4";
+import { state } from "./state.js?v=20261023-5";
 import {
   DEFAULT_COLOR,
   MAX_ANNOTATIONS_PER_IMAGE,
@@ -12,8 +12,8 @@ import {
   normalizeColor,
   PRESET_COLORS,
   rotateAnnotations,
-} from "./annotations.js?v=20261023-4";
-import { showDialog, showToast } from "./utils.js?v=20261023-4";
+} from "./annotations.js?v=20261023-5";
+import { showDialog, showToast } from "./utils.js?v=20261023-5";
 
 const TOOL_HINTS = {
   select: "點選標記可移動、改顏色或粗細；拖曳角落可縮放；點兩下文字可修改",
@@ -23,9 +23,12 @@ const TOOL_HINTS = {
   text: "點一下照片要放文字的位置",
   label: "點一下照片要放編號的位置",
   mask: "拖曳框出要遮蔽的範圍（例如無關民眾的臉、車牌）",
+  zoom: "框出要放大的區域，放大框會自動出現在旁邊；用選取工具可拖曳放大框、拉角落改倍率",
 };
 const BOX_TYPES = new Set(["ellipse", "rect", "mask"]);
 const MIN_SHAPE_PX = 6;
+const ZOOM_SCALES = [3, 2.5, 2, 1.6, 1.3];
+const ZOOM_GAP = 0.03;
 const HANDLE_PX = 10;
 
 let session = null;
@@ -63,6 +66,7 @@ export const openAnnotationEditor = async (imageId, editorHandlers) => {
     color: DEFAULT_COLOR,
     size: "medium",
     maskStyle: "mosaic",
+    connector: true,
     selectedId: null,
     undo: [],
     redo: [],
@@ -221,7 +225,89 @@ const toRatio = (event) => {
 const getSelected = () =>
   session?.annotations.find((item) => item.id === session.selectedId) || null;
 
+/* ---------- 局部放大 ---------- */
+
+const clamp01 = (value) => Math.min(1, Math.max(0, value));
+
+const sourceBoxOf = (item) => ({ x: item.sx, y: item.sy, w: item.sw, h: item.sh });
+const targetBoxOf = (item) => ({ x: item.x, y: item.y, w: item.w, h: item.h });
+
+const insideBox = (point, box, toleranceX, toleranceY) =>
+  point.x >= box.x - toleranceX &&
+  point.x <= box.x + box.w + toleranceX &&
+  point.y >= box.y - toleranceY &&
+  point.y <= box.y + box.h + toleranceY;
+
+/** 放大框的寬高比必須和來源框一樣（比例座標下 w/h = sw/sh）。 */
+const fitTargetToSource = (item, anchor = "nw") => {
+  const ratio = item.sh / item.sw;
+  let w = item.w;
+  let h = w * ratio;
+  const maxW = anchor.includes("w") ? item.x + item.w : 1 - item.x;
+  const maxH = anchor.includes("n") ? item.y + item.h : 1 - item.y;
+  if (h > maxH) {
+    h = maxH;
+    w = h / ratio;
+  }
+  if (w > maxW) {
+    w = maxW;
+    h = w * ratio;
+  }
+  if (anchor.includes("w")) item.x = item.x + item.w - w;
+  if (anchor.includes("n")) item.y = item.y + item.h - h;
+  item.w = w;
+  item.h = h;
+};
+
+/** 自動把放大框放在來源框旁最寬的一側，倍率從約 3 倍開始，放不下就縮小。 */
+const placeTarget = (item) => {
+  const { sx, sy, sw, sh } = item;
+  const sides = [
+    { side: "right", room: 1 - (sx + sw) },
+    { side: "left", room: sx },
+    { side: "below", room: 1 - (sy + sh) },
+    { side: "above", room: sy },
+  ].sort((a, b) => b.room - a.room);
+  for (const scale of ZOOM_SCALES) {
+    const w = sw * scale;
+    const h = sh * scale;
+    if (w > 0.96 || h > 0.96) continue;
+    for (const { side } of sides) {
+      let x;
+      let y;
+      if (side === "right" || side === "left") {
+        x = side === "right" ? sx + sw + ZOOM_GAP : sx - ZOOM_GAP - w;
+        y = Math.min(1 - h, Math.max(0, sy + sh / 2 - h / 2));
+      } else {
+        y = side === "below" ? sy + sh + ZOOM_GAP : sy - ZOOM_GAP - h;
+        x = Math.min(1 - w, Math.max(0, sx + sw / 2 - w / 2));
+      }
+      if (x >= 0 && y >= 0 && x + w <= 1 && y + h <= 1) {
+        Object.assign(item, { x, y, w, h });
+        return;
+      }
+    }
+  }
+  // 照片太小或來源框太大：放在對角的角落，盡量不重疊
+  const scale = Math.min(1.3, 0.45 / Math.max(sw, sh));
+  const w = sw * scale;
+  const h = sh * scale;
+  const x = sx + sw / 2 > 0.5 ? 0.02 : 0.98 - w;
+  const y = sy + sh / 2 > 0.5 ? 0.02 : 0.98 - h;
+  Object.assign(item, { x: clamp01(x), y: clamp01(y), w, h });
+};
+
+const zoomPartAt = (item, point, tolerance) => {
+  const { width, height } = session.view;
+  const tx = tolerance / width;
+  const ty = tolerance / height;
+  if (insideBox(point, targetBoxOf(item), tx, ty)) return "target";
+  if (insideBox(point, sourceBoxOf(item), tx, ty)) return "source";
+  return null;
+};
+
 const boundsOf = (item) => {
+  if (item.type === "zoom") return targetBoxOf(item);
   if (BOX_TYPES.has(item.type)) return { x: item.x, y: item.y, w: item.w, h: item.h };
   if (item.type === "arrow") {
     return {
@@ -235,6 +321,15 @@ const boundsOf = (item) => {
 };
 
 const handlesOf = (item) => {
+  if (item.type === "zoom") {
+    const corners = (box, prefix) => [
+      { key: `${prefix}nw`, x: box.x, y: box.y },
+      { key: `${prefix}ne`, x: box.x + box.w, y: box.y },
+      { key: `${prefix}sw`, x: box.x, y: box.y + box.h },
+      { key: `${prefix}se`, x: box.x + box.w, y: box.y + box.h },
+    ];
+    return [...corners(targetBoxOf(item), "t-"), ...corners(sourceBoxOf(item), "s-")];
+  }
   if (item.type === "arrow") {
     return [
       { key: "start", x: item.x1, y: item.y1 },
@@ -263,16 +358,19 @@ const render = () => {
 
   const selected = getSelected();
   if (selected && selected.id !== session.editing?.id) {
-    const b = boundsOf(selected);
+    const outlines =
+      selected.type === "zoom" ? [targetBoxOf(selected), sourceBoxOf(selected)] : [boundsOf(selected)];
     ctx.save();
-    ctx.setLineDash([5, 4]);
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = "#1f1e1d";
-    ctx.strokeRect(b.x * width - 6, b.y * height - 6, b.w * width + 12, b.h * height + 12);
-    ctx.setLineDash([]);
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 0.75;
-    ctx.strokeRect(b.x * width - 7, b.y * height - 7, b.w * width + 14, b.h * height + 14);
+    outlines.forEach((b) => {
+      ctx.setLineDash([5, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "#1f1e1d";
+      ctx.strokeRect(b.x * width - 6, b.y * height - 6, b.w * width + 12, b.h * height + 12);
+      ctx.setLineDash([]);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 0.75;
+      ctx.strokeRect(b.x * width - 7, b.y * height - 7, b.w * width + 14, b.h * height + 14);
+    });
     handlesOf(selected).forEach((handle) => {
       const hx = handle.x * width - HANDLE_PX / 2;
       const hy = handle.y * height - HANDLE_PX / 2;
@@ -317,6 +415,10 @@ const hitAnnotation = (point, tolerance) => {
   // 由上層往下找，最後畫的優先
   for (let index = session.annotations.length - 1; index >= 0; index -= 1) {
     const item = session.annotations[index];
+    if (item.type === "zoom") {
+      if (zoomPartAt(item, point, tolerance)) return item;
+      continue;
+    }
     if (item.type === "arrow") {
       const distance = distanceToSegment(
         px, py, item.x1 * width, item.y1 * height, item.x2 * width, item.y2 * height,
@@ -424,7 +526,8 @@ const nextLabelText = () => {
 const applyStyle = (key, value) => {
   session[key] = value;
   // 畫圖工具下換顏色只是改下一個標記的顏色；要改已畫好的標記，請用「選取」工具點選它
-  if (session.tool !== "select") {
+  // 連接線開關例外：剛畫好的局部放大也能直接切換
+  if (session.tool !== "select" && !(key === "connector" && getSelected()?.type === "zoom")) {
     if (session.selectedId) {
       session.selectedId = null;
       render();
@@ -434,7 +537,10 @@ const applyStyle = (key, value) => {
   }
   const selected = getSelected();
   const field = key === "maskStyle" ? "style" : key;
-  if (selected && (key !== "maskStyle" || selected.type === "mask") && selected[field] !== value) {
+  const applies =
+    (key !== "maskStyle" || selected?.type === "mask") &&
+    (key !== "connector" || selected?.type === "zoom");
+  if (selected && applies && selected[field] !== value) {
     if (key === "size" && selected.type === "mask") {
       syncControls();
       return;
@@ -529,6 +635,7 @@ const onPointerDown = (event) => {
     if (hit) {
       session.drag = {
         mode: "move",
+        part: hit.type === "zoom" ? zoomPartAt(hit, point, tolerance) : null,
         start: point,
         before: snapshot(),
         original: JSON.parse(JSON.stringify(hit)),
@@ -564,6 +671,29 @@ const onPointerDown = (event) => {
   }
 
   if (!canAddMore()) return;
+  if (tool === "zoom") {
+    const zoom = {
+      id: createAnnotationId(),
+      type: "zoom",
+      sx: point.x,
+      sy: point.y,
+      sw: 0,
+      sh: 0,
+      x: point.x,
+      y: point.y,
+      w: 0,
+      h: 0,
+      color: session.color,
+      size: session.size,
+      connector: session.connector,
+    };
+    session.drag = { mode: "create", start: point, before: snapshot(), item: zoom };
+    session.annotations.push(zoom);
+    session.selectedId = zoom.id;
+    canvas.setPointerCapture(event.pointerId);
+    event.preventDefault();
+    return;
+  }
   const item =
     tool === "arrow"
       ? { id: createAnnotationId(), type: "arrow", x1: point.x, y1: point.y, x2: point.x, y2: point.y }
@@ -591,7 +721,63 @@ const onPointerMove = (event) => {
   if (!drag) return;
   const point = toRatio(event);
   const { item } = drag;
-  if (drag.mode === "create") {
+  if (drag.mode === "create" && item.type === "zoom") {
+    item.sx = Math.min(drag.start.x, point.x);
+    item.sy = Math.min(drag.start.y, point.y);
+    item.sw = Math.abs(point.x - drag.start.x);
+    item.sh = Math.abs(point.y - drag.start.y);
+    if (item.sw > 0.002 && item.sh > 0.002) placeTarget(item);
+  } else if (drag.mode === "move" && item.type === "zoom") {
+    const dx = point.x - drag.start.x;
+    const dy = point.y - drag.start.y;
+    const o = drag.original;
+    if (drag.part === "source") {
+      item.sx = Math.min(1 - o.sw, Math.max(0, o.sx + dx));
+      item.sy = Math.min(1 - o.sh, Math.max(0, o.sy + dy));
+    } else {
+      item.x = Math.min(1 - o.w, Math.max(0, o.x + dx));
+      item.y = Math.min(1 - o.h, Math.max(0, o.y + dy));
+    }
+  } else if (drag.mode === "resize" && item.type === "zoom") {
+    const [part, corner] = drag.handle.split("-");
+    if (part === "s") {
+      // 來源框可以自由改形狀；放大框保留寬度與左上角，高度跟著比例調整
+      const right = item.sx + item.sw;
+      const bottom = item.sy + item.sh;
+      const anchorX = corner.includes("w") ? right : item.sx;
+      const anchorY = corner.includes("n") ? bottom : item.sy;
+      item.sx = Math.min(anchorX, point.x);
+      item.sy = Math.min(anchorY, point.y);
+      item.sw = Math.max(0.005, Math.abs(point.x - anchorX));
+      item.sh = Math.max(0.005, Math.abs(point.y - anchorY));
+      fitTargetToSource(item, "se");
+    } else {
+      // 放大框：比例固定，拉角落就是改倍率
+      const right = item.x + item.w;
+      const bottom = item.y + item.h;
+      const anchorX = corner.includes("w") ? right : item.x;
+      const anchorY = corner.includes("n") ? bottom : item.y;
+      const ratio = item.sh / item.sw;
+      let w = Math.max(item.sw, Math.abs(point.x - anchorX));
+      w = Math.max(w, Math.abs(point.y - anchorY) / ratio);
+      const opposite = corner.includes("w") ? "w" : "e";
+      const vertical = corner.includes("n") ? "n" : "s";
+      item.w = w;
+      item.h = w * ratio;
+      item.x = opposite === "w" ? anchorX - w : anchorX;
+      item.y = vertical === "n" ? anchorY - item.h : anchorY;
+      // 超出照片時縮回來
+      if (item.x < 0 || item.y < 0 || item.x + item.w > 1 || item.y + item.h > 1) {
+        const maxW = opposite === "w" ? anchorX : 1 - anchorX;
+        const maxH = vertical === "n" ? anchorY : 1 - anchorY;
+        const fitted = Math.min(maxW, maxH / ratio);
+        item.w = fitted;
+        item.h = fitted * ratio;
+        item.x = opposite === "w" ? anchorX - fitted : anchorX;
+        item.y = vertical === "n" ? anchorY - item.h : anchorY;
+      }
+    }
+  } else if (drag.mode === "create") {
     if (item.type === "arrow") {
       item.x2 = point.x;
       item.y2 = point.y;
@@ -652,7 +838,9 @@ const onPointerUp = () => {
   const { width, height } = session.view;
   if (drag.mode === "create") {
     const tooSmall =
-      item.type === "arrow"
+      item.type === "zoom"
+        ? item.sw * width < MIN_SHAPE_PX || item.sh * height < MIN_SHAPE_PX
+        : item.type === "arrow"
         ? Math.hypot((item.x2 - item.x1) * width, (item.y2 - item.y1) * height) < MIN_SHAPE_PX * 2
         : item.w * width < MIN_SHAPE_PX || item.h * height < MIN_SHAPE_PX;
     if (tooSmall) {
@@ -732,6 +920,13 @@ const syncControls = () => {
   document.querySelectorAll("[data-annotate-mask]").forEach((button) => {
     button.setAttribute("aria-checked", String(button.dataset.annotateMask === maskStyle));
   });
+  const showConnector = session.tool === "zoom" || selected?.type === "zoom";
+  const connectorGroup = $("annotateConnectorGroup");
+  if (connectorGroup) connectorGroup.hidden = !showConnector;
+  const connectorSwitch = $("annotateConnectorSwitch");
+  if (connectorSwitch) {
+    connectorSwitch.checked = selected?.type === "zoom" ? selected.connector !== false : session.connector;
+  }
   const hint = $("annotateHint");
   if (hint) hint.textContent = TOOL_HINTS[session.tool] || "";
   $("annotateDeleteBtn").disabled = !selected;
@@ -777,6 +972,9 @@ export const initAnnotationEditor = () => {
       else if (action === "rotate-right") rotateView(1);
       else if (action === "split") startSplit();
     }),
+  );
+  $("annotateConnectorSwitch")?.addEventListener("change", (event) =>
+    applyStyle("connector", event.target.checked),
   );
   $("annotateUndoBtn").addEventListener("click", undo);
   $("annotateRedoBtn").addEventListener("click", redo);
