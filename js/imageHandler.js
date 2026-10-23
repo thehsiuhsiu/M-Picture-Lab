@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-8";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-9";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,25 +14,25 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261023-8";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261023-8";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-8";
+} from "./utils.js?v=20261023-9";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261023-9";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-9";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261023-8";
+} from "./photoNumbering.js?v=20261023-9";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261023-8";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-8";
+} from "./splitGroupLogic.js?v=20261023-9";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-9";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261023-8";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-8";
+} from "./annotations.js?v=20261023-9";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-9";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -213,20 +213,6 @@ const normalizeConvertedBlob = (result) => {
   return blob.type ? blob : new Blob([blob], { type: "image/jpeg" });
 };
 
-const convertHeicWithHeic2any = async (file) => {
-  if (typeof heic2any !== "function") {
-    throw new Error("HEIC 轉換程式尚未載入");
-  }
-
-  const result = await heic2any({
-    blob: file,
-    toType: "image/jpeg",
-    quality: 0.88,
-  });
-
-  return normalizeConvertedBlob(result);
-};
-
 const convertNativelyDecodedImageToJpeg = async (file) => {
   const sourceUrl = createObjectUrl(file);
 
@@ -286,7 +272,6 @@ const convertHeicWithHeicTo = async (file) => {
 const convertHeicToJpeg = async (file) => {
   const converters = [
     ["heic-to", convertHeicWithHeicTo],
-    ["heic2any", convertHeicWithHeic2any],
     ["瀏覽器原生解碼", convertNativelyDecodedImageToJpeg],
   ];
   let lastError = null;
