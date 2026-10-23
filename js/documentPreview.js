@@ -1,14 +1,14 @@
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261023-1";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261023-1";
+import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261023-2";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261023-2";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261023-1";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261023-1";
+} from "./multiPhotoLayout.js?v=20261023-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261023-2";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js?v=20261023-1";
+} from "./pageNumbering.js?v=20261023-2";
 
 const PREVIEW_UPDATE_DELAY_MS = 220;
 const MIN_ZOOM = 0.3;
@@ -97,7 +97,7 @@ const createTable = () => {
 const createPhotoRow = (table, image) => {
   const photoCell = createCell({ className: "document-photo-cell", colSpan: 6 });
   const photo = createElement("img", "document-photo");
-  photo.src = image.previewUrl;
+  photo.src = image.annotatedPreviewUrl || image.previewUrl;
   photo.alt = image.name || "照片";
   photo.loading = "eager";
   photo.draggable = false;
@@ -225,7 +225,7 @@ const createMultiPhotoCell = (entry) => {
 
   const photoArea = createElement("div", "document-multi-photo-area");
   const photo = createElement("img", "document-multi-photo");
-  photo.src = entry.image.previewUrl;
+  photo.src = entry.image.annotatedPreviewUrl || entry.image.previewUrl;
   photo.alt = entry.image.name || `照片 ${entry.number}`;
   photo.loading = "eager";
   photo.draggable = false;
@@ -446,6 +446,8 @@ export const initDocumentPreview = () => {
   );
 
   document.addEventListener(PROJECT_CHANGED_EVENT, () => scheduleRender(0));
+  // 含標記的小圖產生完成時（例如開啟專案後）也要更新預覽
+  document.addEventListener("mpicture:annotated-preview-updated", () => scheduleRender(0));
 
   const stage = document.getElementById("documentPreviewStage");
   if (stage && "ResizeObserver" in window) {

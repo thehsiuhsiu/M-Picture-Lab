@@ -1,6 +1,6 @@
 ﻿// pdfGenerator.js - PDF 生成模組
 
-import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-1";
+import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-2";
 import {
   showLoadingModal,
   hideLoadingModal,
@@ -8,16 +8,17 @@ import {
   revokeObjectUrl,
   resizeImageForDoc,
   showToast,
-} from "./utils.js?v=20261023-1";
+} from "./utils.js?v=20261023-2";
+import { createAnnotatedBlob } from "./annotations.js?v=20261023-2";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261023-1";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261023-1";
+} from "./multiPhotoLayout.js?v=20261023-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261023-2";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js?v=20261023-1";
+} from "./pageNumbering.js?v=20261023-2";
 
 const PDF_PRINT_IMAGE_MAX_DIMENSION = 1800;
 
@@ -226,7 +227,7 @@ export const handleGeneratePDF = async () => {
     const printableImages = await Promise.all(
       state.selectedImages.map(async (image) => {
         const printBlob = await resizeImageForDoc(
-          image.blob,
+          await createAnnotatedBlob(image),
           PDF_PRINT_IMAGE_MAX_DIMENSION,
         );
         const printUrl = createObjectUrl(printBlob);

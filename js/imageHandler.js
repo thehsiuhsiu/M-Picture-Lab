@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-1";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-2";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,25 +14,25 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261023-1";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261023-1";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-1";
+} from "./utils.js?v=20261023-2";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261023-2";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-2";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261023-1";
+} from "./photoNumbering.js?v=20261023-2";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261023-1";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-1";
+} from "./splitGroupLogic.js?v=20261023-2";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-2";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261023-1";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-1";
+} from "./annotations.js?v=20261023-2";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-2";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -649,6 +649,7 @@ const createPhotoTools = (imageId) => {
 const updateCardImage = async (image) => {
   const container = document.querySelector(`.image-container[data-id="${image.id}"]`);
   const url = await refreshAnnotatedPreview(image);
+  document.dispatchEvent(new Event("mpicture:annotated-preview-updated"));
   if (!container) return;
   const img = container.querySelector("img");
   if (img) img.src = url;

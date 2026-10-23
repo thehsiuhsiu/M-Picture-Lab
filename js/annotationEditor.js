@@ -1,6 +1,6 @@
 // annotationEditor.js - 標記視窗：在照片上圈選、框選、加箭頭、文字、編號標籤與遮蔽
 
-import { state } from "./state.js?v=20261023-1";
+import { state } from "./state.js?v=20261023-2";
 import {
   ANNOTATION_COLORS,
   MAX_ANNOTATIONS_PER_IMAGE,
@@ -9,8 +9,8 @@ import {
   createAnnotationId,
   drawAnnotatedImage,
   normalizeAnnotations,
-} from "./annotations.js?v=20261023-1";
-import { showDialog, showToast } from "./utils.js?v=20261023-1";
+} from "./annotations.js?v=20261023-2";
+import { showDialog, showToast } from "./utils.js?v=20261023-2";
 
 const TOOL_HINTS = {
   select: "點選標記可移動；拖曳角落可縮放；點兩下文字可修改",

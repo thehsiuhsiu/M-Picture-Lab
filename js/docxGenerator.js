@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-1";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-2";
 import {
   resizeImageForDoc,
   getFormattedDate,
@@ -8,12 +8,13 @@ import {
   hideLoadingModal,
   blobToArrayBuffer,
   showToast,
-} from "./utils.js?v=20261023-1";
+} from "./utils.js?v=20261023-2";
+import { createAnnotatedBlob } from "./annotations.js?v=20261023-2";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261023-1";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261023-1";
+} from "./multiPhotoLayout.js?v=20261023-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261023-2";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -70,7 +71,8 @@ const handleGenerate = async () => {
   try {
     const resizedImages = await Promise.all(
       state.selectedImages.map(async (image) => {
-        const resizedBlob = await resizeImageForDoc(image.blob);
+        // 有標記的照片輸出合成後的版本（原圖不變）
+        const resizedBlob = await resizeImageForDoc(await createAnnotatedBlob(image));
         return {
           ...image,
           docBlob: resizedBlob,
