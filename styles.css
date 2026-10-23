@@ -469,8 +469,6 @@ html[data-theme="dark"] .brand-mark {
   padding: 4px 8px 12px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
 }
 
 .nav-section + .nav-section {
@@ -3423,9 +3421,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   overscroll-behavior: contain;
   padding: 18px;
   background: var(--surface-2);
-  scrollbar-color: var(--border-strong) transparent;
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
 }
 
 .long-shot-queue-panel {
@@ -3491,46 +3487,8 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-color: var(--border-strong) transparent;
   scrollbar-gutter: stable both-edges;
-  scrollbar-width: thin;
   background: var(--surface-3);
-}
-
-.long-shot-preview-panel::-webkit-scrollbar,
-.long-shot-queue-panel::-webkit-scrollbar,
-.long-shot-review-panel::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-.long-shot-preview-panel::-webkit-scrollbar-track,
-.long-shot-queue-panel::-webkit-scrollbar-track,
-.long-shot-review-panel::-webkit-scrollbar-track {
-  margin: 6px;
-  border-radius: 999px;
-  background: transparent;
-}
-
-.long-shot-preview-panel::-webkit-scrollbar-thumb,
-.long-shot-queue-panel::-webkit-scrollbar-thumb,
-.long-shot-review-panel::-webkit-scrollbar-thumb {
-  min-height: 42px;
-  border: 3px solid transparent;
-  border-radius: 999px;
-  background: var(--border-strong);
-  background-clip: padding-box;
-}
-
-.long-shot-preview-panel::-webkit-scrollbar-thumb:hover,
-.long-shot-queue-panel::-webkit-scrollbar-thumb:hover,
-.long-shot-review-panel::-webkit-scrollbar-thumb:hover {
-  background: var(--text-3);
-  background-clip: padding-box;
-}
-
-.long-shot-preview-panel::-webkit-scrollbar-corner {
-  background: transparent;
 }
 
 .long-shot-empty {
@@ -4817,5 +4775,43 @@ body.annotate-open {
   .annotate-connector-label {
     display: inline;
     white-space: nowrap;
+  }
+}
+
+/* ---------- 捲軸：細、圓角，兩端離開對話框的圓角 ---------- */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  margin: 12px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  min-height: 40px;
+  min-width: 40px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--border-strong);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox 沒有上面的寫法，改用標準屬性 */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
   }
 }
