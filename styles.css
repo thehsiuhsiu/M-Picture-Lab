@@ -4647,3 +4647,38 @@ body.annotate-open {
 .annotated-badge .material-symbols-outlined {
   font-size: 14px;
 }
+
+/* 打包照片：同時附上原圖 */
+.zip-originals-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.zip-originals-option[hidden] {
+  display: none;
+}
+
+.zip-originals-option input {
+  width: 16px;
+  height: 16px;
+  margin: 3px 0 0;
+  accent-color: var(--accent-strong);
+}
+
+.zip-originals-option small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.5;
+}

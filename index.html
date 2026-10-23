@@ -49,7 +49,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20261023-1" />
+    <link rel="stylesheet" href="styles.css?v=20261023-2" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;600&amp;display=swap"
       rel="stylesheet"
@@ -899,6 +899,13 @@
         >
           不適合當檔名的字元會被自動移除。
         </p>
+        <label class="zip-originals-option" id="zipOriginalsOption" hidden>
+          <input type="checkbox" id="zipIncludeOriginals" />
+          <span>
+            同時附上原圖
+            <small>有標記的照片會輸出含標記的版本；勾選後另把所有原圖放在「原圖」資料夾</small>
+          </span>
+        </label>
         <div class="zip-name-actions">
           <button
             type="button"
@@ -1276,7 +1283,7 @@
       </div>
     </div>
 
-    <script type="module" src="js/main.js?v=20261023-1"></script>
+    <script type="module" src="js/main.js?v=20261023-2"></script>
 
 
     <div id="consentModal" class="modal consent-modal" aria-hidden="true">
@@ -1484,7 +1491,7 @@
         <section>
           <h3>如何在照片上圈出重點或遮蔽個資？</h3>
           <p>
-            把滑鼠移到照片上，按右上角的「標記」（筆的圖示）開啟標記視窗。可以使用圈選、方框、箭頭、文字、編號標籤，以及遮蔽（馬賽克或塗黑）來遮住無關民眾的臉或車牌；顏色有紅、黃、白、黑，粗細有三種。選取工具可以移動、縮放或刪除標記，也可以復原和重做，按「完成」才會保存。標記不會改變原圖，之後隨時可以修改或移除；有標記的照片會顯示「已標記」。旋轉照片時標記會跟著轉；分割長截圖前會提醒標記將被清除。
+            把滑鼠移到照片上，按右上角的「標記」（筆的圖示）開啟標記視窗。可以使用圈選、方框、箭頭、文字、編號標籤，以及遮蔽（馬賽克或塗黑）來遮住無關民眾的臉或車牌；顏色有紅、黃、白、黑，粗細有三種。選取工具可以移動、縮放或刪除標記，也可以復原和重做，按「完成」才會保存。標記不會改變原圖，之後隨時可以修改或移除；有標記的照片會顯示「已標記」。旋轉照片時標記會跟著轉；分割長截圖前會提醒標記將被清除。輸出 Word、PDF 與打包照片時會使用含標記的照片；打包照片時可勾選「同時附上原圖」，原圖會另外放在「原圖」資料夾。
           </p>
         </section>
 
