@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261023-5";
-import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-5";
+import { state } from "./state.js?v=20261023-6";
+import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-6";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
@@ -317,12 +317,9 @@ const drawZoom = (ctx, base, item, width, height, metrics) => {
       // 兩框重疊時不畫線
       if ((x2 - x1) * dx + (y2 - y1) * dy > 0) {
         ctx.lineCap = "round";
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = stroke + Math.max(2, stroke * 0.6);
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
-        ctx.stroke();
         ctx.strokeStyle = color;
         ctx.lineWidth = stroke;
         ctx.stroke();
@@ -331,19 +328,13 @@ const drawZoom = (ctx, base, item, width, height, metrics) => {
   }
 
   // 來源框
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = stroke + Math.max(2, stroke * 0.6);
-  ctx.strokeRect(sx, sy, sw, sh);
   ctx.strokeStyle = color;
   ctx.lineWidth = stroke;
   ctx.strokeRect(sx, sy, sw, sh);
 
-  // 放大框：白色外圈＋放大的影像＋彩色邊框
+  // 放大框：放大的影像＋彩色邊框
   const baseWidth = base.width;
   const baseHeight = base.height;
-  const ring = Math.max(2, stroke * 0.8);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(tx - stroke / 2 - ring, ty - stroke / 2 - ring, tw + stroke + ring * 2, th + stroke + ring * 2);
   ctx.save();
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(
