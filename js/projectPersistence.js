@@ -1,6 +1,6 @@
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261021-10";
-import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261021-10";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261021-10";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-1";
+import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261023-1";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261023-1";
 import {
   createObjectUrl,
   revokeObjectUrl,
@@ -8,9 +8,10 @@ import {
   showNotice,
   showPromptDialog,
   showToast,
-} from "./utils.js?v=20261021-10";
-import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261021-10";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261021-10";
+} from "./utils.js?v=20261023-1";
+import { normalizeAnnotations } from "./annotations.js?v=20261023-1";
+import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261023-1";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261023-1";
 
 const DATABASE_NAME = "mpicture-local-projects-v1";
 const DATABASE_VERSION = 3;
@@ -26,8 +27,8 @@ const AUTOSAVE_DELAY_MS = 1000;
 const MAX_PROJECT_NAME_LENGTH = 80;
 
 const PROJECT_FORMAT = "m-picture-project";
-const PROJECT_VERSION = 6;
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, PROJECT_VERSION]);
+const PROJECT_VERSION = 7;
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, PROJECT_VERSION]);
 const PROJECT_MAGIC = new Uint8Array([
   0x4d, 0x50, 0x49, 0x43, 0x54, 0x55, 0x52, 0x45,
 ]);
@@ -485,6 +486,7 @@ const normalizeImageMetadata = (rawImage, index, sourceVersion) => {
       "splitPartIndex",
       "splitPartCount",
       "sourceFileName",
+      "annotations",
       "blob",
     ]),
     `第 ${index + 1} 張圖片`,
@@ -568,6 +570,7 @@ const normalizeImageMetadata = (rawImage, index, sourceVersion) => {
       "圖片說明",
     ),
     accidentTags: normalizeAccidentTags(image.accidentTags || {}),
+    annotations: normalizeAnnotations(image.annotations),
     rotation: requireEnum(image.rotation ?? 0, SAFE_ROTATIONS, "圖片旋轉角度"),
     importBatchId,
     originalImportIndex,
@@ -756,6 +759,7 @@ const captureProject = () => {
       address: state.imageAddresses[image.id] || "",
       description: state.imageDescriptions[image.id] || "",
       accidentTags: state.imageAccidentTags[image.id] || {},
+      annotations: state.imageAnnotations[image.id] || [],
       rotation: state.imageRotations[image.id] || 0,
       importBatchId: image.importBatchId || "",
       originalImportIndex: image.originalImportIndex ?? null,

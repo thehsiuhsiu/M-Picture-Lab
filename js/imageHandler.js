@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261021-10";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-1";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,18 +14,25 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261021-10";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261021-10";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261021-10";
+} from "./utils.js?v=20261023-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261023-1";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-1";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261021-10";
+} from "./photoNumbering.js?v=20261023-1";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261021-10";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261021-10";
+} from "./splitGroupLogic.js?v=20261023-1";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-1";
+import {
+  hasAnnotations,
+  refreshAnnotatedPreview,
+  rotateAnnotations,
+  releaseAnnotatedPreview,
+} from "./annotations.js?v=20261023-1";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-1";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -558,6 +565,9 @@ export const replaceImageWithPreparedImages = (
   delete state.imageAddresses[imageId];
   delete state.imageAccidentTags[imageId];
   delete state.imageRotations[imageId];
+  // 分割後各分段是新照片，原本的標記不沿用（分割前已提醒使用者）
+  delete state.imageAnnotations[imageId];
+  releaseAnnotatedPreview(original);
 
   replacements.forEach((record, index) => {
     state.imageDescriptions[record.id] = index === 0 ? originalFields.description : "";
@@ -597,6 +607,7 @@ export const replaceImageWithPreparedImages = (
  */
 /** 滑鼠移到照片上時出現的工具：旋轉、分割長截圖、刪除。 */
 const PHOTO_TOOLS = [
+  { action: "annotate", icon: "draw", label: "標記" },
   { action: "rotate-left", icon: "rotate_left", label: "向左旋轉 90°" },
   { action: "rotate-right", icon: "rotate_right", label: "向右旋轉 90°" },
   { action: "split", icon: "content_cut", label: "分割長截圖" },
@@ -634,7 +645,46 @@ const createPhotoTools = (imageId) => {
   return tools;
 };
 
+/** 照片卡片顯示含標記的樣子，並加上「已標記」徽章。 */
+const updateCardImage = async (image) => {
+  const container = document.querySelector(`.image-container[data-id="${image.id}"]`);
+  const url = await refreshAnnotatedPreview(image);
+  if (!container) return;
+  const img = container.querySelector("img");
+  if (img) img.src = url;
+  const frame = container.querySelector(".image-frame");
+  let badge = frame?.querySelector(".annotated-badge");
+  if (hasAnnotations(image.id)) {
+    if (frame && !badge) {
+      badge = document.createElement("span");
+      badge.className = "annotated-badge";
+      const icon = document.createElement("span");
+      icon.className = "material-symbols-outlined";
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = "draw";
+      badge.append(icon, document.createTextNode("已標記"));
+      frame.appendChild(badge);
+    }
+  } else {
+    badge?.remove();
+  }
+};
+
+const saveAnnotations = async (imageId, annotations) => {
+  const image = state.selectedImages.find((item) => item.id === imageId);
+  if (!image) return;
+  if (annotations.length) state.imageAnnotations[imageId] = annotations;
+  else delete state.imageAnnotations[imageId];
+  try {
+    await updateCardImage(image);
+  } catch (error) {
+    console.warn("更新含標記的照片失敗:", error);
+  }
+  notifyProjectChanged();
+};
+
 const runPhotoTool = async (action, imageId) => {
+  if (action === "annotate") return openAnnotationEditor(imageId, saveAnnotations);
   if (action === "rotate-left") return rotateImage(-90, imageId);
   if (action === "rotate-right") return rotateImage(90, imageId);
   if (action === "delete") return removeImage(imageId);
@@ -678,6 +728,13 @@ const addImageToPreview = (imageData, counter) => {
   img.draggable = false;
   frame.appendChild(img);
   frame.appendChild(createPhotoTools(imageData.id));
+  if (hasAnnotations(imageData.id)) {
+    queueMicrotask(() =>
+      updateCardImage(imageData).catch((error) =>
+        console.warn("顯示含標記的照片失敗:", error),
+      ),
+    );
+  }
   imageContainer.appendChild(frame);
 
   const descriptionDiv = document.createElement("div");
@@ -1154,6 +1211,8 @@ export const removeImage = async (id) => {
   delete state.imageAddresses[id];
   delete state.imageAccidentTags[id];
   delete state.imageRotations[id];
+  delete state.imageAnnotations[id];
+  releaseAnnotatedPreview(imageData);
 
   if (imageData?.previewUrl) {
     revokeObjectUrl(imageData.previewUrl);
@@ -1295,6 +1354,9 @@ export const rotateImage = async (degrees, imageId = state.editingImageId) => {
     revokeObjectUrl(imageData.previewUrl);
   }
   imageData.previewUrl = rotatedData.previewUrl;
+  if (hasAnnotations(imageId)) {
+    state.imageAnnotations[imageId] = rotateAnnotations(state.imageAnnotations[imageId], degrees);
+  }
 
   const container = document.querySelector(
     `.image-container[data-id="${imageId}"]`,
@@ -1304,6 +1366,11 @@ export const rotateImage = async (degrees, imageId = state.editingImageId) => {
     if (img) {
       img.src = rotatedData.previewUrl;
     }
+  }
+  if (hasAnnotations(imageId)) {
+    await updateCardImage(imageData).catch((error) =>
+      console.warn("更新含標記的照片失敗:", error),
+    );
   }
 
   console.log(
@@ -1351,7 +1418,10 @@ export const replaceImageCollection = async (records) => {
     throw error;
   }
 
-  state.selectedImages.forEach((record) => revokeObjectUrl(record.previewUrl));
+  state.selectedImages.forEach((record) => {
+    revokeObjectUrl(record.previewUrl);
+    releaseAnnotatedPreview(record);
+  });
   state.selectedImages = hydratedRecords;
   state.editingImageId = null;
   state.imageDescriptions = {};
@@ -1359,6 +1429,7 @@ export const replaceImageCollection = async (records) => {
   state.imageAddresses = {};
   state.imageAccidentTags = {};
   state.imageRotations = {};
+  state.imageAnnotations = {};
 
   hydratedRecords.forEach((record) => {
     state.imageDescriptions[record.id] = record.description || "";
@@ -1366,6 +1437,7 @@ export const replaceImageCollection = async (records) => {
     state.imageAddresses[record.id] = record.address || "";
     state.imageAccidentTags[record.id] = record.accidentTags || {};
     state.imageRotations[record.id] = record.rotation || 0;
+    if (record.annotations?.length) state.imageAnnotations[record.id] = record.annotations;
   });
 
   const preview = document.getElementById("imagePreview");
