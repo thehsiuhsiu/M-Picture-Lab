@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-10";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-11";
 import {
   resizeImageForDoc,
   getFormattedDate,
@@ -8,13 +8,14 @@ import {
   hideLoadingModal,
   blobToArrayBuffer,
   showToast,
-} from "./utils.js?v=20261023-10";
-import { createAnnotatedBlob } from "./annotations.js?v=20261023-10";
+} from "./utils.js?v=20261023-11";
+import { createAnnotatedBlob } from "./annotations.js?v=20261023-11";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261023-11";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261023-10";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261023-10";
+} from "./multiPhotoLayout.js?v=20261023-11";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261023-11";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -105,7 +106,7 @@ const handleGenerate = async () => {
       resizedImages,
     );
 
-    const blob = await docx.Packer.toBlob(doc);
+    const blob = await makeWord2007Compatible(await docx.Packer.toBlob(doc));
     hideLoadingModal();
 
     const link = document.createElement("a");
