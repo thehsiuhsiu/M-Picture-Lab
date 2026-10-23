@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261023-6";
-import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-6";
+import { state } from "./state.js?v=20261023-7";
+import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-7";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
@@ -50,7 +50,7 @@ export const MAX_ANNOTATIONS_PER_IMAGE = 200;
 export const MAX_TEXT_LENGTH = 100;
 export const MAX_LABEL_LENGTH = 3;
 
-const STROKE_RATIO = { thin: 0.004, medium: 0.007, thick: 0.011 };
+const STROKE_RATIO = { thin: 0.002, medium: 0.0035, thick: 0.0055 };
 const FONT_RATIO = { thin: 0.03, medium: 0.042, thick: 0.058 };
 const LABEL_RATIO = { thin: 0.045, medium: 0.06, thick: 0.08 };
 const FONT_FAMILY = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif';
@@ -149,7 +149,7 @@ const metricsFor = (width, height) => {
   const base = Math.max(width, height);
   return {
     base,
-    stroke: (size) => Math.max(2, base * STROKE_RATIO[size]),
+    stroke: (size) => Math.max(1.5, base * STROKE_RATIO[size]),
     font: (size) => Math.max(12, base * FONT_RATIO[size]),
     label: (size) => Math.max(18, base * LABEL_RATIO[size]),
   };

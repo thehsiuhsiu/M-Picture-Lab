@@ -4430,9 +4430,9 @@ body.annotate-open {
   background: currentColor;
 }
 
-.size-thin span { height: 2px; }
-.size-medium span { height: 4px; }
-.size-thick span { height: 7px; }
+.size-thin span { height: 1px; }
+.size-medium span { height: 2px; }
+.size-thick span { height: 4px; }
 
 .annotate-hint {
   color: var(--text-3);
