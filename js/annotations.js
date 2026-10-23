@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261023-3";
-import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-3";
+import { state } from "./state.js?v=20261023-4";
+import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261023-4";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
@@ -16,16 +16,16 @@ export const ANNOTATION_TYPES = Object.freeze([
 ]);
 /** 常用色票（編輯視窗上方那一排）；也可以從色盤自訂任何顏色。 */
 export const PRESET_COLORS = Object.freeze([
-  { key: "red", label: "紅色", hex: "#e03b2e" },
-  { key: "orange", label: "橙色", hex: "#f08a24" },
-  { key: "yellow", label: "黃色", hex: "#f5c518" },
-  { key: "green", label: "綠色", hex: "#2e9d57" },
-  { key: "blue", label: "藍色", hex: "#2f6fdb" },
-  { key: "purple", label: "紫色", hex: "#8a4fd3" },
+  { key: "red", label: "紅色", hex: "#ff3b30" },
+  { key: "orange", label: "橙色", hex: "#ff9500" },
+  { key: "yellow", label: "黃色", hex: "#ffd60a" },
+  { key: "green", label: "綠色", hex: "#34c759" },
+  { key: "blue", label: "藍色", hex: "#0a84ff" },
+  { key: "purple", label: "紫色", hex: "#bf5af2" },
   { key: "white", label: "白色", hex: "#ffffff" },
   { key: "black", label: "黑色", hex: "#1f1e1d" },
 ]);
-export const DEFAULT_COLOR = "#e03b2e";
+export const DEFAULT_COLOR = "#ff3b30";
 const COLOR_BY_KEY = Object.fromEntries(PRESET_COLORS.map((color) => [color.key, color.hex]));
 
 /** 標記顏色一律存成 #rrggbb；舊版的顏色名稱（red、yellow…）自動轉換。 */
