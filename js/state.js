@@ -16,6 +16,7 @@ export const state = {
   imageAccidentTags: {}, // 儲存交通事故勾選項，以 image id 為 key
   editingImageId: null, // 正在編輯的圖片 ID
   imageRotations: {}, // 儲存圖片旋轉角度，以 image id 為 key
+  imageAnnotations: {}, // 儲存照片標記（與原圖分開），以 image id 為 key
   customDocTitles: {
     left: "刑案照片黏貼表",
     middle: "非道路交通事故照片黏貼紀錄表",

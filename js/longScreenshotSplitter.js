@@ -1,21 +1,22 @@
-import { state } from "./state.js?v=20261021-10";
+import { state } from "./state.js?v=20261023-1";
 import {
   IMAGE_SECURITY_LIMITS,
   buildImageRecord,
   replaceImageWithPreparedImages,
   registerSplitHandler,
-} from "./imageHandler.js?v=20261021-10";
+} from "./imageHandler.js?v=20261023-1";
 import {
   getSplitGroupIntegrity,
   restoreSplitGroup,
-} from "./splitOrderManager.js?v=20261021-10";
+} from "./splitOrderManager.js?v=20261023-1";
+import { hasAnnotations } from "./annotations.js?v=20261023-1";
 import {
   createObjectUrl,
   revokeObjectUrl,
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261021-10";
+} from "./utils.js?v=20261023-1";
 
 const TARGET_HEIGHT_RATIO = Object.freeze({ 2: 22 / 9, 4: 4 / 3 });
 const ANALYSIS_WIDTH = 256;
@@ -399,6 +400,17 @@ const openForSelectedImage = async () => {
   if (!record) {
     showToast("找不到要分割的照片，請重新整理後再試一次", "warning");
     return;
+  }
+
+  if (hasAnnotations(record.id)) {
+    const shouldContinue = await showDialog({
+      title: "這張照片有標記",
+      message: "分割後會產生新的分段照片，原本的標記會被清除，需要時請在各分段重新標記。",
+      tone: "warning",
+      confirmText: "清除標記並繼續",
+      cancelText: "取消",
+    });
+    if (!shouldContinue) return;
   }
 
   if (record.splitGroupId) {
