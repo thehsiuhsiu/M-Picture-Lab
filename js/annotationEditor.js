@@ -1,6 +1,6 @@
 // annotationEditor.js - 編輯視窗：旋轉、標記（圈選、方框、箭頭、文字、編號、遮蔽）與進入長截圖分割
 
-import { state } from "./state.js?v=20261023-3";
+import { state } from "./state.js?v=20261023-4";
 import {
   DEFAULT_COLOR,
   MAX_ANNOTATIONS_PER_IMAGE,
@@ -12,11 +12,11 @@ import {
   normalizeColor,
   PRESET_COLORS,
   rotateAnnotations,
-} from "./annotations.js?v=20261023-3";
-import { showDialog, showToast } from "./utils.js?v=20261023-3";
+} from "./annotations.js?v=20261023-4";
+import { showDialog, showToast } from "./utils.js?v=20261023-4";
 
 const TOOL_HINTS = {
-  select: "點選標記可移動；拖曳角落可縮放；點兩下文字可修改",
+  select: "點選標記可移動、改顏色或粗細；拖曳角落可縮放；點兩下文字可修改",
   ellipse: "在照片上拖曳即可畫出圈選",
   rect: "在照片上拖曳即可畫出方框",
   arrow: "從起點拖曳到要指出的位置",
@@ -423,6 +423,15 @@ const nextLabelText = () => {
 /** 修改選取中的標記樣式（顏色、粗細、遮蔽方式），同時記住為之後的預設。 */
 const applyStyle = (key, value) => {
   session[key] = value;
+  // 畫圖工具下換顏色只是改下一個標記的顏色；要改已畫好的標記，請用「選取」工具點選它
+  if (session.tool !== "select") {
+    if (session.selectedId) {
+      session.selectedId = null;
+      render();
+    }
+    syncControls();
+    return;
+  }
   const selected = getSelected();
   const field = key === "maskStyle" ? "style" : key;
   if (selected && (key !== "maskStyle" || selected.type === "mask") && selected[field] !== value) {

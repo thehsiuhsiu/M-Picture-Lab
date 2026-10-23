@@ -4341,7 +4341,7 @@ body.annotate-open {
   position: relative;
   display: inline-grid;
   flex: 0 0 auto;
-  background: conic-gradient(#e03b2e, #f5c518, #2e9d57, #2f6fdb, #8a4fd3, #e03b2e);
+  background: conic-gradient(#ff3b30, #ffd60a, #34c759, #0a84ff, #bf5af2, #ff3b30);
   cursor: pointer;
   place-items: center;
 }

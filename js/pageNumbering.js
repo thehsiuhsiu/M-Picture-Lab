@@ -1,4 +1,4 @@
-import { state } from "./state.js?v=20261023-3";
+import { state } from "./state.js?v=20261023-4";
 
 export const MIN_PDF_PAGE_START_NUMBER = 1;
 export const MAX_PDF_PAGE_START_NUMBER = 9999;
