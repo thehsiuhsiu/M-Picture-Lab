@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-7";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-8";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,25 +14,25 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261023-7";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261023-7";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-7";
+} from "./utils.js?v=20261023-8";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261023-8";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-8";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261023-7";
+} from "./photoNumbering.js?v=20261023-8";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261023-7";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-7";
+} from "./splitGroupLogic.js?v=20261023-8";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-8";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261023-7";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-7";
+} from "./annotations.js?v=20261023-8";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-8";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -262,17 +262,43 @@ const convertNativelyDecodedImageToJpeg = async (file) => {
   }
 };
 
-const convertHeicToJpeg = async (file) => {
-  try {
-    return await convertHeicWithHeic2any(file);
-  } catch (heic2anyError) {
-    console.warn(
-      "heic2any 轉換失敗，嘗試瀏覽器原生解碼:",
-      file.name,
-      heic2anyError,
-    );
-    return await convertNativelyDecodedImageToJpeg(file);
+// heic-to 跟著 libheif 更新，能讀 iOS 18 之後含 HDR 增益圖的照片；
+// 檔案約 3 MB，第一次遇到 HEIC 才載入。
+const HEIC_TO_URL = "https://cdn.jsdelivr.net/npm/heic-to@1.6.6/dist/csp/heic-to.js";
+let heicToModulePromise = null;
+
+const loadHeicTo = () => {
+  if (!heicToModulePromise) {
+    heicToModulePromise = import(HEIC_TO_URL).catch((error) => {
+      heicToModulePromise = null;
+      throw error;
+    });
   }
+  return heicToModulePromise;
+};
+
+const convertHeicWithHeicTo = async (file) => {
+  const { heicTo } = await loadHeicTo();
+  const result = await heicTo({ blob: file, type: "image/jpeg", quality: 0.88 });
+  return normalizeConvertedBlob(result);
+};
+
+const convertHeicToJpeg = async (file) => {
+  const converters = [
+    ["heic-to", convertHeicWithHeicTo],
+    ["heic2any", convertHeicWithHeic2any],
+    ["瀏覽器原生解碼", convertNativelyDecodedImageToJpeg],
+  ];
+  let lastError = null;
+  for (const [name, convert] of converters) {
+    try {
+      return await convert(file);
+    } catch (error) {
+      lastError = error;
+      console.warn(`HEIC 以 ${name} 轉換失敗:`, file.name, error);
+    }
+  }
+  throw lastError;
 };
 
 export const prepareImageFile = async (file) => {
