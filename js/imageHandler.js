@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-13";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261024-1";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,25 +14,25 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261023-13";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261023-13";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261023-13";
+} from "./utils.js?v=20261024-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261024-1";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261024-1";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261023-13";
+} from "./photoNumbering.js?v=20261024-1";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261023-13";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261023-13";
+} from "./splitGroupLogic.js?v=20261024-1";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261024-1";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261023-13";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261023-13";
+} from "./annotations.js?v=20261024-1";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261024-1";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -1312,6 +1312,7 @@ export const updateCreateButtonState = () => {
   createButton.classList.add("create-btn-enabled");
   [
     "downloadDocx",
+    "downloadPdfFile",
     "downloadPdf",
     "downloadZip",
     "exportProjectBtn",
@@ -1327,7 +1328,7 @@ export const updateCreateButtonState = () => {
   const docxNotice = document.getElementById("multiPhotoDocxNotice");
   if (docxButton) {
     docxButton.title = isMultiPhoto
-      ? "多格照片檔案限定列印/PDF"
+      ? "多格照片版型只能輸出 PDF 檔案或列印"
       : "輸出 Word 文件";
     docxButton.setAttribute("aria-describedby", "multiPhotoDocxNotice");
   }

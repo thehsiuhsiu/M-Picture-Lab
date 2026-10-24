@@ -12,6 +12,19 @@ This project includes or references third-party fonts for PDF output. Keep this 
 | Iansui / 芫荽 | https://github.com/ButTaiwan/iansui | SIL Open Font License 1.1 |
 | Gen Ryu Min / 源流明體 | https://github.com/ButTaiwan/genryu-font | SIL Open Font License 1.1 |
 | Chen Yuluoyan / 辰宇落雁體 | https://github.com/Chenyu-otf/chenyuluoyan_thin | SIL Open Font License 1.1 |
+| TW-Kai / 全字庫正楷體 (font/TW-Kai-1.ttf, TW-Kai-2.ttf, TW-Kai-3.ttf) | 全字庫 CNS11643 中文標準交換碼全字庫, https://www.cns11643.gov.tw/ ; https://data.gov.tw/dataset/5961 | 政府資料開放授權條款－第1版 (Open Government Data License, version 1.0) |
+
+TW-Kai attribution (required by the Open Government Data License): 本專案使用「全字庫正楷體」，來源：國家發展委員會／全字庫網站（CNS11643 中文標準交換碼全字庫），依政府資料開放授權條款－第1版提供。The font file was split into three files by Big5 frequency level (common, less common, rare characters) so that only the needed part is downloaded; glyphs are unchanged.
+
+Bundled Noto Sans TC / Noto Serif TC Regular (font/NotoSansTC-Regular.ttf, font/NotoSerifTC-Regular.ttf) are used for downloaded PDF files and as fallback for characters missing from other fonts.
+
+## Libraries used for downloaded PDF files
+
+| Library | Source | License |
+| --- | --- | --- |
+| pdf-lib 1.17.1 (loaded from jsDelivr with SRI) | https://github.com/Hopding/pdf-lib | MIT |
+| @pdf-lib/fontkit 1.1.1 (loaded from jsDelivr with SRI) | https://github.com/Hopding/fontkit | MIT |
+| harfbuzzjs 1.6.2 — vendor/harfbuzz-subset.wasm | https://github.com/harfbuzz/harfbuzzjs | MIT (see vendor/harfbuzzjs-LICENSE.txt); HarfBuzz itself is under the "Old MIT" license |
 
 ## Usage Notes
 
