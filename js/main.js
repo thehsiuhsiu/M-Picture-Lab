@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261023-13";
+import { state } from "./state.js?v=20261024-1";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,30 +14,31 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261023-13";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261023-13";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261023-13";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261023-13";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261023-13";
+} from "./imageHandler.js?v=20261024-1";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261024-1";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261024-1";
+import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261024-1";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261024-1";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261024-1";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261023-13";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261023-13";
-import { initAnnotationEditor } from "./annotationEditor.js?v=20261023-13";
-import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261023-13";
-import { initDocumentPreview } from "./documentPreview.js?v=20261023-13";
+} from "./projectPersistence.js?v=20261024-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261024-1";
+import { initAnnotationEditor } from "./annotationEditor.js?v=20261024-1";
+import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261024-1";
+import { initDocumentPreview } from "./documentPreview.js?v=20261024-1";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261023-13";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261023-13";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261023-13";
+} from "./photoNumbering.js?v=20261024-1";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261024-1";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261024-1";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261023-13";
+} from "./splitOrderManager.js?v=20261024-1";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -640,6 +641,7 @@ const init = () => {
   const downloadMenu = document.getElementById("downloadMenu");
   const downloadDocx = document.getElementById("downloadDocx");
   const downloadPdf = document.getElementById("downloadPdf");
+  const downloadPdfFile = document.getElementById("downloadPdfFile");
   const downloadZip = document.getElementById("downloadZip");
   const setDownloadMenuOpen = (isOpen) => {
     downloadMenu.classList.toggle("show", isOpen);
@@ -665,6 +667,14 @@ const init = () => {
     if (!(await confirmSplitOrderBeforeExport())) return;
     if (!(await confirmMissingDatesBeforeExport())) return;
     handleGenerateWrapper(e);
+  });
+
+  downloadPdfFile.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    setDownloadMenuOpen(false);
+    if (!(await confirmSplitOrderBeforeExport())) return;
+    if (!(await confirmMissingDatesBeforeExport())) return;
+    handleGeneratePdfFile();
   });
 
   downloadPdf.addEventListener("click", async (e) => {

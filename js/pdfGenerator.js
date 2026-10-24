@@ -1,6 +1,6 @@
 ﻿// pdfGenerator.js - PDF 生成模組
 
-import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261023-13";
+import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261024-1";
 import {
   showLoadingModal,
   hideLoadingModal,
@@ -8,17 +8,17 @@ import {
   revokeObjectUrl,
   resizeImageForDoc,
   showToast,
-} from "./utils.js?v=20261023-13";
-import { createAnnotatedBlob } from "./annotations.js?v=20261023-13";
+} from "./utils.js?v=20261024-1";
+import { createAnnotatedBlob } from "./annotations.js?v=20261024-1";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261023-13";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261023-13";
+} from "./multiPhotoLayout.js?v=20261024-1";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261024-1";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js?v=20261023-13";
+} from "./pageNumbering.js?v=20261024-1";
 
 const PDF_PRINT_IMAGE_MAX_DIMENSION = 1800;
 
@@ -197,6 +197,86 @@ const printInMainDocument = async (printContent, title, printUrls) => {
   window.print();
 };
 
+/**
+ * 產生列印用的整份 HTML。「列印」與「PDF 檔案」共用，確保兩者版面相同。
+ * printUrls 會收集建立的照片網址，使用完畢要釋放；imageBlobs 對應網址與照片內容。
+ */
+export const buildPrintDocument = async ({
+  pdfFont,
+  printUrls,
+  imageBlobs = null,
+  pdfFileMode = false,
+}) => {
+  const isAutoDate = document.getElementById("dateModeSwitch").checked;
+  const manualDate = document.getElementById("caseDate").value;
+  const caseReason = document.getElementById("zipPrefix").value;
+  const caseUnit = document.getElementById("caseUni").value;
+  const caseAddress = document.getElementById("caseAddress").value;
+  const caseNumber = document.getElementById("caseNumber").value;
+  const pageNumberSettings = getPdfPageNumberSettings();
+
+  const title =
+    state.customDocTitles[state.selectedFormat] ??
+    FORMAT_TITLES[state.selectedFormat];
+
+  const printableImages = await Promise.all(
+    state.selectedImages.map(async (image) => {
+      const printBlob = await resizeImageForDoc(
+        await createAnnotatedBlob(image),
+        PDF_PRINT_IMAGE_MAX_DIMENSION,
+      );
+      const printUrl = createObjectUrl(printBlob);
+      printUrls.push(printUrl);
+      imageBlobs?.set(printUrl, printBlob);
+      return {
+        ...image,
+        printUrl,
+      };
+    }),
+  );
+
+  let printContent = buildPrintHTML(title, pdfFont, pdfFileMode);
+
+  if (state.selectedFormat === "left") {
+    printContent += buildCriminalContent(
+      title,
+      isAutoDate,
+      manualDate,
+      caseReason,
+      caseUnit,
+      caseAddress,
+      caseNumber,
+      printableImages,
+      pageNumberSettings,
+    );
+  } else if (state.selectedFormat === "middle") {
+    printContent += buildTrafficAccidentContent(
+      title,
+      isAutoDate,
+      manualDate,
+      printableImages,
+      pageNumberSettings,
+    );
+  } else if (state.selectedFormat === "right") {
+    const multiPhotoSettings = getMultiPhotoSettings();
+    printContent += buildMultiPhotoContent(
+      title,
+      printableImages,
+      multiPhotoSettings.count,
+      multiPhotoSettings.order,
+      pageNumberSettings,
+    );
+  }
+
+  printContent += "</body></html>";
+  return { html: printContent, title };
+};
+
+export const getSelectedPdfFontKey = () => {
+  const selectedFont = document.getElementById("pdfFontSelect")?.value;
+  return PDF_FONT_OPTIONS[selectedFont] ? selectedFont : "kai";
+};
+
 export const handleGeneratePDF = async () => {
   if (state.selectedImages.length === 0) {
     showToast("請先新增照片，再輸出 PDF。", "warning");
@@ -211,68 +291,10 @@ export const handleGeneratePDF = async () => {
   let didCleanup = false;
 
   try {
-    const isAutoDate = document.getElementById("dateModeSwitch").checked;
-    const manualDate = document.getElementById("caseDate").value;
-    const caseReason = document.getElementById("zipPrefix").value;
-    const caseUnit = document.getElementById("caseUni").value;
-    const caseAddress = document.getElementById("caseAddress").value;
-    const caseNumber = document.getElementById("caseNumber").value;
-    const pdfFont = getSelectedPdfFont();
-    const pageNumberSettings = getPdfPageNumberSettings();
-
-    const title =
-      state.customDocTitles[state.selectedFormat] ??
-      FORMAT_TITLES[state.selectedFormat];
-
-    const printableImages = await Promise.all(
-      state.selectedImages.map(async (image) => {
-        const printBlob = await resizeImageForDoc(
-          await createAnnotatedBlob(image),
-          PDF_PRINT_IMAGE_MAX_DIMENSION,
-        );
-        const printUrl = createObjectUrl(printBlob);
-        printUrls.push(printUrl);
-        return {
-          ...image,
-          printUrl,
-        };
-      }),
-    );
-
-    let printContent = buildPrintHTML(title, pdfFont);
-
-    if (state.selectedFormat === "left") {
-      printContent += buildCriminalContent(
-        title,
-        isAutoDate,
-        manualDate,
-        caseReason,
-        caseUnit,
-        caseAddress,
-        caseNumber,
-        printableImages,
-        pageNumberSettings,
-      );
-    } else if (state.selectedFormat === "middle") {
-      printContent += buildTrafficAccidentContent(
-        title,
-        isAutoDate,
-        manualDate,
-        printableImages,
-        pageNumberSettings,
-      );
-    } else if (state.selectedFormat === "right") {
-      const multiPhotoSettings = getMultiPhotoSettings();
-      printContent += buildMultiPhotoContent(
-        title,
-        printableImages,
-        multiPhotoSettings.count,
-        multiPhotoSettings.order,
-        pageNumberSettings,
-      );
-    }
-
-    printContent += "</body></html>";
+    const { html: printContent, title } = await buildPrintDocument({
+      pdfFont: getSelectedPdfFont(),
+      printUrls,
+    });
 
     hideLoadingModal();
 
@@ -366,9 +388,18 @@ export const handleGeneratePDF = async () => {
   }
 };
 
-const buildPrintHTML = (title, pdfFont) => {
+const buildPrintHTML = (title, pdfFont, pdfFileMode = false) => {
   const safeTitle = escapeHtml(title);
   const fontFamily = pdfFont.family;
+  // PDF 檔案：字型由程式另外載入，版面寬度固定為 A4 扣掉左右邊界
+  const remoteFonts = pdfFileMode
+    ? ""
+    : `<link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="${PDF_FONT_STYLESHEET}" rel="stylesheet">`;
+  const pdfFileCss = pdfFileMode
+    ? "html, body { width: 174mm; background: #fff; } .page-container { margin-bottom: 30mm; }"
+    : "";
 
   return `
         <!DOCTYPE html>
@@ -376,11 +407,9 @@ const buildPrintHTML = (title, pdfFont) => {
         <head>
             <meta charset="UTF-8">
             <title>${safeTitle}</title>
-            <link rel="preconnect" href="https://fonts.googleapis.com">
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-            <link href="${PDF_FONT_STYLESHEET}" rel="stylesheet">
+            ${remoteFonts}
             <style>
-                ${pdfFont.face || ""}
+                ${pdfFileMode ? "" : pdfFont.face || ""}
                 @page {
                     size: A4;
                     margin: 12mm 18mm 1mm 18mm;
@@ -547,6 +576,7 @@ const buildPrintHTML = (title, pdfFont) => {
                     white-space: pre-wrap;
                     -webkit-line-clamp: 2;
                 }
+                ${pdfFileCss}
                 @media print {
                     .page-container {
                         page-break-after: always;
