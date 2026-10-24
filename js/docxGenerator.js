@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261024-1";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261024-2";
 import {
   resizeImageForDoc,
   getFormattedDate,
@@ -8,14 +8,14 @@ import {
   hideLoadingModal,
   blobToArrayBuffer,
   showToast,
-} from "./utils.js?v=20261024-1";
-import { createAnnotatedBlob } from "./annotations.js?v=20261024-1";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261024-1";
+} from "./utils.js?v=20261024-2";
+import { createAnnotatedBlob } from "./annotations.js?v=20261024-2";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261024-2";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261024-1";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261024-1";
+} from "./multiPhotoLayout.js?v=20261024-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261024-2";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||

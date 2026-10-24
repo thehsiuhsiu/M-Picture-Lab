@@ -5,15 +5,15 @@
 // 2. 字型只取用到的字（harfbuzz 子集化），同一份子集同時給瀏覽器排版、也內嵌進 PDF，
 //    所以量到的位置和 PDF 裡的字寬完全一致。
 // 3. 逐一讀取每個格線、照片、文字的位置，用 pdf-lib 畫進 PDF。
-import { state } from "./state.js?v=20261024-1";
+import { state } from "./state.js?v=20261024-2";
 import {
   showLoadingModal,
   hideLoadingModal,
   revokeObjectUrl,
   getFormattedDate,
   showToast,
-} from "./utils.js?v=20261024-1";
-import { buildPrintDocument, getSelectedPdfFontKey } from "./pdfGenerator.js?v=20261024-1";
+} from "./utils.js?v=20261024-2";
+import { buildPrintDocument, getSelectedPdfFontKey } from "./pdfGenerator.js?v=20261024-2";
 
 const PDF_LIB_URL = "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js";
 const PDF_LIB_SRI = "sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI";
@@ -447,7 +447,7 @@ export const handleGeneratePdfFile = async () => {
     return;
   }
   showLoadingModal();
-  let restoreText = setLoadingText("正在準備字型，第一次會比較久…");
+  let restoreText = setLoadingText("字型套用中，請稍候…");
   const printUrls = [];
   const imageBlobs = new Map();
   let frame = null;
