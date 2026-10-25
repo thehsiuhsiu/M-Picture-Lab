@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261025-2";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261025-3";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,25 +14,25 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261025-2";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261025-2";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261025-2";
+} from "./utils.js?v=20261025-3";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261025-3";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261025-3";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261025-2";
+} from "./photoNumbering.js?v=20261025-3";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261025-2";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261025-2";
+} from "./splitGroupLogic.js?v=20261025-3";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261025-3";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261025-2";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261025-2";
+} from "./annotations.js?v=20261025-3";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261025-3";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -286,12 +286,74 @@ const convertHeicToJpeg = async (file) => {
   throw lastError;
 };
 
+// 多數瀏覽器（Chrome、Edge、Firefox）不能直接顯示 TIFF，用 UTIF.js 解碼後轉成 PNG（無損）
+const loadVendorScript = (src, globalName) =>
+  window[globalName]
+    ? Promise.resolve(window[globalName])
+    : new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = () =>
+          window[globalName] ? resolve(window[globalName]) : reject(new Error(`${globalName} 未載入`));
+        script.onerror = () => {
+          script.remove();
+          reject(new Error(`無法載入 ${src}`));
+        };
+        document.head.appendChild(script);
+      });
+
+const loadUtif = async () => {
+  await loadVendorScript("./vendor/pako_inflate.min.js", "pako");
+  return loadVendorScript("./vendor/UTIF.js", "UTIF");
+};
+
+const getPngName = (fileName) => fileName.replace(/\.(tiff?)$/i, ".png");
+
+const convertTiffToPng = async (file) => {
+  const UTIF = await loadUtif();
+  const buffer = await file.arrayBuffer();
+  const ifds = UTIF.decode(buffer);
+  // TIFF 可能有多頁或附縮圖，取畫素最多的那一張
+  const sizeOf = (ifd) => ({ width: ifd.t256?.[0] || 0, height: ifd.t257?.[0] || 0 });
+  const page = ifds
+    .filter((ifd) => sizeOf(ifd).width && sizeOf(ifd).height)
+    .sort((a, b) => sizeOf(b).width * sizeOf(b).height - sizeOf(a).width * sizeOf(a).height)[0];
+  if (!page) throw new Error("TIFF 沒有可讀取的影像");
+  const declared = sizeOf(page);
+  if (
+    declared.width > IMAGE_SECURITY_LIMITS.maxDimension ||
+    declared.height > IMAGE_SECURITY_LIMITS.maxDimension ||
+    declared.width * declared.height > IMAGE_SECURITY_LIMITS.maxPixels
+  ) {
+    throw new Error("圖片尺寸超過安全限制");
+  }
+  UTIF.decodeImage(buffer, page, ifds);
+  if (!page.width || !page.height) throw new Error("TIFF 解碼失敗");
+  const rgba = UTIF.toRGBA8(page);
+  const canvas = document.createElement("canvas");
+  canvas.width = page.width;
+  canvas.height = page.height;
+  const ctx = canvas.getContext("2d");
+  ctx.putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer, rgba.byteOffset, page.width * page.height * 4), page.width, page.height), 0, 0);
+  const blob = await new Promise((resolve, reject) =>
+    canvas.toBlob((result) => (result ? resolve(result) : reject(new Error("TIFF 轉換失敗"))), "image/png"),
+  );
+  canvas.width = 1;
+  canvas.height = 1;
+  return blob;
+};
+
 export const prepareImageFile = async (file) => {
   if (!isHeicFile(file)) {
     const detectedType = await detectSafeImageType(file);
     if (!detectedType) throw new Error("圖片內容不是允許的安全格式");
     if (file.type && file.type !== "application/octet-stream" && file.type !== detectedType) {
       throw new Error("圖片內容與宣告格式不一致");
+    }
+    if (detectedType === "image/tiff") {
+      const tiffDate = await extractHeicExifDate(file);
+      const pngBlob = await convertTiffToPng(file);
+      return await buildImageRecord(pngBlob, getPngName(file.name), tiffDate || "", file);
     }
     const safeBlob =
       file.type === detectedType ? file : new Blob([file], { type: detectedType });
@@ -435,10 +497,12 @@ const processFileBatch = async (files) => {
     await appendPreparedImages(imageDataArray);
 
     if (failedFiles.length) {
+      const allHeic = failedFiles.every((name) => /\.(heic|heif)$/i.test(name));
       await showNotice({
         title: `有 ${failedFiles.length} 個檔案無法讀取`,
-        message:
-          "部分 HEIC/HEIF 照片使用了瀏覽器無法轉換的編碼。請先在手機或電腦相簿匯出成 JPEG，再重新匯入。",
+        message: allHeic
+          ? "部分 HEIC/HEIF 照片使用了瀏覽器無法轉換的編碼。請先在手機或電腦相簿匯出成 JPEG，再重新匯入。"
+          : "這些檔案的格式或編碼無法讀取，可能已損壞或使用了不支援的壓縮方式。請先用電腦的照片或小畫家等程式另存成 JPEG 或 PNG，再重新匯入。",
         details: failedFiles,
         tone: "error",
       });

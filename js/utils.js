@@ -294,7 +294,7 @@ export const EMPTY_STATE_HTML = `
       </span>
       <h2>開始整理照片</h2>
       <p>把照片拖到這裡，或使用上方的「新增照片」，從裝置或 Google 相簿選擇。</p>
-      <small>支援 JPG、PNG、WebP、HEIC 等常見格式</small>
+      <small>支援 JPG、PNG、WebP、HEIC、TIFF 等常見格式</small>
     </div>
 `;
 
