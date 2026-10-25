@@ -1,21 +1,20 @@
 ﻿// docxGenerator.js
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261025-1";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261025-2";
 import {
-  resizeImageForDoc,
   getFormattedDate,
   showLoadingModal,
   hideLoadingModal,
   blobToArrayBuffer,
   showToast,
-} from "./utils.js?v=20261025-1";
-import { createAnnotatedBlob } from "./annotations.js?v=20261025-1";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261025-1";
+} from "./utils.js?v=20261025-2";
+import { createDocumentImageBlob } from "./annotations.js?v=20261025-2";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261025-2";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261025-1";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261025-1";
+} from "./multiPhotoLayout.js?v=20261025-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261025-2";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -27,6 +26,8 @@ const platformName =
 const DOCX_KAI_FONT = /Mac|iPhone|iPad|iPod/i.test(platformName)
   ? "BiauKaiTC"
   : "標楷體";
+
+const DOCX_IMAGE_MAX_DIMENSION = 1200;
 
 const sanitizeDownloadFileName = (fileName) => {
   const cleanedName = String(fileName ?? "")
@@ -75,7 +76,7 @@ const handleGenerate = async () => {
     const resizedImages = await Promise.all(
       state.selectedImages.map(async (image) => {
         // 有標記的照片輸出合成後的版本（原圖不變）
-        const resizedBlob = await resizeImageForDoc(await createAnnotatedBlob(image));
+        const resizedBlob = await createDocumentImageBlob(image, DOCX_IMAGE_MAX_DIMENSION);
         return {
           ...image,
           docBlob: resizedBlob,
