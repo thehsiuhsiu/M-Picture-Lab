@@ -1,6 +1,6 @@
 // annotationEditor.js - 編輯視窗：旋轉、標記（圈選、方框、箭頭、文字、編號、遮蔽）與進入長截圖分割
 
-import { state } from "./state.js?v=20261024-3";
+import { state } from "./state.js?v=20261025-1";
 import {
   DEFAULT_COLOR,
   MAX_ANNOTATIONS_PER_IMAGE,
@@ -12,8 +12,8 @@ import {
   normalizeColor,
   PRESET_COLORS,
   rotateAnnotations,
-} from "./annotations.js?v=20261024-3";
-import { showDialog, showToast } from "./utils.js?v=20261024-3";
+} from "./annotations.js?v=20261025-1";
+import { showDialog, showToast } from "./utils.js?v=20261025-1";
 
 const TOOL_HINTS = {
   select: "點選標記可移動、改顏色或粗細；拖曳角落可縮放；點兩下文字可修改",
@@ -41,14 +41,47 @@ const isTouchPointer = (event) => event.pointerType === "touch" || event.pointer
 
 /* ---------- 開啟與關閉 ---------- */
 
+// 編輯畫面用原圖，但只縮到螢幕看得清楚的大小，避免 4800 萬畫素的照片占用太多記憶體
+const EDITOR_MIN_DIMENSION = 2400;
+const EDITOR_MAX_DIMENSION = 4096;
+
+const getEditorMaxDimension = () => {
+  const screenLongSide = Math.max(window.screen?.width || 0, window.screen?.height || 0);
+  const needed = Math.ceil(screenLongSide * (window.devicePixelRatio || 1) * 1.25);
+  return Math.min(EDITOR_MAX_DIMENSION, Math.max(EDITOR_MIN_DIMENSION, needed));
+};
+
+/** 讀取原圖並縮到編輯所需的大小；回傳 canvas（或原尺寸夠小時的 Image）。 */
+const loadEditorSource = async (image) => {
+  const url = URL.createObjectURL(image.blob);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const width = img.naturalWidth;
+    const height = img.naturalHeight;
+    const limit = getEditorMaxDimension();
+    const scale = Math.min(1, limit / Math.max(width, height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+};
+
 /** 由照片卡片的「編輯」按鈕呼叫。 */
 export const openAnnotationEditor = async (imageId, editorHandlers) => {
   const image = state.selectedImages.find((item) => item.id === imageId);
   if (!image) return;
-  const source = new Image();
-  source.src = image.previewUrl;
+  let source;
   try {
-    await source.decode();
+    source = await loadEditorSource(image);
   } catch (_error) {
     showToast("無法開啟這張照片", "error");
     return;
@@ -160,8 +193,8 @@ const rebuildSource = () => {
     session.source = original;
     return;
   }
-  const width = original.naturalWidth;
-  const height = original.naturalHeight;
+  const width = original.naturalWidth || original.width;
+  const height = original.naturalHeight || original.height;
   const canvas = document.createElement("canvas");
   const swap = turns % 2 === 1;
   canvas.width = swap ? height : width;
@@ -345,6 +378,23 @@ const handlesOf = (item) => {
   ];
 };
 
+/** 照片先縮成畫布實際像素大小並保留，拖曳重畫時直接貼上，不必每次從原圖縮放。 */
+const getDisplayBackground = (pixelWidth, pixelHeight) => {
+  const cached = session.displayBackground;
+  if (cached && cached.source === session.source && cached.canvas.width === pixelWidth && cached.canvas.height === pixelHeight) {
+    return cached.canvas;
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = pixelWidth;
+  canvas.height = pixelHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(session.source, 0, 0, pixelWidth, pixelHeight);
+  session.displayBackground = { source: session.source, canvas };
+  return canvas;
+};
+
 const render = () => {
   if (!session?.view) return;
   const canvas = $("annotateCanvas");
@@ -354,7 +404,10 @@ const render = () => {
   ctx.clearRect(0, 0, width, height);
   // 正在輸入的文字先不畫，避免和輸入框重疊
   const visible = session.annotations.filter((item) => item.id !== session.editing?.id);
-  session.boxes = drawAnnotatedImage(ctx, session.source, visible, width, height);
+  session.boxes = drawAnnotatedImage(ctx, session.source, visible, width, height, {
+    cacheZoomBase: true,
+    background: getDisplayBackground(canvas.width, canvas.height),
+  });
 
   const selected = getSelected();
   if (selected && selected.id !== session.editing?.id) {
