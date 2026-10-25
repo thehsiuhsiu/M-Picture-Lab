@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261024-3";
-import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261024-3";
+import { state } from "./state.js?v=20261025-1";
+import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261025-1";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
@@ -374,16 +374,46 @@ const buildZoomBase = (source, annotations) => {
  * 在 ctx 上畫出照片與所有標記。遮蔽先畫（只遮照片本身），其他標記疊在上面。
  * 回傳每個文字／編號標籤的範圍，以 id 為 key。
  */
-export const drawAnnotatedImage = (ctx, source, annotations, width, height) => {
-  ctx.drawImage(source, 0, 0, width, height);
+// 編輯時每次拖曳都會重畫；局部放大的底圖（原圖＋遮蔽）在遮蔽沒變時沿用，拖曳才順
+const zoomBaseCache = new WeakMap();
+const getCachedZoomBase = (source, annotations) => {
+  const key = JSON.stringify(annotations.filter((item) => item.type === "mask"));
+  const cached = zoomBaseCache.get(source);
+  if (cached && cached.key === key) return cached.canvas;
+  if (cached) {
+    cached.canvas.width = 1;
+    cached.canvas.height = 1;
+  }
+  const canvas = buildZoomBase(source, annotations);
+  zoomBaseCache.set(source, { key, canvas });
+  return canvas;
+};
+
+export const drawAnnotatedImage = (
+  ctx,
+  source,
+  annotations,
+  width,
+  height,
+  { cacheZoomBase = false, background = null } = {},
+) => {
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  // background：編輯時預先縮好、剛好等於畫面大小的照片，重畫時不必每次縮放大圖
+  ctx.drawImage(background || source, 0, 0, width, height);
+  ctx.restore();
   const metrics = metricsFor(width, height);
   const boxes = {};
   annotations
     .filter((item) => item.type === "mask")
     .forEach((item) => drawMask(ctx, source, item, width, height, metrics));
-  const zoomBase = annotations.some((item) => item.type === "zoom")
-    ? buildZoomBase(source, annotations)
-    : null;
+  const hasZoom = annotations.some((item) => item.type === "zoom");
+  const zoomBase = !hasZoom
+    ? null
+    : cacheZoomBase
+      ? getCachedZoomBase(source, annotations)
+      : buildZoomBase(source, annotations);
   annotations.forEach((item) => {
     if (item.type === "mask") return;
     ctx.save();
@@ -410,7 +440,7 @@ export const drawAnnotatedImage = (ctx, source, annotations, width, height) => {
     }
     ctx.restore();
   });
-  if (zoomBase) {
+  if (zoomBase && !cacheZoomBase) {
     zoomBase.width = 1;
     zoomBase.height = 1;
   }
