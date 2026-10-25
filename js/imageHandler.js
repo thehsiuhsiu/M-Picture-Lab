@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261025-3";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261025-4";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,25 +14,25 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261025-3";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261025-3";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261025-3";
+} from "./utils.js?v=20261025-4";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261025-4";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261025-4";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261025-3";
+} from "./photoNumbering.js?v=20261025-4";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261025-3";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261025-3";
+} from "./splitGroupLogic.js?v=20261025-4";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261025-4";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261025-3";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261025-3";
+} from "./annotations.js?v=20261025-4";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261025-4";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -307,6 +307,23 @@ const loadUtif = async () => {
   return loadVendorScript("./vendor/UTIF.js", "UTIF");
 };
 
+const EXTENSIONS = {
+  "image/jpeg": ["jpg", /\.(jpe?g|jfif)$/i],
+  "image/png": ["png", /\.png$/i],
+  "image/gif": ["gif", /\.gif$/i],
+  "image/webp": ["webp", /\.webp$/i],
+  "image/bmp": ["bmp", /\.(bmp|dib)$/i],
+  "image/avif": ["avif", /\.avif$/i],
+};
+
+/** 副檔名和實際內容不符時（例如 JPEG 存成 .tif）改成正確的副檔名。 */
+const fixExtension = (fileName, detectedType) => {
+  const entry = EXTENSIONS[detectedType];
+  if (!entry || entry[1].test(fileName)) return fileName;
+  const base = /\.[a-z0-9]{1,5}$/i.test(fileName) ? fileName.replace(/\.[a-z0-9]{1,5}$/i, "") : fileName;
+  return `${base}.${entry[0]}`;
+};
+
 const getPngName = (fileName) => fileName.replace(/\.(tiff?)$/i, ".png");
 
 const convertTiffToPng = async (file) => {
@@ -346,18 +363,28 @@ const convertTiffToPng = async (file) => {
 export const prepareImageFile = async (file) => {
   if (!isHeicFile(file)) {
     const detectedType = await detectSafeImageType(file);
-    if (!detectedType) throw new Error("圖片內容不是允許的安全格式");
-    if (file.type && file.type !== "application/octet-stream" && file.type !== detectedType) {
-      throw new Error("圖片內容與宣告格式不一致");
-    }
+    if (!detectedType) throw new Error("不是支援的圖片格式");
+    // 以檔案內容為準：監視器等設備常把 JPEG、BMP 存成 .tif，副檔名不可靠
     if (detectedType === "image/tiff") {
       const tiffDate = await extractHeicExifDate(file);
-      const pngBlob = await convertTiffToPng(file);
-      return await buildImageRecord(pngBlob, getPngName(file.name), tiffDate || "", file);
+      let converted;
+      try {
+        converted = await convertTiffToPng(file);
+      } catch (tiffError) {
+        // Safari 能直接讀 TIFF，UTIF.js 不支援的編碼再試一次瀏覽器原生解碼
+        console.warn("TIFF 以 UTIF.js 轉換失敗，改用瀏覽器原生解碼:", file.name, tiffError);
+        try {
+          converted = await convertNativelyDecodedImageToJpeg(new Blob([file], { type: "image/tiff" }));
+        } catch (_nativeError) {
+          throw tiffError;
+        }
+      }
+      const name = converted.type === "image/png" ? getPngName(file.name) : file.name.replace(/\.(tiff?)$/i, ".jpg");
+      return await buildImageRecord(converted, name, tiffDate || "", file);
     }
     const safeBlob =
       file.type === detectedType ? file : new Blob([file], { type: detectedType });
-    return await buildImageRecordWithExif(safeBlob, file.name);
+    return await buildImageRecordWithExif(safeBlob, fixExtension(file.name, detectedType));
   }
 
   const heicExifDate = await extractHeicExifDate(file);
@@ -487,7 +514,8 @@ const processFileBatch = async (files) => {
         imageDataArray.push(await prepareImageFile(file));
       } catch (error) {
         console.error("Image processing failed:", file.name, error);
-        failedFiles.push(file.name);
+        const reason = error?.message ? `（${String(error.message).slice(0, 60)}）` : "";
+        failedFiles.push(`${file.name}${reason}`);
       }
     }
 
@@ -497,7 +525,7 @@ const processFileBatch = async (files) => {
     await appendPreparedImages(imageDataArray);
 
     if (failedFiles.length) {
-      const allHeic = failedFiles.every((name) => /\.(heic|heif)$/i.test(name));
+      const allHeic = failedFiles.every((name) => /\.(heic|heif)(（|$)/i.test(name));
       await showNotice({
         title: `有 ${failedFiles.length} 個檔案無法讀取`,
         message: allHeic
