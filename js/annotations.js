@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261025-1";
-import { createObjectUrl, revokeObjectUrl } from "./utils.js?v=20261025-1";
+import { state } from "./state.js?v=20261025-2";
+import { createObjectUrl, revokeObjectUrl, resizeImageForDoc } from "./utils.js?v=20261025-2";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
@@ -474,7 +474,10 @@ const canvasToBlob = (canvas, type, quality) =>
  * 產生含標記的照片。沒有標記時直接回傳原圖。
  * maxDimension 可限制輸出尺寸（例如照片卡片只需要小圖）。
  */
-export const createAnnotatedBlob = async (image, { maxDimension = 0 } = {}) => {
+export const createAnnotatedBlob = async (
+  image,
+  { maxDimension = 0, type = "", quality = 0.92 } = {},
+) => {
   const annotations = getAnnotations(image.id);
   if (!annotations.length) return image.blob;
   const { image: source, url } = await loadImageElement(image.blob);
@@ -489,9 +492,15 @@ export const createAnnotatedBlob = async (image, { maxDimension = 0 } = {}) => {
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
-    drawAnnotatedImage(canvas.getContext("2d"), source, annotations, width, height);
-    const isPng = image.blob.type === "image/png";
-    const blob = await canvasToBlob(canvas, isPng ? "image/png" : "image/jpeg", 0.92);
+    const outputType = type || (image.blob.type === "image/png" ? "image/png" : "image/jpeg");
+    const ctx = canvas.getContext("2d");
+    if (outputType === "image/jpeg") {
+      // JPEG 沒有透明，先鋪白底，避免透明的 PNG 變黑
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+    }
+    drawAnnotatedImage(ctx, source, annotations, width, height);
+    const blob = await canvasToBlob(canvas, outputType, quality);
     canvas.width = 1;
     canvas.height = 1;
     return blob;
@@ -575,3 +584,12 @@ export const rotateAnnotations = (annotations, degrees) => {
 
 export const createAnnotationId = () =>
   `a${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+
+/**
+ * Word、PDF 用的照片：直接在輸出尺寸上合成標記並只壓縮一次。
+ * （以前是先存一張原尺寸的含標記照片，再縮小重存，會壓縮兩次。）
+ */
+export const createDocumentImageBlob = (image, maxDimension) =>
+  hasAnnotations(image.id)
+    ? createAnnotatedBlob(image, { maxDimension, type: "image/jpeg", quality: 0.9 })
+    : resizeImageForDoc(image.blob, maxDimension);

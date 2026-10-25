@@ -1,24 +1,23 @@
 ﻿// pdfGenerator.js - PDF 生成模組
 
-import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261025-1";
+import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261025-2";
 import {
   showLoadingModal,
   hideLoadingModal,
   createObjectUrl,
   revokeObjectUrl,
-  resizeImageForDoc,
   showToast,
-} from "./utils.js?v=20261025-1";
-import { createAnnotatedBlob } from "./annotations.js?v=20261025-1";
+} from "./utils.js?v=20261025-2";
+import { createDocumentImageBlob } from "./annotations.js?v=20261025-2";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261025-1";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261025-1";
+} from "./multiPhotoLayout.js?v=20261025-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261025-2";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js?v=20261025-1";
+} from "./pageNumbering.js?v=20261025-2";
 
 const PDF_PRINT_IMAGE_MAX_DIMENSION = 1800;
 
@@ -221,10 +220,7 @@ export const buildPrintDocument = async ({
 
   const printableImages = await Promise.all(
     state.selectedImages.map(async (image) => {
-      const printBlob = await resizeImageForDoc(
-        await createAnnotatedBlob(image),
-        PDF_PRINT_IMAGE_MAX_DIMENSION,
-      );
+      const printBlob = await createDocumentImageBlob(image, PDF_PRINT_IMAGE_MAX_DIMENSION);
       const printUrl = createObjectUrl(printBlob);
       printUrls.push(printUrl);
       imageBlobs?.set(printUrl, printBlob);
