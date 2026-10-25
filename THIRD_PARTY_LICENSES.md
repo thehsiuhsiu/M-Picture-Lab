@@ -24,6 +24,8 @@ Bundled Noto Sans TC / Noto Serif TC Regular (font/NotoSansTC-Regular.ttf, font/
 | --- | --- | --- |
 | pdf-lib 1.17.1 (loaded from jsDelivr with SRI) | https://github.com/Hopding/pdf-lib | MIT |
 | @pdf-lib/fontkit 1.1.1 (loaded from jsDelivr with SRI) | https://github.com/Hopding/fontkit | MIT |
+| UTIF.js 3.1.0 — vendor/UTIF.js (TIFF import) | https://github.com/photopea/UTIF.js | MIT (see vendor/utif-LICENSE.txt) |
+| pako 1.0.11 — vendor/pako_inflate.min.js (used by UTIF.js) | https://github.com/nodeca/pako | MIT AND Zlib (see vendor/pako-LICENSE.txt) |
 | harfbuzzjs 1.6.2 — vendor/harfbuzz-subset.wasm | https://github.com/harfbuzz/harfbuzzjs | MIT (see vendor/harfbuzzjs-LICENSE.txt); HarfBuzz itself is under the "Old MIT" license |
 
 ## Usage Notes
