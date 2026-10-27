@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261027-3";
+import { state } from "./state.js?v=20261027-4";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,31 +14,31 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261027-3";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261027-3";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261027-3";
-import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261027-3";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261027-3";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261027-3";
+} from "./imageHandler.js?v=20261027-4";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261027-4";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261027-4";
+import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261027-4";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261027-4";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261027-4";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261027-3";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261027-3";
-import { initAnnotationEditor } from "./annotationEditor.js?v=20261027-3";
-import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261027-3";
-import { initDocumentPreview } from "./documentPreview.js?v=20261027-3";
+} from "./projectPersistence.js?v=20261027-4";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261027-4";
+import { initAnnotationEditor } from "./annotationEditor.js?v=20261027-4";
+import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261027-4";
+import { initDocumentPreview } from "./documentPreview.js?v=20261027-4";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261027-3";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261027-3";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261027-3";
+} from "./photoNumbering.js?v=20261027-4";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261027-4";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261027-4";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261027-3";
+} from "./splitOrderManager.js?v=20261027-4";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -1191,7 +1191,11 @@ const updateCaseCardSummary = () => {
   const summary = document.getElementById("caseCardSummary");
   if (!summary) return;
   const parts = getCaseSummaryParts();
-  summary.textContent = parts.length ? parts.join("｜") : "尚未填寫";
+  const formatName =
+    document.querySelector(".toggle-container .label.active .label-text, .toggle-container .label[aria-pressed=\"true\"] .label-text")
+      ?.textContent.trim() || "";
+  const detail = parts.length ? parts.join("・") : "尚未填寫";
+  summary.textContent = formatName ? `${formatName}｜${detail}` : detail;
   summary.classList.toggle("is-empty", parts.length === 0);
 };
 
@@ -1225,6 +1229,22 @@ const setupCaseCard = () => {
   });
   card.addEventListener("input", updateCaseCardSummary);
   setCaseCardCollapsed(false);
+
+  // 切到版面預覽時先收起案件資料，讓預覽有更多空間；回到照片時恢復原本的狀態
+  let inPreview = document.body.classList.contains("document-preview-mode");
+  let collapsedBeforePreview = null;
+  new MutationObserver(() => {
+    const nowPreview = document.body.classList.contains("document-preview-mode");
+    if (nowPreview === inPreview) return;
+    inPreview = nowPreview;
+    if (nowPreview) {
+      collapsedBeforePreview = card.classList.contains("is-collapsed");
+      setCaseCardCollapsed(true);
+    } else if (collapsedBeforePreview !== null) {
+      setCaseCardCollapsed(collapsedBeforePreview);
+      collapsedBeforePreview = null;
+    }
+  }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
 };
 
 /** 左側專案欄：桌機可收合成細欄，手機改為從左側滑出。 */
