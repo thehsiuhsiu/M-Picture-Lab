@@ -2500,9 +2500,10 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 }
 
 /* 版型切換放在案件資料卡片的標題位置：展開時當標題，收合時收起、改顯示版型名稱與摘要。
-   左右間距與下方欄位相同（20px）；「收合」按鈕本身右側有 6px 內距，所以右邊少 6px 讓文字對齊欄位右緣 */
+   卡片四周內距一律 10px，欄位與版型按鈕切齊；「收合」按鈕本身右側有 6px 內距，所以右邊只留 4px */
 .case-card-header {
-  padding: 14px 14px 10px 20px;
+  min-height: 0;
+  padding: 10px 4px 10px 10px;
 }
 
 .case-card-header h2 {
@@ -2523,8 +2524,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 }
 
 .case-card.is-collapsed .case-card-header {
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding-left: 14px;
 }
 
 .case-card-summary {
@@ -2576,7 +2576,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px 16px;
   align-items: end;
-  padding: 0 20px 20px;
+  padding: 0 10px 10px;
 }
 
 .case-card-body[hidden] {
@@ -2737,12 +2737,6 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 @media (max-width: 560px) {
   .case-card-body {
     grid-template-columns: minmax(0, 1fr);
-    padding: 0 14px 16px;
-  }
-
-  .case-card-header {
-    padding-right: 8px;
-    padding-left: 14px;
   }
 
   .workspace-view-text {
