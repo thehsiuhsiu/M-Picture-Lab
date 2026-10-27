@@ -2499,6 +2499,32 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   font-weight: 700;
 }
 
+/* 版型切換放在案件資料卡片的標題位置：展開時當標題，收合時收起、改顯示版型名稱與摘要 */
+.case-card-header {
+  padding-left: 10px;
+}
+
+.case-card-header h2 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.case-card-header .toggle-container {
+  flex: 0 1 420px;
+}
+
+.case-card.is-collapsed .toggle-container {
+  display: none;
+}
+
+.case-card.is-collapsed .case-card-header {
+  padding-left: 20px;
+}
+
 .case-card-summary {
   display: none;
   min-width: 0;
@@ -2811,6 +2837,31 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 
   .toggle-container {
     flex: 1 1 auto;
+  }
+
+  /* 手機：第一行「案件資料」與收合，版型獨立一整行 */
+  .case-card-header {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding-left: 14px;
+  }
+
+  .case-card-header h2 {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    flex: 1 1 auto;
+  }
+
+  .case-card.is-collapsed .case-card-header h2 {
+    display: none;
+  }
+
+  .case-card-header .toggle-container {
+    order: 3;
+    flex: 1 1 100%;
   }
 
   .photo-sort-hint {
