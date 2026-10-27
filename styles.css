@@ -344,9 +344,9 @@ img {
   height: var(--header-h);
   flex: 0 0 auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0 10px 0 16px;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 0 16px 0 10px;
 }
 
 .brand-link {
