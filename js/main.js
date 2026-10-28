@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261027-6";
+import { state } from "./state.js?v=20261028-1";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,31 +14,31 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261027-6";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261027-6";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261027-6";
-import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261027-6";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261027-6";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261027-6";
+} from "./imageHandler.js?v=20261028-1";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261028-1";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261028-1";
+import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261028-1";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261028-1";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261028-1";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261027-6";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261027-6";
-import { initAnnotationEditor } from "./annotationEditor.js?v=20261027-6";
-import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261027-6";
-import { initDocumentPreview } from "./documentPreview.js?v=20261027-6";
+} from "./projectPersistence.js?v=20261028-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261028-1";
+import { initAnnotationEditor } from "./annotationEditor.js?v=20261028-1";
+import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261028-1";
+import { initDocumentPreview } from "./documentPreview.js?v=20261028-1";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261027-6";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261027-6";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261027-6";
+} from "./photoNumbering.js?v=20261028-1";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261028-1";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261028-1";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261027-6";
+} from "./splitOrderManager.js?v=20261028-1";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -755,6 +755,9 @@ const setupEventListeners = () => {
       });
       return;
     }
+
+    // 瀏覽器在縮放視窗時偶爾發出的 ResizeObserver 提醒，不影響功能，不必驚動使用者
+    if (/ResizeObserver loop/i.test(String(event.message || ""))) return;
 
     console.error("Uncaught error:", event.error || event.message);
     showToast("發生了意外錯誤。請重新整理頁面後再試一次。", "error", 6000);
