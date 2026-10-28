@@ -1,22 +1,22 @@
-import { state } from "./state.js?v=20261028-2";
+import { state } from "./state.js?v=20261028-3";
 import {
   IMAGE_SECURITY_LIMITS,
   buildImageRecord,
   replaceImageWithPreparedImages,
   registerSplitHandler,
-} from "./imageHandler.js?v=20261028-2";
+} from "./imageHandler.js?v=20261028-3";
 import {
   getSplitGroupIntegrity,
   restoreSplitGroup,
-} from "./splitOrderManager.js?v=20261028-2";
-import { hasAnnotations } from "./annotations.js?v=20261028-2";
+} from "./splitOrderManager.js?v=20261028-3";
+import { hasAnnotations } from "./annotations.js?v=20261028-3";
 import {
   createObjectUrl,
   revokeObjectUrl,
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261028-2";
+} from "./utils.js?v=20261028-3";
 
 const TARGET_HEIGHT_RATIO = Object.freeze({ 2: 22 / 9, 4: 4 / 3 });
 const ANALYSIS_WIDTH = 256;
