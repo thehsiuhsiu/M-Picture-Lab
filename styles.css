@@ -5039,6 +5039,15 @@ body.annotate-open {
   box-shadow: none;
 }
 
+.date-popover-day:disabled,
+.date-popover-col button:disabled,
+.date-popover-nav button:disabled {
+  color: var(--text-3);
+  opacity: 0.35;
+  background: transparent;
+  cursor: not-allowed;
+}
+
 .date-popover-day:focus-visible {
   outline: none;
   box-shadow: var(--ring);

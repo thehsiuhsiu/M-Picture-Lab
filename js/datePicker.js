@@ -31,6 +31,16 @@ const parseTime = (text) => {
   return { hour, minute };
 };
 
+// 防呆：照片不會是未來拍的，選擇器不讓選到「現在」之後的日期時間
+const nowMinute = () => {
+  const now = new Date();
+  now.setSeconds(0, 0);
+  return now;
+};
+const isFuture = (date) => date.getTime() > nowMinute().getTime();
+const clampToNow = (date) => (isFuture(date) ? nowMinute() : date);
+const monthStart = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+
 const sameDay = (a, b) =>
   a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
@@ -83,7 +93,9 @@ const buildPopover = () => {
   element.querySelectorAll("[data-nav]").forEach((button) =>
     button.addEventListener("click", () => {
       const step = Number(button.dataset.nav);
-      current.view = new Date(current.view.getFullYear(), current.view.getMonth() + step, 1);
+      const next = new Date(current.view.getFullYear(), current.view.getMonth() + step, 1);
+      const latest = monthStart(new Date());
+      current.view = next > latest ? latest : next;
       renderGrid();
     }),
   );
@@ -91,7 +103,9 @@ const buildPopover = () => {
     const cell = event.target.closest("[data-day]");
     if (!cell) return;
     const [year, month, day] = cell.dataset.day.split("-").map(Number);
-    current.selected = new Date(year, month, day, current.selected.getHours(), current.selected.getMinutes());
+    current.selected = clampToNow(
+      new Date(year, month, day, current.selected.getHours(), current.selected.getMinutes()),
+    );
     current.view = new Date(year, month, 1);
     syncFields();
     renderGrid();
@@ -112,15 +126,20 @@ const buildPopover = () => {
     const hourButton = event.target.closest("[data-hour]");
     const minuteButton = event.target.closest("[data-minute]");
     if (!hourButton && !minuteButton) return;
+    if ((hourButton || minuteButton).disabled) return;
     if (hourButton) current.selected.setHours(Number(hourButton.dataset.hour));
     if (minuteButton) current.selected.setMinutes(Number(minuteButton.dataset.minute));
+    current.selected = clampToNow(current.selected);
     syncFields();
     syncTimePanel(false);
   });
   dateField.addEventListener("input", () => {
     const parsed = parseRocDateTime(dateField.value);
-    dateField.classList.toggle("is-invalid", Boolean(dateField.value.trim()) && !parsed);
-    if (!parsed) return;
+    const today = new Date();
+    const future = parsed && parsed >= new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    dateField.classList.toggle("is-invalid", Boolean(dateField.value.trim()) && (!parsed || future));
+    dateField.title = future ? "不能選未來的日期" : "";
+    if (!parsed || future) return;
     current.selected = new Date(
       parsed.getFullYear(), parsed.getMonth(), parsed.getDate(),
       current.selected.getHours(), current.selected.getMinutes(),
@@ -135,8 +154,12 @@ const buildPopover = () => {
       timeField.value = `${digits.slice(0, 2)}:${digits.slice(2)}`;
     }
     const parsed = parseTime(timeField.value);
-    timeField.classList.toggle("is-invalid", Boolean(timeField.value.trim()) && !parsed);
-    if (!parsed) return;
+    const candidate = parsed ? new Date(current.selected) : null;
+    candidate?.setHours(parsed.hour, parsed.minute);
+    const future = candidate && isFuture(candidate);
+    timeField.classList.toggle("is-invalid", Boolean(timeField.value.trim()) && (!parsed || future));
+    timeField.title = future ? "不能選未來的時間" : "";
+    if (!parsed || future) return;
     current.selected.setHours(parsed.hour, parsed.minute);
     syncTimePanel(true);
   });
@@ -189,15 +212,21 @@ const syncTimePanel = (scroll) => {
   if (!popover || !current) return;
   const hour = current.selected.getHours();
   const minute = current.selected.getMinutes();
+  const now = nowMinute();
+  const isToday = sameDay(current.selected, now);
   popover.querySelectorAll("[data-hour]").forEach((button) => {
-    const on = Number(button.dataset.hour) === hour;
+    const value = Number(button.dataset.hour);
+    const on = value === hour;
     button.classList.toggle("is-selected", on);
     button.setAttribute("aria-selected", String(on));
+    button.disabled = isToday && value > now.getHours();
   });
   popover.querySelectorAll("[data-minute]").forEach((button) => {
-    const on = Number(button.dataset.minute) === minute;
+    const value = Number(button.dataset.minute);
+    const on = value === minute;
     button.classList.toggle("is-selected", on);
     button.setAttribute("aria-selected", String(on));
+    button.disabled = isToday && hour === now.getHours() && value > now.getMinutes();
   });
   if (!scroll || popover.querySelector(".date-popover-timepanel").hidden) return;
   popover.querySelectorAll(".date-popover-col").forEach((column) => {
@@ -219,6 +248,11 @@ const renderGrid = () => {
   const first = new Date(view.getFullYear(), view.getMonth(), 1);
   const daysInMonth = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
   const today = new Date();
+  const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const atLatestMonth = monthStart(view) >= monthStart(today);
+  popover.querySelectorAll('[data-nav="1"], [data-nav="12"]').forEach((button) => {
+    button.disabled = atLatestMonth;
+  });
   const cells = [];
   for (let i = 0; i < first.getDay(); i += 1) cells.push('<span class="date-popover-empty"></span>');
   for (let day = 1; day <= daysInMonth; day += 1) {
@@ -226,8 +260,9 @@ const renderGrid = () => {
     const classes = ["date-popover-day"];
     if (sameDay(date, today)) classes.push("is-today");
     if (sameDay(date, selected)) classes.push("is-selected");
+    const disabled = date >= endOfToday;
     cells.push(
-      `<button type="button" class="${classes.join(" ")}" data-day="${view.getFullYear()}-${view.getMonth()}-${day}" aria-label="${view.getFullYear() - 1911} 年 ${view.getMonth() + 1} 月 ${day} 日"${sameDay(date, selected) ? ' aria-pressed="true"' : ""}>${day}</button>`,
+      `<button type="button" class="${classes.join(" ")}" data-day="${view.getFullYear()}-${view.getMonth()}-${day}" aria-label="${view.getFullYear() - 1911} 年 ${view.getMonth() + 1} 月 ${day} 日"${sameDay(date, selected) ? ' aria-pressed="true"' : ""}${disabled ? " disabled" : ""}>${day}</button>`,
     );
   }
   popover.querySelector(".date-popover-grid").innerHTML = cells.join("");
@@ -279,6 +314,7 @@ const commit = () => {
   const dateField = popover.querySelector(".date-popover-date");
   const timeField = popover.querySelector(".date-popover-time");
   if (dateField.classList.contains("is-invalid") || timeField.classList.contains("is-invalid")) return;
+  if (isFuture(current.selected)) current.selected = nowMinute();
   const { input } = current;
   input.value = formatRocDateTime(current.selected);
   input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -289,7 +325,7 @@ const commit = () => {
 
 const open = (input, anchor, button, fallback) => {
   popover ||= buildPopover();
-  const start = parseRocDateTime(input.value) || parseRocDateTime(fallback) || new Date();
+  const start = clampToNow(parseRocDateTime(input.value) || parseRocDateTime(fallback) || new Date());
   start.setSeconds(0, 0);
   current = { input, anchor, button, selected: start, view: new Date(start.getFullYear(), start.getMonth(), 1) };
   syncFields();
