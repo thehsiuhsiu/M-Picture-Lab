@@ -9,6 +9,7 @@ export const parseRocDateTime = (text) => {
     .match(/^(\d{2,3})[/\-.](\d{1,2})[/\-.](\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?/);
   if (!match) return null;
   const [, rocYear, month, day, hour = "0", minute = "0"] = match;
+  if (Number(rocYear) < 1) return null; // 民國元年以前不是有效的民國日期
   const year = Number(rocYear) + 1911;
   const date = new Date(year, Number(month) - 1, Number(day), Number(hour), Number(minute));
   if (date.getFullYear() !== year || date.getMonth() !== Number(month) - 1 || date.getDate() !== Number(day)) {
@@ -43,6 +44,15 @@ const nowMinute = () => {
 };
 const isFuture = (date) => date.getTime() > nowMinute().getTime();
 const monthStart = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+// 月曆最早到民國元年 1 月，避免往前翻出現 0 年、負的年份
+const EARLIEST_MONTH = new Date(1912, 0, 1);
+const clampMonth = (date) => {
+  const latest = monthStart(new Date());
+  const month = monthStart(date);
+  if (month > latest) return latest;
+  if (month < EARLIEST_MONTH) return new Date(EARLIEST_MONTH);
+  return month;
+};
 
 const sameDay = (a, b) =>
   a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -97,9 +107,7 @@ const buildPopover = () => {
   element.querySelectorAll("[data-nav]").forEach((button) =>
     button.addEventListener("click", () => {
       const step = Number(button.dataset.nav);
-      const next = new Date(current.view.getFullYear(), current.view.getMonth() + step, 1);
-      const latest = monthStart(new Date());
-      current.view = next > latest ? latest : next;
+      current.view = clampMonth(new Date(current.view.getFullYear(), current.view.getMonth() + step, 1));
       renderGrid();
     }),
   );
@@ -145,9 +153,7 @@ const buildPopover = () => {
         parsed.getFullYear(), parsed.getMonth(), parsed.getDate(),
         current.selected.getHours(), current.selected.getMinutes(),
       );
-      const latest = monthStart(new Date());
-      const month = monthStart(parsed);
-      current.view = month > latest ? latest : month;
+      current.view = clampMonth(parsed);
       renderGrid();
       syncTimePanel(false);
     }
@@ -301,8 +307,12 @@ const renderGrid = () => {
   const today = new Date();
   const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
   const atLatestMonth = monthStart(view) >= monthStart(today);
+  const atEarliestMonth = monthStart(view) <= EARLIEST_MONTH;
   popover.querySelectorAll('[data-nav="1"], [data-nav="12"]').forEach((button) => {
     button.disabled = atLatestMonth;
+  });
+  popover.querySelectorAll('[data-nav="-1"], [data-nav="-12"]').forEach((button) => {
+    button.disabled = atEarliestMonth;
   });
   const cells = [];
   for (let i = 0; i < first.getDay(); i += 1) cells.push('<span class="date-popover-empty"></span>');
@@ -383,8 +393,7 @@ const open = (input, anchor, button, fallback) => {
   popover ||= buildPopover();
   const start = parseRocDateTime(input.value) || parseRocDateTime(fallback) || new Date();
   start.setSeconds(0, 0);
-  const latestMonth = monthStart(new Date());
-  current = { input, anchor, button, selected: start, view: monthStart(start) > latestMonth ? latestMonth : monthStart(start) };
+  current = { input, anchor, button, selected: start, view: clampMonth(start) };
   syncFields();
   showError("");
   renderGrid();
