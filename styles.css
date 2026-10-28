@@ -5044,6 +5044,77 @@ body.annotate-open {
   box-shadow: var(--ring);
 }
 
+/* 時／分兩欄捲動清單：高度與月曆相同，切換時版面不跳動 */
+.date-popover-calendar[hidden],
+.date-popover-nav[hidden],
+.date-popover-timepanel[hidden] {
+  display: none;
+}
+
+.date-popover-timepanel {
+  display: grid;
+  height: 290px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.date-popover-col {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 2px 4px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  scrollbar-width: none;
+}
+
+.date-popover-col::-webkit-scrollbar {
+  display: none;
+}
+
+.date-popover-col-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 0;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.date-popover-col button {
+  flex: 0 0 34px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.date-popover-col button:hover {
+  background: var(--hover);
+}
+
+.date-popover-col button.is-selected {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+.date-popover.is-time-mode .date-popover-time,
+.date-popover:not(.is-time-mode) .date-popover-date {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
 .date-popover-footer {
   display: flex;
   align-items: center;

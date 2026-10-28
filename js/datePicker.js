@@ -57,8 +57,20 @@ const buildPopover = () => {
       <button type="button" data-nav="1" aria-label="下個月" title="下個月">${chevron(false, false)}</button>
       <button type="button" data-nav="12" aria-label="下一年" title="下一年">${chevron(false, true)}</button>
     </div>
-    <div class="date-popover-weekdays">${WEEKDAYS.map((day) => `<span>${day}</span>`).join("")}</div>
-    <div class="date-popover-grid" role="grid"></div>
+    <div class="date-popover-calendar">
+      <div class="date-popover-weekdays">${WEEKDAYS.map((day) => `<span>${day}</span>`).join("")}</div>
+      <div class="date-popover-grid" role="grid"></div>
+    </div>
+    <div class="date-popover-timepanel" hidden>
+      <div class="date-popover-col" data-col="hour" role="listbox" aria-label="時">
+        <div class="date-popover-col-title">時</div>
+        ${Array.from({ length: 24 }, (_, h) => `<button type="button" role="option" data-hour="${h}">${pad(h)}</button>`).join("")}
+      </div>
+      <div class="date-popover-col" data-col="minute" role="listbox" aria-label="分">
+        <div class="date-popover-col-title">分</div>
+        ${Array.from({ length: 60 }, (_, m) => `<button type="button" role="option" data-minute="${m}">${pad(m)}</button>`).join("")}
+      </div>
+    </div>
     <div class="date-popover-footer">
       <button type="button" class="date-popover-now">現在</button>
       <span class="date-popover-spacer"></span>
@@ -90,6 +102,21 @@ const buildPopover = () => {
 
   const dateField = element.querySelector(".date-popover-date");
   const timeField = element.querySelector(".date-popover-time");
+  // 觸控裝置點時間框直接用選的，不跳出鍵盤
+  if (window.matchMedia?.("(pointer: coarse)").matches) timeField.readOnly = true;
+  dateField.addEventListener("focus", () => setMode("date"));
+  dateField.addEventListener("click", () => setMode("date"));
+  timeField.addEventListener("focus", () => setMode("time"));
+  timeField.addEventListener("click", () => setMode("time"));
+  element.querySelector(".date-popover-timepanel").addEventListener("click", (event) => {
+    const hourButton = event.target.closest("[data-hour]");
+    const minuteButton = event.target.closest("[data-minute]");
+    if (!hourButton && !minuteButton) return;
+    if (hourButton) current.selected.setHours(Number(hourButton.dataset.hour));
+    if (minuteButton) current.selected.setMinutes(Number(minuteButton.dataset.minute));
+    syncFields();
+    syncTimePanel(false);
+  });
   dateField.addEventListener("input", () => {
     const parsed = parseRocDateTime(dateField.value);
     dateField.classList.toggle("is-invalid", Boolean(dateField.value.trim()) && !parsed);
@@ -111,6 +138,7 @@ const buildPopover = () => {
     timeField.classList.toggle("is-invalid", Boolean(timeField.value.trim()) && !parsed);
     if (!parsed) return;
     current.selected.setHours(parsed.hour, parsed.minute);
+    syncTimePanel(true);
   });
   [dateField, timeField].forEach((field) =>
     field.addEventListener("keydown", (event) => {
@@ -127,6 +155,7 @@ const buildPopover = () => {
     current.view = new Date(now.getFullYear(), now.getMonth(), 1);
     syncFields();
     renderGrid();
+    syncTimePanel(true);
   });
   element.querySelector(".date-popover-cancel").addEventListener("click", () => close(true));
   element.querySelector(".date-popover-ok").addEventListener("click", commit);
@@ -144,6 +173,38 @@ function chevron(left, double) {
   const two = left ? "M10 5 5 10l5 5M15 5l-5 5 5 5" : "M5 5l5 5-5 5M10 5l5 5-5 5";
   return `<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="${double ? two : one}" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
+
+/** 月曆與時分清單切換：點日期框看月曆，點時間框選時分。 */
+const setMode = (mode) => {
+  if (!popover || !current) return;
+  const isTime = mode === "time";
+  popover.classList.toggle("is-time-mode", isTime);
+  popover.querySelector(".date-popover-timepanel").hidden = !isTime;
+  popover.querySelector(".date-popover-calendar").hidden = isTime;
+  popover.querySelector(".date-popover-nav").hidden = isTime;
+  if (isTime) syncTimePanel(true);
+};
+
+const syncTimePanel = (scroll) => {
+  if (!popover || !current) return;
+  const hour = current.selected.getHours();
+  const minute = current.selected.getMinutes();
+  popover.querySelectorAll("[data-hour]").forEach((button) => {
+    const on = Number(button.dataset.hour) === hour;
+    button.classList.toggle("is-selected", on);
+    button.setAttribute("aria-selected", String(on));
+  });
+  popover.querySelectorAll("[data-minute]").forEach((button) => {
+    const on = Number(button.dataset.minute) === minute;
+    button.classList.toggle("is-selected", on);
+    button.setAttribute("aria-selected", String(on));
+  });
+  if (!scroll || popover.querySelector(".date-popover-timepanel").hidden) return;
+  popover.querySelectorAll(".date-popover-col").forEach((column) => {
+    const selected = column.querySelector(".is-selected");
+    if (selected) column.scrollTop = selected.offsetTop - column.clientHeight / 2 + selected.offsetHeight / 2;
+  });
+};
 
 const syncFields = () => {
   popover.querySelector(".date-popover-date").value = formatRocDate(current.selected);
@@ -234,6 +295,7 @@ const open = (input, anchor, button, fallback) => {
   syncFields();
   renderGrid();
   popover.hidden = false;
+  setMode("date");
   position();
   document.addEventListener("pointerdown", onOutside, true);
   window.addEventListener("resize", position);
