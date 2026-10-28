@@ -1702,6 +1702,7 @@ body.format-middle .accident-tags-container {
 }
 
 body.format-middle .image-address-input,
+body.format-right .image-date-field,
 body.format-right .image-date-input,
 body.format-right .image-address-input,
 body.format-right .exif-date-warning {
@@ -1716,7 +1717,8 @@ body.format-right .exif-date-warning {
   border-color: var(--warning);
 }
 
-#imagePreview.list-view .image-date-input.missing-exif-date + .exif-date-warning {
+#imagePreview.list-view .image-date-input.missing-exif-date + .exif-date-warning,
+#imagePreview.list-view .date-field:has(.missing-exif-date) + .exif-date-warning {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1728,7 +1730,8 @@ body.format-right .exif-date-warning {
 
 #imagePreview.list-view
   .image-date-input.missing-exif-date
-  + .exif-date-warning::before {
+  + .exif-date-warning::before,
+#imagePreview.list-view .date-field:has(.missing-exif-date) + .exif-date-warning::before {
   font-family: "Material Symbols Outlined";
   font-size: 18px;
   content: "warning";
@@ -4855,4 +4858,53 @@ body.annotate-open {
     scrollbar-width: thin;
     scrollbar-color: var(--border-strong) transparent;
   }
+}
+
+/* 日期欄右側的日曆按鈕 */
+.date-field {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.date-field > input[type="text"] {
+  padding-right: 44px;
+}
+
+.date-field-btn {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: inline-grid;
+  width: 34px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.date-field-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.date-field-icon {
+  display: block;
+}
+
+/* 內建選擇器本體藏在按鈕底下，讓彈出的月曆對齊按鈕位置 */
+.date-field-picker {
+  position: absolute;
+  right: 4px;
+  bottom: 0;
+  width: 34px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }
