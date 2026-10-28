@@ -38,7 +38,6 @@ const nowMinute = () => {
   return now;
 };
 const isFuture = (date) => date.getTime() > nowMinute().getTime();
-const clampToNow = (date) => (isFuture(date) ? nowMinute() : date);
 const monthStart = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
 
 const sameDay = (a, b) =>
@@ -104,12 +103,11 @@ const buildPopover = () => {
     const cell = event.target.closest("[data-day]");
     if (!cell) return;
     const [year, month, day] = cell.dataset.day.split("-").map(Number);
-    current.selected = clampToNow(
-      new Date(year, month, day, current.selected.getHours(), current.selected.getMinutes()),
-    );
+    current.selected = new Date(year, month, day, current.selected.getHours(), current.selected.getMinutes());
     current.view = new Date(year, month, 1);
-    syncFields();
+    popover.querySelector(".date-popover-date").value = formatRocDate(current.selected);
     renderGrid();
+    validate();
   });
   element.querySelector(".date-popover-grid").addEventListener("dblclick", (event) => {
     if (event.target.closest("[data-day]")) commit();
@@ -130,26 +128,26 @@ const buildPopover = () => {
     if ((hourButton || minuteButton).disabled) return;
     if (hourButton) current.selected.setHours(Number(hourButton.dataset.hour));
     if (minuteButton) current.selected.setMinutes(Number(minuteButton.dataset.minute));
-    current.selected = clampToNow(current.selected);
-    syncFields();
+    // 只更新時間框；日期框保留使用者打的內容，不自動改
+    popover.querySelector(".date-popover-time").value = formatTime(current.selected);
     syncTimePanel(false);
+    validate();
   });
   dateField.addEventListener("input", () => {
     const parsed = parseRocDateTime(dateField.value);
-    const today = new Date();
-    const future = parsed && parsed >= new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-    dateField.classList.toggle("is-invalid", Boolean(dateField.value.trim()) && (!parsed || future));
-    dateField.dataset.reason = future ? "future" : parsed ? "" : "format";
-    dateField.title = future ? "無法選擇未來的日期、時間，請修正。" : "";
-    // 已經按過確定、正在顯示提醒時，修正後提醒跟著更新或消失
-    if (!popover.querySelector(".date-popover-error").hidden) showError(fieldProblem());
-    if (!parsed || future) return;
-    current.selected = new Date(
-      parsed.getFullYear(), parsed.getMonth(), parsed.getDate(),
-      current.selected.getHours(), current.selected.getMinutes(),
-    );
-    current.view = new Date(parsed.getFullYear(), parsed.getMonth(), 1);
-    renderGrid();
+    if (parsed) {
+      // 未來日期也先記下來（標紅、不能確定），由使用者自己改，不自動跳回
+      current.selected = new Date(
+        parsed.getFullYear(), parsed.getMonth(), parsed.getDate(),
+        current.selected.getHours(), current.selected.getMinutes(),
+      );
+      const latest = monthStart(new Date());
+      const month = monthStart(parsed);
+      current.view = month > latest ? latest : month;
+      renderGrid();
+      syncTimePanel(false);
+    }
+    validate();
   });
   timeField.addEventListener("input", () => {
     // 輸入 4 個數字時自動補上冒號，例如 0918 → 09:18
@@ -158,16 +156,11 @@ const buildPopover = () => {
       timeField.value = `${digits.slice(0, 2)}:${digits.slice(2)}`;
     }
     const parsed = parseTime(timeField.value);
-    const candidate = parsed ? new Date(current.selected) : null;
-    candidate?.setHours(parsed.hour, parsed.minute);
-    const future = candidate && isFuture(candidate);
-    timeField.classList.toggle("is-invalid", Boolean(timeField.value.trim()) && (!parsed || future));
-    timeField.dataset.reason = future ? "future" : parsed ? "" : "format";
-    timeField.title = future ? "無法選擇未來的日期、時間，請修正。" : "";
-    if (!popover.querySelector(".date-popover-error").hidden) showError(fieldProblem());
-    if (!parsed || future) return;
-    current.selected.setHours(parsed.hour, parsed.minute);
-    syncTimePanel(true);
+    if (parsed) {
+      current.selected.setHours(parsed.hour, parsed.minute);
+      syncTimePanel(true);
+    }
+    validate();
   });
   [dateField, timeField].forEach((field) =>
     field.addEventListener("keydown", (event) => {
@@ -185,6 +178,7 @@ const buildPopover = () => {
     syncFields();
     renderGrid();
     syncTimePanel(true);
+    validate();
   });
   element.querySelector(".date-popover-cancel").addEventListener("click", () => close(true));
   element.querySelector(".date-popover-ok").addEventListener("click", commit);
@@ -203,6 +197,34 @@ function chevron(left, double) {
   return `<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="${double ? two : one}" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
+const FUTURE_MESSAGE = "無法選擇未來的日期、時間，請修正。";
+
+/** 檢查兩個輸入框，標紅有問題的框；已顯示提醒時同步更新提醒內容。 */
+const validate = () => {
+  if (!popover || !current) return;
+  const dateField = popover.querySelector(".date-popover-date");
+  const timeField = popover.querySelector(".date-popover-time");
+  const parsedDate = parseRocDateTime(dateField.value);
+  const parsedTime = parseTime(timeField.value);
+  const today = new Date();
+  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  let dateReason = "";
+  let timeReason = "";
+  if (!parsedDate) dateReason = "format";
+  else if (parsedDate >= tomorrow) dateReason = "future";
+  if (!parsedTime) timeReason = "format";
+  else if (!dateReason && isFuture(current.selected)) timeReason = "future";
+  [
+    [dateField, dateReason],
+    [timeField, timeReason],
+  ].forEach(([field, reason]) => {
+    field.classList.toggle("is-invalid", Boolean(reason));
+    field.dataset.reason = reason;
+    field.title = reason === "future" ? FUTURE_MESSAGE : "";
+  });
+  if (!popover.querySelector(".date-popover-error").hidden) showError(fieldProblem());
+};
+
 const showError = (message) => {
   const error = popover?.querySelector(".date-popover-error");
   if (!error) return;
@@ -215,10 +237,10 @@ const fieldProblem = () => {
   const dateField = popover.querySelector(".date-popover-date");
   const timeField = popover.querySelector(".date-popover-time");
   if (dateField.classList.contains("is-invalid")) {
-    return dateField.dataset.reason === "future" ? "無法選擇未來的日期、時間，請修正。" : "日期格式不正確，請輸入例如 115/05/16。";
+    return dateField.dataset.reason === "future" ? FUTURE_MESSAGE : "日期格式不正確，請輸入例如 115/05/16。";
   }
   if (timeField.classList.contains("is-invalid")) {
-    return timeField.dataset.reason === "future" ? "無法選擇未來的日期、時間，請修正。" : "時間格式不正確，請輸入例如 09:18（24 小時制）。";
+    return timeField.dataset.reason === "future" ? FUTURE_MESSAGE : "時間格式不正確，請輸入例如 09:18（24 小時制）。";
   }
   return "";
 };
@@ -264,8 +286,6 @@ const syncTimePanel = (scroll) => {
 const syncFields = () => {
   popover.querySelector(".date-popover-date").value = formatRocDate(current.selected);
   popover.querySelector(".date-popover-time").value = formatTime(current.selected);
-  popover.querySelectorAll(".is-invalid").forEach((field) => field.classList.remove("is-invalid"));
-  showError("");
 };
 
 const renderGrid = () => {
@@ -340,13 +360,13 @@ const commit = () => {
   if (!current) return;
   const dateField = popover.querySelector(".date-popover-date");
   const timeField = popover.querySelector(".date-popover-time");
+  validate();
   const problem = fieldProblem();
   if (problem) {
     showError(problem);
     (dateField.classList.contains("is-invalid") ? dateField : timeField).focus();
     return;
   }
-  if (isFuture(current.selected)) current.selected = nowMinute();
   const { input } = current;
   input.value = formatRocDateTime(current.selected);
   input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -357,13 +377,16 @@ const commit = () => {
 
 const open = (input, anchor, button, fallback) => {
   popover ||= buildPopover();
-  const start = clampToNow(parseRocDateTime(input.value) || parseRocDateTime(fallback) || new Date());
+  const start = parseRocDateTime(input.value) || parseRocDateTime(fallback) || new Date();
   start.setSeconds(0, 0);
-  current = { input, anchor, button, selected: start, view: new Date(start.getFullYear(), start.getMonth(), 1) };
+  const latestMonth = monthStart(new Date());
+  current = { input, anchor, button, selected: start, view: monthStart(start) > latestMonth ? latestMonth : monthStart(start) };
   syncFields();
+  showError("");
   renderGrid();
   popover.hidden = false;
   setMode("date");
+  validate();
   position();
   document.addEventListener("pointerdown", onOutside, true);
   window.addEventListener("resize", position);
