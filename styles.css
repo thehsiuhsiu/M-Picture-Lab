@@ -4959,8 +4959,25 @@ body.annotate-open {
   background: var(--surface);
 }
 
-.date-popover-fields input.is-invalid {
+.date-popover .date-popover-fields input.is-invalid,
+.date-popover .date-popover-fields input.is-invalid:focus {
   border-color: var(--danger);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.date-popover-error {
+  margin: -2px 0 8px;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.date-popover-error[hidden] {
+  display: none;
 }
 
 .date-popover-nav {

@@ -1,23 +1,23 @@
 ﻿// pdfGenerator.js - PDF 生成模組
 
-import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261028-5";
+import { state, FORMAT_TITLES, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261028-6";
 import {
   showLoadingModal,
   hideLoadingModal,
   createObjectUrl,
   revokeObjectUrl,
   showToast,
-} from "./utils.js?v=20261028-5";
-import { createDocumentImageBlob } from "./annotations.js?v=20261028-5";
+} from "./utils.js?v=20261028-6";
+import { createDocumentImageBlob } from "./annotations.js?v=20261028-6";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261028-5";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261028-5";
+} from "./multiPhotoLayout.js?v=20261028-6";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261028-6";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js?v=20261028-5";
+} from "./pageNumbering.js?v=20261028-6";
 
 const PDF_PRINT_IMAGE_MAX_DIMENSION = 1800;
 
