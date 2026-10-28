@@ -1,20 +1,20 @@
 ﻿// docxGenerator.js
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261027-6";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261028-1";
 import {
   getFormattedDate,
   showLoadingModal,
   hideLoadingModal,
   blobToArrayBuffer,
   showToast,
-} from "./utils.js?v=20261027-6";
-import { createDocumentImageBlob } from "./annotations.js?v=20261027-6";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261027-6";
+} from "./utils.js?v=20261028-1";
+import { createDocumentImageBlob } from "./annotations.js?v=20261028-1";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261028-1";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261027-6";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261027-6";
+} from "./multiPhotoLayout.js?v=20261028-1";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261028-1";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||

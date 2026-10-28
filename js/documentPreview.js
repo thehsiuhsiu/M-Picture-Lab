@@ -1,14 +1,14 @@
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261027-6";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261027-6";
+import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261028-1";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261028-1";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261027-6";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261027-6";
+} from "./multiPhotoLayout.js?v=20261028-1";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261028-1";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js?v=20261027-6";
+} from "./pageNumbering.js?v=20261028-1";
 
 const PREVIEW_UPDATE_DELAY_MS = 220;
 const MIN_ZOOM = 0.3;
@@ -451,9 +451,15 @@ export const initDocumentPreview = () => {
 
   const stage = document.getElementById("documentPreviewStage");
   if (stage && "ResizeObserver" in window) {
+    // 縮放視窗時，自動縮放會改變預覽大小；放到下一個畫面再處理，避免 ResizeObserver 連鎖觸發
+    let resizeFrame = 0;
     new ResizeObserver(() => {
-      if (state.viewMode !== "preview") return;
-      if (applyAutoZoom(stage)) updateControls(getPageCount());
+      if (resizeFrame) return;
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = 0;
+        if (state.viewMode !== "preview") return;
+        if (applyAutoZoom(stage)) updateControls(getPageCount());
+      });
     }).observe(stage);
   }
   document.addEventListener("input", (event) => {
