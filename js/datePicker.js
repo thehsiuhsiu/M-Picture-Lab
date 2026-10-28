@@ -2,11 +2,11 @@
 const pad = (value) => String(value).padStart(2, "0");
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
-/** 解析「115/05/16 09:18」這類民國日期；也接受 - 或 . 分隔、沒有時間。 */
+/** 解析「115/05/16 09:18」這類民國日期；年份 1～3 位數（例如 2/10/09），也接受 - 或 . 分隔、沒有時間。 */
 export const parseRocDateTime = (text) => {
   const match = String(text || "")
     .trim()
-    .match(/^(\d{2,3})[/\-.](\d{1,2})[/\-.](\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?/);
+    .match(/^(\d{1,3})[/\-.](\d{1,2})[/\-.](\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?/);
   if (!match) return null;
   const [, rocYear, month, day, hour = "0", minute = "0"] = match;
   if (Number(rocYear) < 1) return null; // 民國元年以前不是有效的民國日期
@@ -20,7 +20,7 @@ export const parseRocDateTime = (text) => {
 
 /** 選擇器上方的日期框只接受日期本身（例如 115/05/16），後面不能多打其他字。 */
 const parseRocDateOnly = (text) =>
-  /^\d{2,3}[/\-.]\d{1,2}[/\-.]\d{1,2}$/.test(String(text || "").trim()) ? parseRocDateTime(text) : null;
+  /^\d{1,3}[/\-.]\d{1,2}[/\-.]\d{1,2}$/.test(String(text || "").trim()) ? parseRocDateTime(text) : null;
 
 const formatRocDate = (date) =>
   `${date.getFullYear() - 1911}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
