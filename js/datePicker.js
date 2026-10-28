@@ -1,5 +1,6 @@
-// datePicker.js - 日期欄右側的日曆按鈕：用瀏覽器內建的日期時間選擇器，選完填入民國格式
+// datePicker.js - 日期欄右側的日曆按鈕與網頁風格的日期時間選擇器（民國年、24 小時制）
 const pad = (value) => String(value).padStart(2, "0");
+const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
 /** 解析「115/05/16 09:18」這類民國日期；也接受 - 或 . 分隔、沒有時間。 */
 export const parseRocDateTime = (text) => {
@@ -16,11 +17,229 @@ export const parseRocDateTime = (text) => {
   return date;
 };
 
-export const formatRocDateTime = (date) =>
-  `${date.getFullYear() - 1911}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+const formatRocDate = (date) =>
+  `${date.getFullYear() - 1911}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
+const formatTime = (date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+export const formatRocDateTime = (date) => `${formatRocDate(date)} ${formatTime(date)}`;
 
-const toLocalInputValue = (date) =>
-  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+const parseTime = (text) => {
+  const match = String(text || "").trim().match(/^(\d{1,2})[:：]?(\d{2})$/);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
+  return { hour, minute };
+};
+
+const sameDay = (a, b) =>
+  a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+/* ---------- 選擇器（全頁共用一個） ---------- */
+
+let popover = null;
+let current = null; // { input, anchor, selected: Date, view: Date }
+
+const buildPopover = () => {
+  const element = document.createElement("div");
+  element.className = "date-popover";
+  element.setAttribute("role", "dialog");
+  element.setAttribute("aria-label", "選擇日期與時間");
+  element.hidden = true;
+  element.innerHTML = `
+    <div class="date-popover-fields">
+      <input type="text" class="date-popover-date" inputmode="numeric" placeholder="115/05/16" aria-label="日期（民國年/月/日）" />
+      <input type="text" class="date-popover-time" inputmode="numeric" placeholder="HH:mm" maxlength="5" aria-label="時間（24 小時制）" />
+    </div>
+    <div class="date-popover-nav">
+      <button type="button" data-nav="-12" aria-label="上一年" title="上一年">${chevron(true, true)}</button>
+      <button type="button" data-nav="-1" aria-label="上個月" title="上個月">${chevron(true, false)}</button>
+      <span class="date-popover-title" aria-live="polite"></span>
+      <button type="button" data-nav="1" aria-label="下個月" title="下個月">${chevron(false, false)}</button>
+      <button type="button" data-nav="12" aria-label="下一年" title="下一年">${chevron(false, true)}</button>
+    </div>
+    <div class="date-popover-weekdays">${WEEKDAYS.map((day) => `<span>${day}</span>`).join("")}</div>
+    <div class="date-popover-grid" role="grid"></div>
+    <div class="date-popover-footer">
+      <button type="button" class="date-popover-now">現在</button>
+      <span class="date-popover-spacer"></span>
+      <button type="button" class="date-popover-cancel">取消</button>
+      <button type="button" class="date-popover-ok">確定</button>
+    </div>`;
+  document.body.appendChild(element);
+
+  element.addEventListener("pointerdown", (event) => event.stopPropagation());
+  element.querySelectorAll("[data-nav]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const step = Number(button.dataset.nav);
+      current.view = new Date(current.view.getFullYear(), current.view.getMonth() + step, 1);
+      renderGrid();
+    }),
+  );
+  element.querySelector(".date-popover-grid").addEventListener("click", (event) => {
+    const cell = event.target.closest("[data-day]");
+    if (!cell) return;
+    const [year, month, day] = cell.dataset.day.split("-").map(Number);
+    current.selected = new Date(year, month, day, current.selected.getHours(), current.selected.getMinutes());
+    current.view = new Date(year, month, 1);
+    syncFields();
+    renderGrid();
+  });
+  element.querySelector(".date-popover-grid").addEventListener("dblclick", (event) => {
+    if (event.target.closest("[data-day]")) commit();
+  });
+
+  const dateField = element.querySelector(".date-popover-date");
+  const timeField = element.querySelector(".date-popover-time");
+  dateField.addEventListener("input", () => {
+    const parsed = parseRocDateTime(dateField.value);
+    dateField.classList.toggle("is-invalid", Boolean(dateField.value.trim()) && !parsed);
+    if (!parsed) return;
+    current.selected = new Date(
+      parsed.getFullYear(), parsed.getMonth(), parsed.getDate(),
+      current.selected.getHours(), current.selected.getMinutes(),
+    );
+    current.view = new Date(parsed.getFullYear(), parsed.getMonth(), 1);
+    renderGrid();
+  });
+  timeField.addEventListener("input", () => {
+    // 輸入 4 個數字時自動補上冒號，例如 0918 → 09:18
+    const digits = timeField.value.replace(/\D/g, "");
+    if (/^\d{4}$/.test(digits) && !timeField.value.includes(":")) {
+      timeField.value = `${digits.slice(0, 2)}:${digits.slice(2)}`;
+    }
+    const parsed = parseTime(timeField.value);
+    timeField.classList.toggle("is-invalid", Boolean(timeField.value.trim()) && !parsed);
+    if (!parsed) return;
+    current.selected.setHours(parsed.hour, parsed.minute);
+  });
+  [dateField, timeField].forEach((field) =>
+    field.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        commit();
+      }
+    }),
+  );
+  element.querySelector(".date-popover-now").addEventListener("click", () => {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    current.selected = now;
+    current.view = new Date(now.getFullYear(), now.getMonth(), 1);
+    syncFields();
+    renderGrid();
+  });
+  element.querySelector(".date-popover-cancel").addEventListener("click", () => close(true));
+  element.querySelector(".date-popover-ok").addEventListener("click", commit);
+  element.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close(true);
+    }
+  });
+  return element;
+};
+
+function chevron(left, double) {
+  const one = left ? "M12.5 5 7.5 10l5 5" : "M7.5 5l5 5-5 5";
+  const two = left ? "M10 5 5 10l5 5M15 5l-5 5 5 5" : "M5 5l5 5-5 5M10 5l5 5-5 5";
+  return `<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="${double ? two : one}" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+const syncFields = () => {
+  popover.querySelector(".date-popover-date").value = formatRocDate(current.selected);
+  popover.querySelector(".date-popover-time").value = formatTime(current.selected);
+  popover.querySelectorAll(".is-invalid").forEach((field) => field.classList.remove("is-invalid"));
+};
+
+const renderGrid = () => {
+  const { view, selected } = current;
+  popover.querySelector(".date-popover-title").textContent =
+    `${view.getFullYear() - 1911} 年 ${view.getMonth() + 1} 月`;
+  const first = new Date(view.getFullYear(), view.getMonth(), 1);
+  const daysInMonth = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+  const today = new Date();
+  const cells = [];
+  for (let i = 0; i < first.getDay(); i += 1) cells.push('<span class="date-popover-empty"></span>');
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = new Date(view.getFullYear(), view.getMonth(), day);
+    const classes = ["date-popover-day"];
+    if (sameDay(date, today)) classes.push("is-today");
+    if (sameDay(date, selected)) classes.push("is-selected");
+    cells.push(
+      `<button type="button" class="${classes.join(" ")}" data-day="${view.getFullYear()}-${view.getMonth()}-${day}" aria-label="${view.getFullYear() - 1911} 年 ${view.getMonth() + 1} 月 ${day} 日"${sameDay(date, selected) ? ' aria-pressed="true"' : ""}>${day}</button>`,
+    );
+  }
+  popover.querySelector(".date-popover-grid").innerHTML = cells.join("");
+};
+
+const position = () => {
+  if (!current || popover.hidden) return;
+  // 手機：從畫面底部滑出，不跟著欄位移動
+  const isSheet = window.innerWidth <= 560;
+  popover.classList.toggle("is-sheet", isSheet);
+  if (isSheet) {
+    popover.style.left = "";
+    popover.style.top = "";
+    return;
+  }
+  const rect = current.anchor.getBoundingClientRect();
+  const width = popover.offsetWidth;
+  const height = popover.offsetHeight;
+  const margin = 8;
+  let left = Math.min(rect.right - width, window.innerWidth - width - margin);
+  left = Math.max(margin, left);
+  let top = rect.bottom + 6;
+  if (top + height > window.innerHeight - margin && rect.top - height - 6 > margin) {
+    top = rect.top - height - 6;
+  }
+  popover.style.left = `${left}px`;
+  popover.style.top = `${Math.max(margin, top)}px`;
+};
+
+const onOutside = (event) => {
+  if (!current) return;
+  if (popover.contains(event.target) || current.anchor.contains(event.target)) return;
+  close(false);
+};
+
+const close = (returnFocus) => {
+  if (!current) return;
+  const { button } = current;
+  popover.hidden = true;
+  current = null;
+  document.removeEventListener("pointerdown", onOutside, true);
+  window.removeEventListener("resize", position);
+  window.removeEventListener("scroll", position, true);
+  if (returnFocus) button?.focus();
+};
+
+const commit = () => {
+  if (!current) return;
+  const dateField = popover.querySelector(".date-popover-date");
+  const timeField = popover.querySelector(".date-popover-time");
+  if (dateField.classList.contains("is-invalid") || timeField.classList.contains("is-invalid")) return;
+  const { input } = current;
+  input.value = formatRocDateTime(current.selected);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  close(false);
+  input.focus();
+};
+
+const open = (input, anchor, button, fallback) => {
+  popover ||= buildPopover();
+  const start = parseRocDateTime(input.value) || parseRocDateTime(fallback) || new Date();
+  start.setSeconds(0, 0);
+  current = { input, anchor, button, selected: start, view: new Date(start.getFullYear(), start.getMonth(), 1) };
+  syncFields();
+  renderGrid();
+  popover.hidden = false;
+  position();
+  document.addEventListener("pointerdown", onOutside, true);
+  window.addEventListener("resize", position);
+  window.addEventListener("scroll", position, true);
+  popover.querySelector(".date-popover-selected, .is-selected, .date-popover-day")?.focus({ preventScroll: true });
+};
 
 /**
  * 把文字日期欄包起來，右側加上日曆按鈕。
@@ -39,45 +258,21 @@ export const attachDatePicker = (input, { getFallback = () => "", wrapperClass =
   button.className = "date-field-btn";
   button.title = "用日曆選擇日期與時間";
   button.setAttribute("aria-label", "用日曆選擇日期與時間");
+  button.setAttribute("aria-haspopup", "dialog");
   // 細線條、圓角的簡約日曆圖示（與側邊欄收合圖示同一風格）
   button.innerHTML =
     '<svg class="date-field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">' +
     '<rect x="3" y="4.25" width="14" height="12.5" rx="3" stroke="currentColor" stroke-width="1.3"/>' +
     '<path d="M3.5 8.25h13M7 2.75v3M13 2.75v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>' +
     "</svg>";
-
-  const picker = document.createElement("input");
-  picker.type = "datetime-local";
-  picker.className = "date-field-picker";
-  picker.tabIndex = -1;
-  picker.setAttribute("aria-hidden", "true");
-
-  wrapper.append(button, picker);
+  wrapper.appendChild(button);
 
   button.addEventListener("click", () => {
-    const start = parseRocDateTime(input.value) || parseRocDateTime(getFallback()) || new Date();
-    picker.value = toLocalInputValue(start);
-    try {
-      if (typeof picker.showPicker === "function") picker.showPicker();
-      else {
-        picker.focus();
-        picker.click();
-      }
-    } catch (_error) {
-      picker.focus();
-      picker.click();
+    if (current?.input === input) {
+      close(true);
+      return;
     }
-  });
-
-  picker.addEventListener("change", () => {
-    if (!picker.value) return;
-    const [datePart, timePart = "00:00"] = picker.value.split("T");
-    const [year, month, day] = datePart.split("-").map(Number);
-    const [hour, minute] = timePart.split(":").map(Number);
-    input.value = formatRocDateTime(new Date(year, month - 1, day, hour, minute));
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-    input.focus();
+    open(input, wrapper, button, getFallback());
   });
   return wrapper;
 };
