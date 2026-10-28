@@ -60,6 +60,7 @@ const buildPopover = () => {
       <input type="text" class="date-popover-date" inputmode="numeric" placeholder="115/05/16" aria-label="日期（民國年/月/日）" />
       <input type="text" class="date-popover-time" inputmode="numeric" placeholder="HH:mm" maxlength="5" aria-label="時間（24 小時制）" />
     </div>
+    <p class="date-popover-error" role="alert" hidden></p>
     <div class="date-popover-nav">
       <button type="button" data-nav="-12" aria-label="上一年" title="上一年">${chevron(true, true)}</button>
       <button type="button" data-nav="-1" aria-label="上個月" title="上個月">${chevron(true, false)}</button>
@@ -138,7 +139,10 @@ const buildPopover = () => {
     const today = new Date();
     const future = parsed && parsed >= new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
     dateField.classList.toggle("is-invalid", Boolean(dateField.value.trim()) && (!parsed || future));
+    dateField.dataset.reason = future ? "future" : parsed ? "" : "format";
     dateField.title = future ? "不能選未來的日期" : "";
+    // 已經按過確定、正在顯示提醒時，修正後提醒跟著更新或消失
+    if (!popover.querySelector(".date-popover-error").hidden) showError(fieldProblem());
     if (!parsed || future) return;
     current.selected = new Date(
       parsed.getFullYear(), parsed.getMonth(), parsed.getDate(),
@@ -158,7 +162,9 @@ const buildPopover = () => {
     candidate?.setHours(parsed.hour, parsed.minute);
     const future = candidate && isFuture(candidate);
     timeField.classList.toggle("is-invalid", Boolean(timeField.value.trim()) && (!parsed || future));
+    timeField.dataset.reason = future ? "future" : parsed ? "" : "format";
     timeField.title = future ? "不能選未來的時間" : "";
+    if (!popover.querySelector(".date-popover-error").hidden) showError(fieldProblem());
     if (!parsed || future) return;
     current.selected.setHours(parsed.hour, parsed.minute);
     syncTimePanel(true);
@@ -196,6 +202,26 @@ function chevron(left, double) {
   const two = left ? "M10 5 5 10l5 5M15 5l-5 5 5 5" : "M5 5l5 5-5 5M10 5l5 5-5 5";
   return `<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="${double ? two : one}" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
+
+const showError = (message) => {
+  const error = popover?.querySelector(".date-popover-error");
+  if (!error) return;
+  error.textContent = message || "";
+  error.hidden = !message;
+};
+
+/** 輸入框的錯誤原因（沒有錯誤回傳空字串） */
+const fieldProblem = () => {
+  const dateField = popover.querySelector(".date-popover-date");
+  const timeField = popover.querySelector(".date-popover-time");
+  if (dateField.classList.contains("is-invalid")) {
+    return dateField.dataset.reason === "future" ? "不能選未來的日期，照片不會在今天之後拍攝。" : "日期格式不正確，請輸入例如 115/05/16。";
+  }
+  if (timeField.classList.contains("is-invalid")) {
+    return timeField.dataset.reason === "future" ? "不能選未來的時間，請選現在或更早的時間。" : "時間格式不正確，請輸入例如 09:18（24 小時制）。";
+  }
+  return "";
+};
 
 /** 月曆與時分清單切換：點日期框看月曆，點時間框選時分。 */
 const setMode = (mode) => {
@@ -239,6 +265,7 @@ const syncFields = () => {
   popover.querySelector(".date-popover-date").value = formatRocDate(current.selected);
   popover.querySelector(".date-popover-time").value = formatTime(current.selected);
   popover.querySelectorAll(".is-invalid").forEach((field) => field.classList.remove("is-invalid"));
+  showError("");
 };
 
 const renderGrid = () => {
@@ -313,7 +340,12 @@ const commit = () => {
   if (!current) return;
   const dateField = popover.querySelector(".date-popover-date");
   const timeField = popover.querySelector(".date-popover-time");
-  if (dateField.classList.contains("is-invalid") || timeField.classList.contains("is-invalid")) return;
+  const problem = fieldProblem();
+  if (problem) {
+    showError(problem);
+    (dateField.classList.contains("is-invalid") ? dateField : timeField).focus();
+    return;
+  }
   if (isFuture(current.selected)) current.selected = nowMinute();
   const { input } = current;
   input.value = formatRocDateTime(current.selected);
