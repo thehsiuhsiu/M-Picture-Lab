@@ -2,14 +2,20 @@
 const pad = (value) => String(value).padStart(2, "0");
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
-/** 解析「115/05/16 09:18」這類民國日期；年份 1～3 位數（例如 2/10/09），也接受 - 或 . 分隔、沒有時間。 */
+/**
+ * 解析民國日期時間，兩種寫法都接受：
+ * 「115年05月16日09時18分」（選擇器回填的格式）和「115/05/16 09:18」（也可用 - 或 .）。
+ * 年份 1～3 位數（例如 2/10/09、02年10月09日），時間可省略。
+ */
+const ROC_SLASH = /^(\d{1,3})[/\-.](\d{1,2})[/\-.](\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?/;
+const ROC_CHINESE = /^(\d{1,3})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日(?:\s*(\d{1,2})\s*時\s*(\d{1,2})\s*分)?/;
 export const parseRocDateTime = (text) => {
-  const match = String(text || "")
-    .trim()
-    .match(/^(\d{1,3})[/\-.](\d{1,2})[/\-.](\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?/);
+  const value = String(text || "").trim();
+  const match = value.match(ROC_SLASH) || value.match(ROC_CHINESE);
   if (!match) return null;
   const [, rocYear, month, day, hour = "0", minute = "0"] = match;
   if (Number(rocYear) < 1) return null; // 民國元年以前不是有效的民國日期
+  if (Number(hour) > 23 || Number(minute) > 59) return null;
   const year = Number(rocYear) + 1911;
   const date = new Date(year, Number(month) - 1, Number(day), Number(hour), Number(minute));
   if (date.getFullYear() !== year || date.getMonth() !== Number(month) - 1 || date.getDate() !== Number(day)) {
@@ -25,7 +31,10 @@ const parseRocDateOnly = (text) =>
 const formatRocDate = (date) =>
   `${date.getFullYear() - 1911}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
 const formatTime = (date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-export const formatRocDateTime = (date) => `${formatRocDate(date)} ${formatTime(date)}`;
+/** 回填到欄位的格式：115年05月16日09時18分（年份至少兩位數，例如 02年） */
+export const formatRocDateTime = (date) =>
+  `${pad(date.getFullYear() - 1911)}年${pad(date.getMonth() + 1)}月${pad(date.getDate())}日` +
+  `${pad(date.getHours())}時${pad(date.getMinutes())}分`;
 
 const parseTime = (text) => {
   const match = String(text || "").trim().match(/^(\d{1,2})[:：]?(\d{2})$/);
