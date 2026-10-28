@@ -17,6 +17,10 @@ export const parseRocDateTime = (text) => {
   return date;
 };
 
+/** 選擇器上方的日期框只接受日期本身（例如 115/05/16），後面不能多打其他字。 */
+const parseRocDateOnly = (text) =>
+  /^\d{2,3}[/\-.]\d{1,2}[/\-.]\d{1,2}$/.test(String(text || "").trim()) ? parseRocDateTime(text) : null;
+
 const formatRocDate = (date) =>
   `${date.getFullYear() - 1911}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
 const formatTime = (date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -134,7 +138,7 @@ const buildPopover = () => {
     validate();
   });
   dateField.addEventListener("input", () => {
-    const parsed = parseRocDateTime(dateField.value);
+    const parsed = parseRocDateOnly(dateField.value);
     if (parsed) {
       // 未來日期也先記下來（標紅、不能確定），由使用者自己改，不自動跳回
       current.selected = new Date(
@@ -204,7 +208,7 @@ const validate = () => {
   if (!popover || !current) return;
   const dateField = popover.querySelector(".date-popover-date");
   const timeField = popover.querySelector(".date-popover-time");
-  const parsedDate = parseRocDateTime(dateField.value);
+  const parsedDate = parseRocDateOnly(dateField.value);
   const parsedTime = parseTime(timeField.value);
   const today = new Date();
   const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
@@ -391,7 +395,9 @@ const open = (input, anchor, button, fallback) => {
   document.addEventListener("pointerdown", onOutside, true);
   window.addEventListener("resize", position);
   window.addEventListener("scroll", position, true);
-  popover.querySelector(".date-popover-selected, .is-selected, .date-popover-day")?.focus({ preventScroll: true });
+  popover
+    .querySelector(".date-popover-day.is-selected, .date-popover-day.is-today, .date-popover-day:not(:disabled)")
+    ?.focus({ preventScroll: true });
 };
 
 /**
