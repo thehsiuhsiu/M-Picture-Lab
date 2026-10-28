@@ -434,24 +434,29 @@ export const resizeImageForDoc = async (blob, maxDimension = 1200) => {
  */
 export const formatExifDate = (exifDate) => {
   if (!exifDate) return "";
+  const pad = (value) => String(value).padStart(2, "0");
+  // 與日期選擇器回填的格式一致：115年06月11日14時23分
+  const format = (year, month, day, hour, minute) =>
+    `${pad(year - 1911)}年${pad(month)}月${pad(day)}日${pad(hour)}時${pad(minute)}分`;
 
   if (exifDate instanceof Date) {
-    const year = exifDate.getFullYear() - 1911;
-    const m = String(exifDate.getMonth() + 1).padStart(2, "0");
-    const d = String(exifDate.getDate()).padStart(2, "0");
-    const hh = String(exifDate.getHours()).padStart(2, "0");
-    const mm = String(exifDate.getMinutes()).padStart(2, "0");
-    return `${year}/${m}/${d} ${hh}:${mm}`;
+    return format(
+      exifDate.getFullYear(),
+      exifDate.getMonth() + 1,
+      exifDate.getDate(),
+      exifDate.getHours(),
+      exifDate.getMinutes(),
+    );
   }
 
   if (typeof exifDate !== "string") return "";
 
   const [datePart, timePart] = exifDate.split(" ");
   if (!datePart || !timePart) return "";
-  const [y, m, d] = datePart.split(":");
-  const year = parseInt(y, 10) - 1911;
-  const [hh, mm] = timePart.split(":");
-  return `${year}/${m}/${d} ${hh}:${mm}`;
+  const [y, m, d] = datePart.split(":").map((part) => parseInt(part, 10));
+  const [hh, mm] = timePart.split(":").map((part) => parseInt(part, 10));
+  if ([y, m, d, hh, mm].some(Number.isNaN)) return "";
+  return format(y, m, d, hh, mm);
 };
 
 /**

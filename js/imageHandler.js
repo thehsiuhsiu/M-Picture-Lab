@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261029-2";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261029-3";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,26 +14,26 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261029-2";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261029-2";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261029-2";
+} from "./utils.js?v=20261029-3";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261029-3";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261029-3";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261029-2";
+} from "./photoNumbering.js?v=20261029-3";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261029-2";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261029-2";
+} from "./splitGroupLogic.js?v=20261029-3";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261029-3";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261029-2";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261029-2";
-import { attachDatePicker } from "./datePicker.js?v=20261029-2";
+} from "./annotations.js?v=20261029-3";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261029-3";
+import { attachDatePicker } from "./datePicker.js?v=20261029-3";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
