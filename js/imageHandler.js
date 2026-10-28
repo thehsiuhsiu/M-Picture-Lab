@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261028-1";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261028-2";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,25 +14,26 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261028-1";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261028-1";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261028-1";
+} from "./utils.js?v=20261028-2";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261028-2";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261028-2";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261028-1";
+} from "./photoNumbering.js?v=20261028-2";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261028-1";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261028-1";
+} from "./splitGroupLogic.js?v=20261028-2";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261028-2";
 import {
   hasAnnotations,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261028-1";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261028-1";
+} from "./annotations.js?v=20261028-2";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261028-2";
+import { attachDatePicker } from "./datePicker.js?v=20261028-2";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -879,6 +880,10 @@ const addImageToPreview = (imageData, counter) => {
     e.stopPropagation();
   });
   descriptionDiv.appendChild(dateInput);
+  attachDatePicker(dateInput, {
+    wrapperClass: "image-date-field",
+    getFallback: () => imageData.date || document.getElementById("caseDate")?.value || "",
+  });
 
   const dateWarning = document.createElement("span");
   dateWarning.className = "exif-date-warning";

@@ -1,4 +1,4 @@
-import { state } from "./state.js?v=20261028-1";
+import { state } from "./state.js?v=20261028-2";
 
 export const MIN_PHOTO_START_NUMBER = 1;
 export const MAX_PHOTO_START_NUMBER = 999;
