@@ -32,6 +32,9 @@
   --warning: #96600e;
   --warning-soft: #f8eedb;
   --overlay: rgba(24, 26, 29, 0.42);
+  --toast-bg: rgba(255, 255, 255, 0.62);
+  --toast-border: rgba(255, 255, 255, 0.7);
+  --toast-shadow: 0 10px 32px rgba(24, 26, 29, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --ring: 0 0 0 3px rgba(104, 125, 147, 0.4);
   --shadow-sm: 0 1px 2px rgba(24, 26, 29, 0.06);
   --shadow-md: 0 4px 16px rgba(24, 26, 29, 0.08), 0 1px 3px rgba(24, 26, 29, 0.06);
@@ -98,6 +101,9 @@ html[data-theme="dark"] {
   --warning: #e7b464;
   --warning-soft: rgba(231, 180, 100, 0.14);
   --overlay: rgba(0, 0, 0, 0.6);
+  --toast-bg: rgba(48, 48, 48, 0.55);
+  --toast-border: rgba(255, 255, 255, 0.1);
+  --toast-shadow: 0 10px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --ring: 0 0 0 3px rgba(188, 201, 214, 0.4);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
@@ -560,6 +566,41 @@ html[data-theme="dark"] .brand-mark {
 .project-more-btn[aria-expanded="true"] {
   background: var(--active);
   color: var(--text);
+}
+
+/* 刪除倒數中的專案：變灰、加刪除線，只能復原 */
+.project-list-item.is-deleting,
+.project-list-item.is-deleting:hover {
+  background: transparent;
+}
+
+.project-list-item.is-deleting .project-link {
+  padding-right: 64px;
+  cursor: default;
+}
+
+.project-list-item.is-deleting .project-link-name {
+  color: var(--text-3);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--text-3) 60%, transparent);
+}
+
+.project-undo-btn {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--accent-ink);
+  font-size: 12px;
+  transform: translateY(-50%);
+}
+
+.project-undo-btn:hover {
+  background: var(--accent-soft);
 }
 
 .nav-empty {
@@ -2392,10 +2433,14 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: var(--r-md);
-  background: var(--text);
-  color: var(--bg);
-  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--toast-border);
+  border-radius: 14px;
+  /* 磨砂毛玻璃：半透明，後面的畫面模糊透出 */
+  background: var(--toast-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
+  color: var(--text);
+  box-shadow: var(--toast-shadow);
   font-size: 14px;
   line-height: 1.5;
   opacity: 0;
@@ -2404,6 +2449,13 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
     opacity 0.2s ease,
     transform 0.2s ease;
   pointer-events: auto;
+}
+
+/* 不支援模糊的瀏覽器改用實色，確保字看得清楚 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .toast {
+    background: var(--surface);
+  }
 }
 
 .toast.show {
@@ -2417,15 +2469,106 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 }
 
 .toast.success .material-symbols-outlined {
-  color: color-mix(in srgb, var(--success) 70%, var(--bg));
+  color: var(--success);
 }
 
 .toast.error .material-symbols-outlined {
-  color: color-mix(in srgb, var(--danger) 70%, var(--bg));
+  color: var(--danger);
 }
 
 .toast.warning .material-symbols-outlined {
-  color: color-mix(in srgb, var(--warning) 70%, var(--bg));
+  color: var(--warning);
+}
+
+.toast.info .material-symbols-outlined {
+  color: var(--accent-strong);
+}
+
+/* 有「復原」按鈕的提示 */
+.toast.has-action {
+  align-items: center;
+  padding: 8px 8px 8px 14px;
+}
+
+.toast.has-action .material-symbols-outlined {
+  margin-top: 0;
+}
+
+.toast .toast-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.toast-undo-btn {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 78px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.toast-undo-btn:hover {
+  background: var(--hover);
+}
+
+.toast-undo-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.toast-undo-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.toast-undo-ring rect {
+  fill: none;
+  stroke-width: 2;
+}
+
+.toast-undo-ring .track {
+  stroke: color-mix(in srgb, var(--text-3) 28%, transparent);
+}
+
+/* 倒數圈：外框從滿到空 */
+.toast-undo-ring .progress {
+  stroke: var(--accent-ink);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  animation: toast-countdown var(--toast-countdown, 8s) linear forwards;
+}
+
+@keyframes toast-countdown {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: 100;
+  }
+}
+
+.toast-undo-seconds {
+  min-width: 1ch;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- 頂端列：檢視切換 ---------- */

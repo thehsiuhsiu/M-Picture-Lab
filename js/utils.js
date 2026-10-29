@@ -2,6 +2,41 @@
 
 // ============ Toast 通知函數 ============
 
+const TOAST_ICONS = {
+  success: "check_circle",
+  error: "error",
+  warning: "warning",
+  info: "info",
+};
+
+const createToast = (message, type) => {
+  const toastType = Object.prototype.hasOwnProperty.call(TOAST_ICONS, type) ? type : "info";
+  const toast = document.createElement("div");
+  toast.className = `toast ${toastType}`;
+
+  const icon = document.createElement("span");
+  icon.className = "material-symbols-outlined";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = TOAST_ICONS[toastType];
+
+  const text = document.createElement("span");
+  text.className = "toast-text";
+  text.textContent = String(message ?? "");
+
+  toast.append(icon, text);
+  return toast;
+};
+
+const presentToast = (container, toast) => {
+  container.appendChild(toast);
+  setTimeout(() => toast.classList.add("show"), 10);
+};
+
+const removeToast = (toast) => {
+  toast.classList.remove("show");
+  setTimeout(() => toast.remove(), 300);
+};
+
 /**
  * 顯示 toast 通知
  * @param {string} message - 通知訊息
@@ -11,44 +46,72 @@
 export const showToast = (message, type = "info", duration = 3000) => {
   const container = document.getElementById("toast-container");
   if (!container) return;
+  const toast = createToast(message, type);
+  presentToast(container, toast);
+  setTimeout(() => removeToast(toast), duration);
+};
 
-  const toast = document.createElement("div");
-  const iconMap = {
-    success: "check_circle",
-    error: "error",
-    warning: "warning",
-    info: "info",
+/**
+ * 顯示帶「復原」按鈕的提示，按鈕外框是倒數圈。
+ * 倒數由呼叫端決定何時結束（呼叫回傳的 dismiss）；按下復原會呼叫 onUndo。
+ * @returns {{ dismiss: () => void }}
+ */
+export const showUndoToast = (message, { duration = 8000, onUndo } = {}) => {
+  const container = document.getElementById("toast-container");
+  if (!container) return { dismiss: () => {} };
+  const toast = createToast(message, "success");
+  toast.classList.add("has-action");
+  toast.style.setProperty("--toast-countdown", `${duration}ms`);
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "toast-undo-btn";
+  const svgNs = "http://www.w3.org/2000/svg";
+  const ring = document.createElementNS(svgNs, "svg");
+  ring.setAttribute("class", "toast-undo-ring");
+  ring.setAttribute("viewBox", "0 0 78 34");
+  ring.setAttribute("aria-hidden", "true");
+  for (const className of ["track", "progress"]) {
+    const rect = document.createElementNS(svgNs, "rect");
+    rect.setAttribute("class", className);
+    rect.setAttribute("x", "1");
+    rect.setAttribute("y", "1");
+    rect.setAttribute("width", "76");
+    rect.setAttribute("height", "32");
+    rect.setAttribute("rx", "16");
+    rect.setAttribute("pathLength", "100");
+    ring.appendChild(rect);
+  }
+  const label = document.createElement("span");
+  label.textContent = "復原";
+  const seconds = document.createElement("span");
+  seconds.className = "toast-undo-seconds";
+  button.append(ring, label, seconds);
+  toast.appendChild(button);
+
+  const endsAt = Date.now() + duration;
+  const updateSeconds = () => {
+    const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    seconds.textContent = String(left);
+    button.setAttribute("aria-label", `復原（剩 ${left} 秒）`);
   };
-  const toastType = Object.prototype.hasOwnProperty.call(iconMap, type)
-    ? type
-    : "info";
+  updateSeconds();
+  const ticker = setInterval(updateSeconds, 250);
 
-  toast.className = `toast ${toastType}`;
+  let dismissed = false;
+  const dismiss = () => {
+    if (dismissed) return;
+    dismissed = true;
+    clearInterval(ticker);
+    removeToast(toast);
+  };
+  button.addEventListener("click", () => {
+    dismiss();
+    onUndo?.();
+  });
 
-  const icon = document.createElement("span");
-  icon.className = "material-symbols-outlined";
-  icon.textContent = iconMap[toastType];
-
-  const text = document.createElement("span");
-  text.textContent = String(message ?? "");
-
-  toast.appendChild(icon);
-  toast.appendChild(text);
-
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.classList.add("show");
-  }, 10);
-
-  setTimeout(() => {
-    toast.classList.remove("show");
-    setTimeout(() => {
-      if (toast.parentNode) {
-        toast.parentNode.removeChild(toast);
-      }
-    }, 300);
-  }, duration);
+  presentToast(container, toast);
+  return { dismiss };
 };
 
 // ============ 對話框 ============
