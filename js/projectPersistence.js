@@ -1,6 +1,6 @@
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261029-3";
-import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261029-3";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261029-3";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261029-4";
+import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261029-4";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261029-4";
 import {
   createObjectUrl,
   revokeObjectUrl,
@@ -8,10 +8,11 @@ import {
   showNotice,
   showPromptDialog,
   showToast,
-} from "./utils.js?v=20261029-3";
-import { normalizeAnnotations } from "./annotations.js?v=20261029-3";
-import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261029-3";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261029-3";
+  showUndoToast,
+} from "./utils.js?v=20261029-4";
+import { normalizeAnnotations } from "./annotations.js?v=20261029-4";
+import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261029-4";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261029-4";
 
 const DATABASE_NAME = "mpicture-local-projects-v1";
 const DATABASE_VERSION = 3;
@@ -1527,27 +1528,20 @@ const togglePinProject = async (id) => {
   showToast(pinned ? "已釘選到清單最上方" : "已取消釘選", "success");
 };
 
-const deleteProject = async (id) => {
-  const meta =
-    projectIndex.find((item) => item.id === id) ||
-    (id === currentProject?.id ? currentProject : null);
-  if (!meta) return;
-  const confirmed = await showDialog({
-    title: `刪除「${getDisplayName(meta)}」？`,
-    message:
-      "專案中的照片和填寫的資料都會從這台裝置刪除，無法復原。需要保留的話，請先用「輸出」選單匯出加密專案。",
-    tone: "danger",
-    confirmText: "刪除專案",
-    cancelText: "取消",
-  });
-  if (!confirmed) return;
+// 刪除專案後先等一段時間才真正刪除，這段時間內可按「復原」。
+// 倒數中關掉或重新整理網頁，專案會保留（資料還沒刪）。
+const UNDO_DELETE_MS = 8000;
+const pendingDeletions = new Map(); // id → { timer, toast, wasCurrent }
+
+const isPendingDeletion = (id) => pendingDeletions.has(id);
+
+const finalizeDeletion = async (id) => {
+  const pending = pendingDeletions.get(id);
+  if (!pending) return;
+  pendingDeletions.delete(id);
+  pending.toast.dismiss();
   try {
-    const isCurrent = id === currentProject?.id;
-    if (isCurrent) {
-      window.clearTimeout(autosaveTimer);
-      dirty = false;
-    }
-    if (meta.isStored !== false) await deleteProjectData(id);
+    await deleteProjectData(id);
     try {
       if (localStorage.getItem(LAST_PROJECT_STORAGE_KEY) === id) {
         localStorage.removeItem(LAST_PROJECT_STORAGE_KEY);
@@ -1555,9 +1549,58 @@ const deleteProject = async (id) => {
     } catch (_error) {
       // 忽略
     }
-    if (isCurrent) await startNewProject();
-    await refreshProjectList();
-    showToast("專案已刪除", "success");
+  } catch (error) {
+    console.error("刪除專案失敗:", error);
+    showToast("無法完整刪除專案資料", "error");
+  }
+  await refreshProjectList();
+};
+
+const undoDeletion = async (id) => {
+  const pending = pendingDeletions.get(id);
+  if (!pending) return;
+  clearTimeout(pending.timer);
+  pendingDeletions.delete(id);
+  pending.toast.dismiss();
+  await refreshProjectList();
+  if (pending.wasCurrent) await openProject(id);
+};
+
+const deleteProject = async (id) => {
+  if (isPendingDeletion(id)) return;
+  const meta =
+    projectIndex.find((item) => item.id === id) ||
+    (id === currentProject?.id ? currentProject : null);
+  if (!meta) return;
+  const name = getDisplayName(meta);
+  const confirmed = await showDialog({
+    title: `刪除「${name}」？`,
+    message:
+      "專案中的照片和填寫的資料都會從這台裝置刪除。刪除後 8 秒內可按「復原」，之後就無法復原。需要保留的話，請先用「輸出」選單匯出加密專案。",
+    tone: "danger",
+    confirmText: "刪除專案",
+    cancelText: "取消",
+  });
+  if (!confirmed) return;
+  const wasCurrent = id === currentProject?.id;
+  try {
+    if (meta.isStored === false) {
+      // 還沒存進裝置的新專案：沒有資料可刪，直接換成新專案
+      if (wasCurrent) await startNewProject();
+      return;
+    }
+    if (wasCurrent) {
+      // 先把最後的修改存好，復原時才會原封不動
+      await flushPendingSave();
+      await startNewProject();
+    }
+    const toast = showUndoToast(`「${name}」已刪除`, {
+      duration: UNDO_DELETE_MS,
+      onUndo: () => undoDeletion(id),
+    });
+    const timer = setTimeout(() => finalizeDeletion(id), UNDO_DELETE_MS);
+    pendingDeletions.set(id, { timer, toast, wasCurrent });
+    renderProjectList();
   } catch (error) {
     console.error("刪除專案失敗:", error);
     showToast("無法完整刪除專案資料", "error");
@@ -1730,6 +1773,26 @@ const createProjectListItem = (meta) => {
     if (isCurrent) return;
     openProject(meta.id);
   });
+  if (isPendingDeletion(meta.id)) {
+    // 刪除倒數中：變灰、不能打開，只能復原
+    item.classList.add("is-deleting");
+    openButton.disabled = true;
+    detail.classList.remove("project-save-status");
+    detail.removeAttribute("role");
+    detail.removeAttribute("aria-live");
+    detail.textContent = "刪除中…";
+    const undoButton = document.createElement("button");
+    undoButton.type = "button";
+    undoButton.className = "project-undo-btn";
+    undoButton.textContent = "復原";
+    undoButton.setAttribute("aria-label", `復原「${getDisplayName(meta)}」`);
+    undoButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      undoDeletion(meta.id);
+    });
+    item.append(openButton, undoButton);
+    return item;
+  }
   if (!meta.isStored) {
     // 尚未儲存的新專案：只標示目前位置，沒有改名或刪除可做
     item.append(openButton);
