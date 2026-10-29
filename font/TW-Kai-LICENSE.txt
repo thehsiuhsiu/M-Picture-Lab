@@ -1,0 +1,21 @@
+全字庫正楷體（TW-Kai）授權說明
+================================
+
+檔案：TW-Kai-1.ttf、TW-Kai-2.ttf、TW-Kai-3.ttf
+
+來源：國家發展委員會／全字庫網站（CNS11643 中文標準交換碼全字庫）
+  https://www.cns11643.gov.tw/
+  https://data.gov.tw/dataset/5961
+
+授權：政府資料開放授權條款－第1版
+  https://data.gov.tw/license
+
+原始字型檔內的版權標示：(c) Copyright IMC, DGBAS Executive Yuan R.O.C. 2005-
+
+修改說明：為了只下載需要的部分，原字型檔依 Big5 字頻分成三個檔案
+（常用字、次常用字、罕用字）；字形本身未修改。
+
+Attribution (Open Government Data License, version 1.0):
+This project uses "TW-Kai" (全字庫正楷體) from the CNS11643 font collection
+provided by the National Development Council, R.O.C. (Taiwan). The original
+font was split into three files by Big5 frequency level; glyphs are unchanged.
