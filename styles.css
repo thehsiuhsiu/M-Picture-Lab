@@ -2646,7 +2646,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 }
 
 /* 版型切換放在案件資料卡片的標題位置：展開時當標題，收合時收起、改顯示版型名稱與摘要。
-   卡片四周內距一律 10px，欄位與版型按鈕左右都切齊；「收合」按鈕本身右側有 6px 內距，用負邊距抵掉，箭頭也對齊 10px */
+   卡片四周內距一律 10px，欄位、版型按鈕與「編輯／收合」按鈕的外框都離卡片邊 10px（上下左右一致） */
 .case-card-header {
   min-height: 0;
   padding: 10px;
@@ -2699,8 +2699,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   align-items: center;
   gap: 2px;
   margin-left: auto;
-  margin-right: -6px;
-  padding: 0 6px 0 12px;
+  padding: 0 8px 0 12px;
   border: 0;
   border-radius: var(--r-sm);
   background: transparent;
@@ -2709,9 +2708,17 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   font-weight: 500;
 }
 
-.case-card-toggle:hover {
-  background: var(--hover);
-  color: var(--text);
+/* 只在有滑鼠的裝置顯示懸停底色；手機點完不會一直留著灰底 */
+@media (hover: hover) {
+  .case-card-toggle:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
+}
+
+.case-card-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
 }
 
 .case-card-toggle .material-symbols-outlined {
