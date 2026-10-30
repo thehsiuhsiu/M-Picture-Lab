@@ -2646,10 +2646,10 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
 }
 
 /* 版型切換放在案件資料卡片的標題位置：展開時當標題，收合時收起、改顯示版型名稱與摘要。
-   卡片四周內距一律 10px，欄位與版型按鈕切齊；「收合」按鈕本身右側有 6px 內距，所以右邊只留 4px */
+   卡片四周內距一律 10px，欄位與版型按鈕左右都切齊；「收合」按鈕本身右側有 6px 內距，用負邊距抵掉，箭頭也對齊 10px */
 .case-card-header {
   min-height: 0;
-  padding: 10px 4px 10px 10px;
+  padding: 10px;
 }
 
 .case-card-header h2 {
@@ -2699,6 +2699,7 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   align-items: center;
   gap: 2px;
   margin-left: auto;
+  margin-right: -6px;
   padding: 0 6px 0 12px;
   border: 0;
   border-radius: var(--r-sm);
