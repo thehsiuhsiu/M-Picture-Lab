@@ -901,6 +901,14 @@ html:not([data-theme-mode]) .theme-toggle-icon .theme-icon-system {
 }
 
 /* 日期列：標籤在左、開關與說明在右 */
+/* 依版型顯示欄位：直接用 body 的版型 class 決定，
+   網頁剛載入、程式還沒跑完時也只會看到目前版型的欄位，不會三個「文件標題」一起閃過 */
+body.format-left :is(#caseCard, #layoutSettings) [data-format]:not([data-format~="left"]),
+body.format-middle :is(#caseCard, #layoutSettings) [data-format]:not([data-format~="middle"]),
+body.format-right :is(#caseCard, #layoutSettings) [data-format]:not([data-format~="right"]) {
+  display: none;
+}
+
 .form-group-row[data-format] {
   margin-bottom: -6px;
 }
