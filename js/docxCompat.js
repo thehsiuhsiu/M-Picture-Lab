@@ -6,6 +6,7 @@
  * 1. 百分比寬度寫成 "100%"；舊版只接受「五十分之一百分比」的整數（100% = 5000）。
  * 2. 文字格式 <w:rPr> 裡的子元素順序不符合規格（例如字型排在字級後面）。
  * 3. 每張圖片的 <wp:docPr id> 都是 0；舊版要求每張圖的編號不重複。
+ * 另外 docx 套件把固定行高寫成 lineRule="exactly"，規格的值是 "exact"（各版 Word 與 LibreOffice 才認得）。
  */
 
 const W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
@@ -45,6 +46,9 @@ const sortRunProperties = (xml) =>
 const numberDrawings = (xml, counter) =>
   xml.replace(/<wp:docPr id="\d+"/g, () => `<wp:docPr id="${counter.next++}"`);
 
+const fixLineRule = (xml) =>
+  xml.replace(/(<w:spacing\b[^<>]*?\sw:lineRule=")exactly"/g, '$1exact"');
+
 const PARTS = /^word\/(document|header\d*|footer\d*|footnotes|endnotes|styles|numbering)\.xml$/;
 
 export const makeWord2007Compatible = async (blob) => {
@@ -58,7 +62,7 @@ export const makeWord2007Compatible = async (blob) => {
     for (const name of names) {
       const original = await zip.file(name).async("string");
       if (!original.includes(W_NS)) continue;
-      const fixed = numberDrawings(sortRunProperties(fixPercentages(original)), counter);
+      const fixed = numberDrawings(sortRunProperties(fixPercentages(fixLineRule(original))), counter);
       if (fixed !== original) zip.file(name, fixed);
     }
     // 重新打包：只放檔案、不放資料夾項目，[Content_Types].xml 放第一個
