@@ -2024,6 +2024,21 @@ body.format-right .exif-date-warning {
 
 /* ---------- 對話框 ---------- */
 
+/* 處理專案中：馬上擋住點擊，但 0.4 秒內做完就不顯示，切換專案不會閃一下灰色畫面 */
+#projectBusyModal {
+  animation: project-busy-appear 0.15s ease 0.4s both;
+}
+
+@keyframes project-busy-appear {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .modal {
   position: fixed;
   inset: 0;

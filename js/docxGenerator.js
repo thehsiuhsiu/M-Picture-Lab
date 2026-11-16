@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js：產生 Word 文件（刑案、交通事故兩種版型；多格照片只能輸出 PDF）
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261116-2";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261116-3";
 import {
   getFormattedDate,
   showLoadingModal,
@@ -8,10 +8,10 @@ import {
   blobToArrayBuffer,
   showToast,
   showDialog,
-} from "./utils.js?v=20261116-2";
-import { createDocumentImageBlob } from "./annotations.js?v=20261116-2";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261116-2";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261116-2";
+} from "./utils.js?v=20261116-3";
+import { createDocumentImageBlob } from "./annotations.js?v=20261116-3";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261116-3";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261116-3";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
