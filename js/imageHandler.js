@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-5";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-7";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,19 +14,19 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261121-5";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261121-5";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-5";
+} from "./utils.js?v=20261121-7";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261121-7";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-7";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261121-5";
+} from "./photoNumbering.js?v=20261121-7";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261121-5";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-5";
-import { updateLineHint } from "./lineLimitHints.js?v=20261121-5";
+} from "./splitGroupLogic.js?v=20261121-7";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-7";
+import { updateLineHint } from "./lineLimitHints.js?v=20261121-7";
 import {
   createAnnotatedBlob,
   getDisplaySize,
@@ -38,9 +38,9 @@ import {
   rotateAnnotations,
   releaseAnnotatedPreview,
   swapAspect,
-} from "./annotations.js?v=20261121-5";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-5";
-import { attachDatePicker } from "./datePicker.js?v=20261121-5";
+} from "./annotations.js?v=20261121-7";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-7";
+import { attachDatePicker } from "./datePicker.js?v=20261121-7";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -1251,7 +1251,7 @@ export const showMissingExifDateWarning = () => {
   closeExifWarningModal?.();
   message.textContent = `照片編號 ${missingDates
     .map(({ number }) => number)
-    .join("、")} 沒有可用的拍攝日期，請手動填寫。`;
+    .join("、")} 沒有可用的拍攝日期，請手動填寫；如未填寫，則統一套用案件資料的攝影日期。`;
 
   const handleKeydown = (event) => {
     if (event.key === "Escape") closeExifWarningModal?.();

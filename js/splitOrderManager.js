@@ -1,12 +1,12 @@
-import { state } from "./state.js?v=20261121-5";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261121-5";
-import { showDialog, showToast } from "./utils.js?v=20261121-5";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261121-5";
+import { state } from "./state.js?v=20261121-7";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261121-7";
+import { showDialog, showToast } from "./utils.js?v=20261121-7";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261121-7";
 import {
   acceptCurrentSplitGroupForImages,
   getSplitGroupIntegrityForImages,
   restoreSplitGroupAtCurrentPositionForImages,
-} from "./splitGroupLogic.js?v=20261121-5";
+} from "./splitGroupLogic.js?v=20261121-7";
 
 let dismissedFingerprint = "";
 
