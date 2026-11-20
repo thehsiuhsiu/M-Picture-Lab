@@ -1,8 +1,8 @@
 // documentLayout.js - 版面規格：刑事案件與交通事故版型的 Word、列印、PDF 檔案、版面預覽共用
 // 所有排版數字以 Word 為準（見 docs/adr/0005-shared-layout-spec.md）。
 
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-9";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261121-9";
+import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-10";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261121-10";
 
 // ============ 頁面（A4，單位 mm） ============
 export const PAGE = Object.freeze({
@@ -400,11 +400,16 @@ ${scope} .doc-table td.doc-photo {
   text-align: center;
   white-space: normal;
 }
+/* 照片在照片框裡上下、左右都置中（和 Word 相同） */
+${scope} .doc-photo-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 ${scope} .doc-photo img {
   display: block;
   max-width: 100%;
   max-height: 100%;
-  margin: 0 auto;
   object-fit: contain;
 }
 `;
@@ -420,7 +425,7 @@ const value = (text, { span = 1, align = "doc-left", lines = 1 } = {}) =>
 
 const photoRow = (src, frameHeight) => {
   const inner = mm(frameHeight - 2 * PHOTO_GAP_MM);
-  return `<tr><td class="doc-photo" colspan="6" style="height:${mm(frameHeight)}"><div style="height:${inner}"><img src="${escapeHtml(src)}" alt=""></div></td></tr>`;
+  return `<tr><td class="doc-photo" colspan="6" style="height:${mm(frameHeight)}"><div class="doc-photo-box" style="height:${inner}"><img src="${escapeHtml(src)}" alt=""></div></td></tr>`;
 };
 
 const caseHeaderTable = (formData) => {
