@@ -519,9 +519,9 @@ const createCaseHeaderTable = (docx, layout, formData) =>
   createTable(docx, layout, [
     textRow(docx, [
       labelCell(docx, layout, 0, "案由"),
-      textCell(docx, layout, 1, formData.caseReason, 2, docx.AlignmentType.CENTER),
+      textCell(docx, layout, 1, formData.caseReason, 2),
       labelCell(docx, layout, 3, "單位"),
-      textCell(docx, layout, 4, formData.caseUnit, 2, docx.AlignmentType.CENTER),
+      textCell(docx, layout, 4, formData.caseUnit, 2),
     ]),
   ]);
 
