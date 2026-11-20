@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261121-1";
-import { createObjectUrl, revokeObjectUrl, resizeImageForDoc } from "./utils.js?v=20261121-1";
+import { state } from "./state.js?v=20261121-2";
+import { createObjectUrl, revokeObjectUrl, resizeImageForDoc } from "./utils.js?v=20261121-2";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
@@ -151,7 +151,8 @@ export const ASPECT_PRESETS = Object.freeze([
   Object.freeze([16, 9]),
   Object.freeze([4, 3]),
 ]);
-export const MAX_ASPECT_PART = 50;
+// 拖曳出來的比例存成 [185, 100] 這類數字，所以上限放寬
+export const MAX_ASPECT_PART = 9999;
 export const MAX_ASPECT_RATIO = 5;
 // 拉伸後的照片最多約 1600 萬畫素（原圖更大時以原圖為上限），避免手機瀏覽器畫不出來
 const MAX_STRETCHED_PIXELS = 16_777_216;

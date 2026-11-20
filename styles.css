@@ -5393,3 +5393,80 @@ body.annotate-open {
     flex: 0 0 auto;
   }
 }
+
+/* 編輯視窗：拖曳把手直接拉照片 */
+#annotateCanvas.is-aspect-mode {
+  cursor: default;
+}
+
+.annotate-aspect-handle {
+  position: absolute;
+  z-index: 3;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ffffff;
+  border-radius: 4px;
+  background: #2f6fde;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  touch-action: none;
+}
+
+.annotate-aspect-handle[hidden] {
+  display: none;
+}
+
+.annotate-aspect-handle.handle-n,
+.annotate-aspect-handle.handle-s {
+  left: 50%;
+  width: 36px;
+  height: 10px;
+  margin-left: -18px;
+  cursor: ns-resize;
+}
+
+.annotate-aspect-handle.handle-e,
+.annotate-aspect-handle.handle-w {
+  top: 50%;
+  width: 10px;
+  height: 36px;
+  margin-top: -18px;
+  cursor: ew-resize;
+}
+
+.annotate-aspect-handle.handle-n { top: -6px; }
+.annotate-aspect-handle.handle-s { bottom: -6px; }
+.annotate-aspect-handle.handle-e { right: -6px; }
+.annotate-aspect-handle.handle-w { left: -6px; }
+.annotate-aspect-handle.handle-nw { top: -8px; left: -8px; cursor: nwse-resize; }
+.annotate-aspect-handle.handle-se { bottom: -8px; right: -8px; cursor: nwse-resize; }
+.annotate-aspect-handle.handle-ne { top: -8px; right: -8px; cursor: nesw-resize; }
+.annotate-aspect-handle.handle-sw { bottom: -8px; left: -8px; cursor: nesw-resize; }
+
+.annotate-aspect-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(31, 30, 29, 0.78);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.annotate-aspect-badge[hidden] {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .annotate-aspect-handle.handle-nw,
+  .annotate-aspect-handle.handle-ne,
+  .annotate-aspect-handle.handle-sw,
+  .annotate-aspect-handle.handle-se {
+    width: 22px;
+    height: 22px;
+  }
+}

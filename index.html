@@ -50,7 +50,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.js" integrity="sha384-mjCisVk+9cQGYprByJbHxzwFO7BVEgR6iCftsCqnmHNKA8uzLYoRng5h1qKMvHjp" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js" integrity="sha384-KrOocIA+lZcNUz2MDavnT/FuX+CbTREJihUi0bp8QUSwhE2AkGTNpv2b7yMbBkx5" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="styles.css?v=20261121-1" />
+    <link rel="stylesheet" href="styles.css?v=20261121-2" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;600&amp;display=swap"
       rel="stylesheet"
@@ -1188,10 +1188,10 @@
                   <button type="button" class="annotate-aspect-btn" role="radio" aria-checked="false" data-annotate-aspect="4:3">4:3</button>
                   <button type="button" class="annotate-aspect-btn" role="radio" aria-checked="false" data-annotate-aspect="custom">自訂</button>
                 </div>
-                <div class="annotate-aspect-custom">
-                  <input type="number" id="annotateAspectWidth" class="annotate-aspect-input" min="1" max="50" step="1" inputmode="numeric" placeholder="寬" aria-label="自訂比例的寬" />
+                <div class="annotate-aspect-custom" id="annotateAspectCustom" hidden>
+                  <input type="number" id="annotateAspectWidth" class="annotate-aspect-input" min="1" max="9999" step="1" inputmode="numeric" placeholder="寬" aria-label="自訂比例的寬" />
                   <span aria-hidden="true">:</span>
-                  <input type="number" id="annotateAspectHeight" class="annotate-aspect-input" min="1" max="50" step="1" inputmode="numeric" placeholder="高" aria-label="自訂比例的高" />
+                  <input type="number" id="annotateAspectHeight" class="annotate-aspect-input" min="1" max="9999" step="1" inputmode="numeric" placeholder="高" aria-label="自訂比例的高" />
                   <button type="button" id="annotateAspectApplyBtn" class="annotate-aspect-apply">套用</button>
                 </div>
               </div>
@@ -1344,7 +1344,7 @@
       </div>
     </div>
 
-    <script type="module" src="js/main.js?v=20261121-1"></script>
+    <script type="module" src="js/main.js?v=20261121-2"></script>
 
 
     <div id="consentModal" class="modal consent-modal" aria-hidden="true">
@@ -1552,7 +1552,7 @@
         <section>
           <h3>監視器照片被壓成正方形，可以拉回原本的比例嗎？</h3>
           <p>
-            可以。在編輯視窗按左側工具列下方的「比例」，選「16:9」或「4:3」，或按「自訂」輸入寬和高再按「套用」；按「完成」才會保存。照片只會拉寬或拉高、不會裁掉任何內容，原圖也不會改變，之後隨時可以改回「原始」。旋轉時比例會跟著轉；照片上的標記會跟著移到對應位置，文字與編號不會被拉扁。分割長截圖前會提醒：比例會直接套用到照片，之後無法再改回。
+            可以。在編輯視窗按左側工具列下方的「比例」，直接拖曳照片四周的把手拉寬或拉高（接近 16:9、4:3 會自動對齊，按住 Alt 可不對齊），或選「16:9」「4:3」，也可以按「自訂」輸入寬和高再按「套用」；按「完成」才會保存。照片只會拉寬或拉高、不會裁掉任何內容，原圖也不會改變，之後隨時可以改回「原始」。旋轉時比例會跟著轉；照片上的標記會跟著移到對應位置，文字與編號不會被拉扁。分割長截圖前會提醒：比例會直接套用到照片，之後無法再改回。
           </p>
         </section>
 
