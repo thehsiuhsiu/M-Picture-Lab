@@ -49,6 +49,17 @@ const numberDrawings = (xml, counter) =>
 const fixLineRule = (xml) =>
   xml.replace(/(<w:spacing\b[^<>]*?\sw:lineRule=")exactly"/g, '$1exact"');
 
+/**
+ * 關閉 Word「自動調整中文與英數字間距」：Word 預設會在中文與數字之間多塞一點空白，
+ * 例如「115年11月20日」變成「115 年 11 月 20 日」，日期就擠成兩行，也和列印、PDF 的排版不同。
+ * 只在 Normal 樣式加上設定（其他段落都繼承它）；依規格放在 <w:spacing> 前面。
+ */
+const disableAsianAutoSpace = (xml) =>
+  xml.replace(
+    /(<w:style\b[^>]*w:styleId="Normal"[^>]*>[\s\S]*?<w:pPr>)(?!<w:autoSpaceDE)/,
+    '$1<w:autoSpaceDE w:val="0"/><w:autoSpaceDN w:val="0"/>',
+  );
+
 const PARTS = /^word\/(document|header\d*|footer\d*|footnotes|endnotes|styles|numbering)\.xml$/;
 
 export const makeWord2007Compatible = async (blob) => {
@@ -62,7 +73,8 @@ export const makeWord2007Compatible = async (blob) => {
     for (const name of names) {
       const original = await zip.file(name).async("string");
       if (!original.includes(W_NS)) continue;
-      const fixed = numberDrawings(sortRunProperties(fixPercentages(fixLineRule(original))), counter);
+      let fixed = numberDrawings(sortRunProperties(fixPercentages(fixLineRule(original))), counter);
+      if (name === "word/styles.xml") fixed = disableAsianAutoSpace(fixed);
       if (fixed !== original) zip.file(name, fixed);
     }
     // 重新打包：只放檔案、不放資料夾項目，[Content_Types].xml 放第一個
