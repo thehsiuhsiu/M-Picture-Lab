@@ -1,18 +1,18 @@
 // documentLayout.js - 版面規格：刑事案件與交通事故版型的 Word、列印、PDF 檔案、版面預覽共用
 // 所有排版數字以 Word 為準（見 docs/adr/0005-shared-layout-spec.md）。
 
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-8";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261121-8";
+import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-9";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261121-9";
 
 // ============ 頁面（A4，單位 mm） ============
 export const PAGE = Object.freeze({
   width: 210,
   height: 297,
-  marginTop: 20,
+  marginTop: 22,
   marginBottom: 10,
   marginSide: 24,
-  // 標題離紙張上緣：10mm，標題用固定行高，底部約在 18.5mm，仍在表格開始的 20mm 之上，版面不受影響
-  headerDistance: 10,
+  // 標題離紙張上緣 12mm，固定行高，底部約在 20.5mm，仍在表格開始的 22mm 之上
+  headerDistance: 12,
   footerDistance: 5, // 頁碼離紙張下緣
 });
 
@@ -24,7 +24,7 @@ export const BODY_HEIGHT_MM = PAGE.height - PAGE.marginTop - PAGE.marginBottom;
 // ============ 文字 ============
 export const FONT_PT = 12; // 表格文字
 export const TITLE_PT = 22; // 文件標題
-export const TITLE_LINE_PT = 24; // 標題固定行高（10mm＋約 8.5mm，仍在表格開始的 20mm 之上）
+export const TITLE_LINE_PT = 24; // 標題固定行高（12mm＋約 8.5mm，仍在表格開始的 22mm 之上）
 export const PAGE_NUMBER_PT = 10; // 頁碼
 export const LINE_PT = 15; // 固定行高
 export const LINE_TWIPS = LINE_PT * 20;

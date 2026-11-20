@@ -1,9 +1,9 @@
-import { state, FORMAT_TITLES } from "./state.js?v=20261121-8";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-8";
+import { state, FORMAT_TITLES } from "./state.js?v=20261121-9";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-9";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261121-8";
+} from "./multiPhotoLayout.js?v=20261121-9";
 import {
   buildSheetCss,
   buildSheetHtml,
@@ -12,11 +12,11 @@ import {
   isLayoutFormat,
   planPages,
   readFormData,
-} from "./documentLayout.js?v=20261121-8";
+} from "./documentLayout.js?v=20261121-9";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js?v=20261121-8";
+} from "./pageNumbering.js?v=20261121-9";
 
 const PREVIEW_UPDATE_DELAY_MS = 220;
 const MIN_ZOOM = 0.3;
