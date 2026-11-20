@@ -864,6 +864,14 @@ const addImageToPreview = (imageData, counter) => {
   img.draggable = false;
   frame.appendChild(img);
   frame.appendChild(createPhotoTools(imageData.id));
+  // 卡片模式下顯示原檔名，方便辨認是哪一張照片
+  if (imageData.name) {
+    const fileName = document.createElement("p");
+    fileName.className = "image-file-name";
+    fileName.textContent = imageData.name;
+    fileName.title = imageData.name;
+    frame.appendChild(fileName);
+  }
   if (needsComposite(imageData.id)) {
     queueMicrotask(() =>
       updateCardImage(imageData).catch((error) =>
