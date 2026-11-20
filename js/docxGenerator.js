@@ -40,16 +40,16 @@ const TEXT_WIDTH_TWIPS = 11906 - 2 * Math.round((PAGE.marginSide / 25.4) * 1440)
 const TEXT_WIDTH_MM = (TEXT_WIDTH_TWIPS / 1440) * 25.4;
 const BODY_HEIGHT_MM = PAGE.height - PAGE.marginTop - PAGE.marginBottom;
 
-// 表格文字：11.5 點標楷體、固定行高 15 點，行數才能準確估算
-const FONT_HALF_POINTS = 23;
+// 表格文字：12 點標楷體、固定行高 15 點，行數才能準確估算
+const FONT_HALF_POINTS = 24;
 const FONT_EM_MM = (FONT_HALF_POINTS / 2 / 72) * 25.4;
 const LINE_TWIPS = 300;
 const LINE_MM = (LINE_TWIPS / 20 / 72) * 25.4;
 const CELL_SIDE_PADDING_TWIPS = 108; // Word 預設儲存格左右內距各 0.19 cm
 const CELL_PADDING_MM = (2 * CELL_SIDE_PADDING_TWIPS * 25.4) / 1440;
 // Word 的「固定行高」會把多出來的行距都放在文字上方，文字看起來偏下。
-// 儲存格下方補同樣大小的內距（約 3 點），上下留白才會一樣
-const TEXT_BOTTOM_PADDING_TWIPS = 60;
+// 儲存格下方補同樣大小的內距（約 2.5 點），上下留白才會一樣
+const TEXT_BOTTOM_PADDING_TWIPS = 50;
 const TEXT_BOTTOM_PADDING_MM = (TEXT_BOTTOM_PADDING_TWIPS / 1440) * 25.4;
 const ROW_EXTRA_MM = 0.4 + TEXT_BOTTOM_PADDING_MM; // 框線＋下方內距
 const TINY_PARAGRAPH_MM = 0.5; // 換頁與文件結尾用的極小段落
