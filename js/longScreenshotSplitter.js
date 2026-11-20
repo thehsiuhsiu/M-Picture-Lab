@@ -1,22 +1,23 @@
-import { state } from "./state.js?v=20261116-3";
+import { state } from "./state.js?v=20261121-1";
 import {
   IMAGE_SECURITY_LIMITS,
   buildImageRecord,
   replaceImageWithPreparedImages,
   registerSplitHandler,
-} from "./imageHandler.js?v=20261116-3";
+  applyAspectToImage,
+} from "./imageHandler.js?v=20261121-1";
 import {
   getSplitGroupIntegrity,
   restoreSplitGroup,
-} from "./splitOrderManager.js?v=20261116-3";
-import { hasAnnotations } from "./annotations.js?v=20261116-3";
+} from "./splitOrderManager.js?v=20261121-1";
+import { formatAspect, getAspect, hasAnnotations, hasAspect } from "./annotations.js?v=20261121-1";
 import {
   createObjectUrl,
   revokeObjectUrl,
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261116-3";
+} from "./utils.js?v=20261121-1";
 
 const TARGET_HEIGHT_RATIO = Object.freeze({ 2: 22 / 9, 4: 4 / 3 });
 const ANALYSIS_WIDTH = 256;
@@ -417,6 +418,27 @@ const openForSelectedImage = async ({ fromEditor = false, onCancel = null } = {}
       cancelText: "取消",
     });
     if (!shouldContinue) return abort();
+  }
+
+  // 分段要照調整後的比例切：先把比例套用進照片（見 docs/adr/0004）
+  if (hasAspect(record.id)) {
+    const shouldApply = await showDialog({
+      title: "這張照片調整過比例",
+      message: `分割前會把 ${formatAspect(getAspect(record.id))} 的比例直接套用到照片，之後無法再改回原始比例。`,
+      tone: "warning",
+      confirmText: "套用比例並繼續",
+      cancelText: "取消",
+    });
+    if (!shouldApply) return abort();
+    try {
+      await applyAspectToImage(record.id);
+    } catch (error) {
+      console.warn("套用比例失敗:", error);
+      showToast("無法套用比例，請再試一次", "error");
+      return abort();
+    }
+    record = state.selectedImages.find((image) => image.id === state.editingImageId);
+    if (!record) return abort();
   }
 
   if (record.splitGroupId) {

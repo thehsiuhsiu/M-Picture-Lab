@@ -1,6 +1,6 @@
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261116-3";
-import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261116-3";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261116-3";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-1";
+import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261121-1";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-1";
 import {
   createObjectUrl,
   revokeObjectUrl,
@@ -9,10 +9,10 @@ import {
   showPromptDialog,
   showToast,
   showUndoToast,
-} from "./utils.js?v=20261116-3";
-import { normalizeAnnotations } from "./annotations.js?v=20261116-3";
-import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261116-3";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261116-3";
+} from "./utils.js?v=20261121-1";
+import { normalizeAnnotations, normalizeAspect } from "./annotations.js?v=20261121-1";
+import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261121-1";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261121-1";
 
 const DATABASE_NAME = "mpicture-local-projects-v1";
 const DATABASE_VERSION = 3;
@@ -488,6 +488,7 @@ const normalizeImageMetadata = (rawImage, index, sourceVersion) => {
       "splitPartCount",
       "sourceFileName",
       "annotations",
+      "aspect",
       "blob",
     ]),
     `第 ${index + 1} 張圖片`,
@@ -572,6 +573,7 @@ const normalizeImageMetadata = (rawImage, index, sourceVersion) => {
     ),
     accidentTags: normalizeAccidentTags(image.accidentTags || {}),
     annotations: normalizeAnnotations(image.annotations),
+    aspect: normalizeAspect(image.aspect),
     rotation: requireEnum(image.rotation ?? 0, SAFE_ROTATIONS, "圖片旋轉角度"),
     importBatchId,
     originalImportIndex,
@@ -761,6 +763,7 @@ const captureProject = () => {
       description: state.imageDescriptions[image.id] || "",
       accidentTags: state.imageAccidentTags[image.id] || {},
       annotations: state.imageAnnotations[image.id] || [],
+      aspect: state.imageAspects[image.id] || null,
       rotation: state.imageRotations[image.id] || 0,
       importBatchId: image.importBatchId || "",
       originalImportIndex: image.originalImportIndex ?? null,

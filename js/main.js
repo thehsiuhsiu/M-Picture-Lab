@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261116-3";
+import { state } from "./state.js?v=20261121-1";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,32 +14,32 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261116-3";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261116-3";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261116-3";
-import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261116-3";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261116-3";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261116-3";
+} from "./imageHandler.js?v=20261121-1";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261121-1";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261121-1";
+import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261121-1";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261121-1";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261121-1";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261116-3";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261116-3";
-import { initAnnotationEditor } from "./annotationEditor.js?v=20261116-3";
-import { createAnnotatedBlob, hasAnnotations } from "./annotations.js?v=20261116-3";
-import { initDocumentPreview } from "./documentPreview.js?v=20261116-3";
-import { attachDatePicker } from "./datePicker.js?v=20261116-3";
+} from "./projectPersistence.js?v=20261121-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261121-1";
+import { initAnnotationEditor } from "./annotationEditor.js?v=20261121-1";
+import { createAnnotatedBlob, needsComposite } from "./annotations.js?v=20261121-1";
+import { initDocumentPreview } from "./documentPreview.js?v=20261121-1";
+import { attachDatePicker } from "./datePicker.js?v=20261121-1";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261116-3";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261116-3";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261116-3";
+} from "./photoNumbering.js?v=20261121-1";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261121-1";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261121-1";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261116-3";
+} from "./splitOrderManager.js?v=20261121-1";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -97,8 +97,8 @@ const requestZipDownloadNames = () =>
 
     let isResolved = false;
     photoInput.value = defaultPhotoName;
-    // 有標記的照片時，才提供「同時附上原圖」
-    const anyAnnotated = state.selectedImages.some((image) => hasAnnotations(image.id));
+    // 有標記或調整過比例的照片時，才提供「同時附上原圖」
+    const anyAnnotated = state.selectedImages.some((image) => needsComposite(image.id));
     if (originalsOption) originalsOption.hidden = !anyAnnotated;
     if (originalsCheckbox) originalsCheckbox.checked = false;
     modal.style.display = "flex";
@@ -192,8 +192,8 @@ const downloadImagesAsZip = async ({ zipFileName, photoFileName, includeOriginal
         : (img.blob?.type || "").split("/")[1]?.replace("jpeg", "jpg").replace(/[^a-z0-9]/gi, "") || "jpg";
       const basePhotoName = sanitizeZipFileName(photoFileName || prefix);
       const baseName = `${basePhotoName}-編號${getPhotoNumber(i)}`;
-      if (hasAnnotations(img.id)) {
-        // 預設輸出含標記的照片；需要時另外附上原圖
+      if (needsComposite(img.id)) {
+        // 預設輸出含標記、已套用比例的照片；需要時另外附上原圖
         const annotated = await createAnnotatedBlob(img);
         const ext = annotated.type === "image/png" ? "png" : "jpg";
         zip.file(`${baseName}.${ext}`, annotated);
@@ -420,6 +420,7 @@ const applyProjectSnapshot = async (project) => {
     description: image.description,
     accidentTags: image.accidentTags,
     annotations: image.annotations || [],
+    aspect: image.aspect || null,
     rotation: image.rotation,
     importBatchId: image.importBatchId || "",
     originalImportIndex: image.originalImportIndex,
