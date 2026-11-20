@@ -5,15 +5,16 @@
 // 2. 字型只取用到的字（harfbuzz 子集化），同一份子集同時給瀏覽器排版、也內嵌進 PDF，
 //    所以量到的位置和 PDF 裡的字寬完全一致。
 // 3. 逐一讀取每個格線、照片、文字的位置，用 pdf-lib 畫進 PDF。
-import { state } from "./state.js?v=20261121-3";
+import { state } from "./state.js?v=20261121-4";
 import {
   showLoadingModal,
   hideLoadingModal,
   revokeObjectUrl,
   getFormattedDate,
   showToast,
-} from "./utils.js?v=20261121-3";
-import { buildPrintDocument, getSelectedPdfFontKey } from "./pdfGenerator.js?v=20261121-3";
+} from "./utils.js?v=20261121-4";
+import { buildPrintDocument, getSelectedPdfFontKey } from "./pdfGenerator.js?v=20261121-4";
+import { ensureWithinLineLimits } from "./lineLimitCheck.js?v=20261121-4";
 
 const PDF_LIB_URL = "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js";
 const PDF_LIB_SRI = "sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI";
@@ -263,8 +264,12 @@ const drawPage = async ({ PDFLib, pdfDoc, pageElement, frameWindow, fonts, image
   const { rgb } = PDFLib;
   const page = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
   const origin = pageElement.getBoundingClientRect();
-  const toX = (px) => MARGIN_LEFT + (px - origin.left) * PX_TO_PT;
-  const toY = (px) => A4_HEIGHT - MARGIN_TOP - (px - origin.top) * PX_TO_PT;
+  // 刑事案件、交通事故的頁面（.doc-sheet）已含邊界
+  const isSheet = pageElement.classList.contains("doc-sheet");
+  const marginLeft = isSheet ? 0 : MARGIN_LEFT;
+  const marginTop = isSheet ? 0 : MARGIN_TOP;
+  const toX = (px) => marginLeft + (px - origin.left) * PX_TO_PT;
+  const toY = (px) => A4_HEIGHT - marginTop - (px - origin.top) * PX_TO_PT;
 
   // 背景、框線、照片
   for (const element of [pageElement, ...pageElement.querySelectorAll("*")]) {
@@ -446,6 +451,7 @@ export const handleGeneratePdfFile = async () => {
     showToast("請先新增照片，再輸出 PDF。", "warning");
     return;
   }
+  if (!(await ensureWithinLineLimits())) return;
   showLoadingModal();
   let restoreText = setLoadingText("字型套用中，請稍候…");
   const printUrls = [];

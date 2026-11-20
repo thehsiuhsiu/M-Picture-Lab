@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js：產生 Word 文件（刑案、交通事故兩種版型；多格照片只能輸出 PDF）
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-3";
+import { state } from "./state.js?v=20261121-4";
 import {
   getFormattedDate,
   showLoadingModal,
@@ -8,10 +8,29 @@ import {
   blobToArrayBuffer,
   showToast,
   showDialog,
-} from "./utils.js?v=20261121-3";
-import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-3";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-3";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261121-3";
+} from "./utils.js?v=20261121-4";
+import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-4";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-4";
+import {
+  CELL_SIDE_PADDING_TWIPS,
+  descriptionRowLines,
+  FONT_PT,
+  LAYOUTS,
+  LINE_TWIPS,
+  PAGE,
+  PHOTO_GAP_MM,
+  TEXT_BOTTOM_PADDING_TWIPS,
+  TEXT_WIDTH_MM,
+  TEXT_WIDTH_TWIPS,
+  columnTwips,
+  describeImages,
+  describeViolation,
+  findLineLimitViolations,
+  getDocumentTitle,
+  planPages,
+  readFormData,
+  spanWidth,
+} from "./documentLayout.js?v=20261121-4";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -26,202 +45,20 @@ const DOCX_KAI_FONT = /Mac|iPhone|iPad|iPod/i.test(platformName)
 
 const DOCX_IMAGE_MAX_DIMENSION = 1200;
 
-// ============ 版面尺寸（A4，單位 mm） ============
-// 標題與頁碼盡量靠近紙張邊緣，把空間留給照片與文字。
-const PAGE = {
-  height: 297,
-  marginTop: 20,
-  marginBottom: 10,
-  marginSide: 24,
-  headerDistance: 8, // 標題離紙張上緣
-  footerDistance: 5, // 頁碼離紙張下緣
-};
-const TEXT_WIDTH_TWIPS = 11906 - 2 * Math.round((PAGE.marginSide / 25.4) * 1440); // 9184
-const TEXT_WIDTH_MM = (TEXT_WIDTH_TWIPS / 1440) * 25.4;
-const BODY_HEIGHT_MM = PAGE.height - PAGE.marginTop - PAGE.marginBottom;
-
-// 表格文字：12 點標楷體、固定行高 15 點，行數才能準確估算
-const FONT_HALF_POINTS = 24;
-const FONT_EM_MM = (FONT_HALF_POINTS / 2 / 72) * 25.4;
-const LINE_TWIPS = 300;
-const LINE_MM = (LINE_TWIPS / 20 / 72) * 25.4;
-const CELL_SIDE_PADDING_TWIPS = 108; // Word 預設儲存格左右內距各 0.19 cm
-const CELL_PADDING_MM = (2 * CELL_SIDE_PADDING_TWIPS * 25.4) / 1440;
-// Word 的「固定行高」會把多出來的行距都放在文字上方，文字看起來偏下。
-// 儲存格下方補同樣大小的內距（約 2.5 點），上下留白才會一樣
-const TEXT_BOTTOM_PADDING_TWIPS = 50;
-const TEXT_BOTTOM_PADDING_MM = (TEXT_BOTTOM_PADDING_TWIPS / 1440) * 25.4;
-const ROW_EXTRA_MM = 0.4 + TEXT_BOTTOM_PADDING_MM; // 框線＋下方內距
-const TINY_PARAGRAPH_MM = 0.5; // 換頁與文件結尾用的極小段落
-const SAFETY_MM = 4; // 估算誤差的保留空間
-
-// 照片框：一般 95mm；文字換行多時同頁一起變矮，最矮 85mm（約可多容納 3 行說明）
-const PHOTO_FRAME_MAX_MM = 95;
-const PHOTO_FRAME_MIN_MM = 85;
-// 照片貼齊框線：照片框的儲存格不留內距，只保留框線的寬度，避免照片壓到框線
-const PHOTO_GAP_MM = 0.4;
-const DESCRIPTION_MAX_LINES = 3;
-// 說明欄位預設至少兩行高，方便印出後手寫補充
-const DESCRIPTION_MIN_LINES = 2;
+// ============ 版面規格（與列印、PDF、版面預覽共用，見 documentLayout.js） ============
+const FONT_HALF_POINTS = FONT_PT * 2;
 
 const mmToTwips = (mm) => Math.round((mm / 25.4) * 1440);
 const mmToPixels = (mm) => (mm / 25.4) * 96; // docx 套件的圖片尺寸以 96 dpi 像素計
 
-// 表格欄位：所有寬度都落在同一組 6 欄格線上，Word、LibreOffice、WPS 欄寬才會一致
-const LAYOUTS = {
-  left: {
-    columns: [15, 15, 20, 15, 15, 20],
-    hasCaseHeader: true,
-  },
-  middle: {
-    columns: [15, 27.5, 27.5, 15, 7.5, 7.5],
-    hasCaseHeader: false,
-  },
-};
-
-const columnTwips = (columns) => {
-  const widths = columns.map((percent) => Math.floor((TEXT_WIDTH_TWIPS * percent) / 100));
-  widths[widths.length - 1] += TEXT_WIDTH_TWIPS - widths.reduce((sum, value) => sum + value, 0);
-  return widths;
-};
-
-/** 從第 start 欄起合併 span 欄的寬度（twips 與 mm） */
-const spanWidth = (layout, start, span) => {
-  const twips = columnTwips(layout.columns)
-    .slice(start, start + span)
-    .reduce((sum, value) => sum + value, 0);
-  return { twips, mm: (twips / 1440) * 25.4 };
-};
-
-// ============ 文字行數估算 ============
-const isHalfWidth = (char) => {
-  const code = char.codePointAt(0);
-  return code <= 0x7e || (code >= 0xff61 && code <= 0xff9f);
-};
-
-/** 估算文字放進寬 widthMm 的儲存格會佔幾行（含使用者自己按的換行） */
-export const estimateLines = (text, widthMm) => {
-  const available = Math.max(1, widthMm - CELL_PADDING_MM);
-  return String(text ?? "")
-    .split(/\r\n|\r|\n/)
-    .reduce((total, segment) => {
-      let width = 0;
-      for (const char of segment) width += isHalfWidth(char) ? FONT_EM_MM / 2 : FONT_EM_MM;
-      return total + Math.max(1, Math.ceil((width * 1.05) / available));
-    }, 0);
-};
-
-const rowHeight = (lines) => lines * LINE_MM + ROW_EXTRA_MM;
-
-// ============ 每張照片要印的內容 ============
-const getDateToShow = (image, isAutoDate, manualDate) => {
-  if (image.customDate) return image.customDate;
-  if (isAutoDate) return image.date || manualDate;
-  return manualDate;
-};
-
-const generateAccidentTagsText = (tags) =>
-  ACCIDENT_TAG_OPTIONS.map((option) => {
-    const isChecked = tags && tags[option.id];
-    const checkbox = isChecked ? "■" : "□";
-    if (option.id === "other") {
-      const otherText = isChecked && tags.otherText ? tags.otherText : "___________";
-      return `${checkbox}其他:${otherText}`;
-    }
-    return `${checkbox}${option.label}`;
-  }).join(" ");
-
-/** 整理一張照片在文件上要印的文字 */
-const describeImage = (image, index, format, formData, isAutoDate, manualDate) => {
-  const description =
-    format === "middle"
-      ? generateAccidentTagsText(state.imageAccidentTags[image.id] || {})
-      : state.imageDescriptions[image.id] || "";
-  return {
-    image,
-    number: getPhotoNumber(index),
-    date: getDateToShow(
-      { ...image, customDate: state.imageDates[image.id] || "" },
-      isAutoDate,
-      manualDate,
-    ) || "",
-    address: state.imageAddresses[image.id] || formData.caseAddress || "",
-    description,
-  };
-};
-
-// ============ 版面規劃：決定每頁放哪幾張、照片框多高 ============
-const caseHeaderLines = (layout, formData) =>
-  Math.max(
-    estimateLines(formData.caseReason, spanWidth(layout, 1, 2).mm),
-    estimateLines(formData.caseUnit, spanWidth(layout, 4, 2).mm),
-  );
-
-const descriptionLines = (layout, item) => estimateLines(item.description, spanWidth(layout, 1, 5).mm);
-/** 說明列實際佔的行數（至少兩行高） */
-const descriptionRowLines = (layout, item) =>
-  Math.max(DESCRIPTION_MIN_LINES, descriptionLines(layout, item));
-
-/** 一組（照片框以外的文字列）的高度 */
-const groupTextHeight = (format, layout, item, formData) => {
-  if (format === "middle") {
-    const dateLines = Math.max(
-      estimateLines(item.date, spanWidth(layout, 1, 2).mm),
-      estimateLines(String(item.number), spanWidth(layout, 4, 2).mm),
-    );
-    return rowHeight(dateLines) + rowHeight(descriptionRowLines(layout, item));
-  }
-  const dateLines = Math.max(
-    estimateLines(item.date, spanWidth(layout, 2, 2).mm),
-    estimateLines(formData.caseNumber, spanWidth(layout, 5, 1).mm),
-  );
-  return (
-    rowHeight(dateLines) +
-    rowHeight(estimateLines(item.address, spanWidth(layout, 1, 5).mm)) +
-    rowHeight(descriptionRowLines(layout, item))
-  );
-};
-
-/** 這幾組放同一頁時，照片框可以多高 */
-const frameHeightFor = (format, layout, items, formData) => {
-  let fixed = TINY_PARAGRAPH_MM * 2 + SAFETY_MM;
-  if (layout.hasCaseHeader) fixed += rowHeight(caseHeaderLines(layout, formData));
-  fixed += (items.length - 1) * LINE_MM; // 兩組之間空一行
-  for (const item of items) fixed += groupTextHeight(format, layout, item, formData);
-  return Math.min(PHOTO_FRAME_MAX_MM, (BODY_HEIGHT_MM - fixed) / items.length);
-};
-
-/**
- * 每頁固定放 2 張。文字多時同頁兩個照片框一起變矮（最矮 85mm）；
- * 還是放不下時不另外拆頁，交給 Word 自然接到下一頁。
- */
-export const planDocxPages = (format, items, formData) => {
-  const layout = LAYOUTS[format];
-  const pages = [];
-  for (let index = 0; index < items.length; index += 2) {
-    const pair = items.slice(index, index + 2);
-    const frame = frameHeightFor(format, layout, pair, formData);
-    pages.push({ items: pair, frameHeight: Math.max(PHOTO_FRAME_MIN_MM, frame) });
-  }
-  const longDescriptions = items
-    .filter((item) => descriptionLines(layout, item) > DESCRIPTION_MAX_LINES)
-    .map((item) => item.number);
-  return { pages, longDescriptions };
-};
-
-/** 照片說明輸出到 Word（刑事案件版型）約佔幾行，供說明欄位即時顯示 */
-export const estimateWordDescriptionLines = (text) =>
-  String(text ?? "").trim() ? descriptionLines(LAYOUTS.left, { description: text }) : 0;
-
-export { DESCRIPTION_MAX_LINES };
-
-const confirmLongTextBeforeExport = async ({ longDescriptions }) => {
-  if (!longDescriptions.length) return true;
+/** Word 不擋輸出（使用者可在 Word 裡修改），只提醒超過行數上限的欄位 */
+const confirmLineLimitsBeforeExport = async (violations) => {
+  if (!violations.length) return true;
   return showDialog({
-    title: "部分照片的說明較長",
+    title: "部分文字超過行數上限",
     message:
-      "Word 文件每頁放 2 張照片，說明多時照片會稍微縮小；還是放不下時，會自動接到下一頁。可以回去精簡文字，或照樣輸出。",
-    details: [`說明超過 ${DESCRIPTION_MAX_LINES} 行：照片 ${longDescriptions.join("、")}`],
+      "列印與 PDF 檔案需要先修改才能輸出；Word 可以照樣輸出，照片會稍微縮小或接到下一頁，之後可在 Word 裡自行調整。",
+    details: violations.map(describeViolation),
     tone: "warning",
     confirmText: "照樣輸出",
     cancelText: "回去修改",
@@ -237,11 +74,6 @@ const sanitizeDownloadFileName = (fileName) => {
     .replace(/[. ]+$/g, "");
 
   return cleanedName || "照片黏貼表";
-};
-
-const DEFAULT_TITLES = {
-  left: "刑案照片黏貼表",
-  middle: "非道路交通事故照片黏貼紀錄表",
 };
 
 export const handleGenerateWrapper = async (event) => {
@@ -265,17 +97,6 @@ export const handleGenerateWrapper = async (event) => {
   }
 };
 
-const readFormData = () => {
-  const value = (id) => document.getElementById(id)?.value || "";
-  return {
-    caseReason: value("zipPrefix"),
-    caseUnit: value("caseUni"),
-    caseAddress: value("caseAddress"),
-    caseDate: value("caseDate"),
-    caseNumber: value("caseNumber"),
-  };
-};
-
 const handleGenerate = async () => {
   if (state.selectedImages.length === 0) {
     showToast("請先新增照片，再產生文件。", "warning");
@@ -285,12 +106,10 @@ const handleGenerate = async () => {
   const format = state.selectedFormat;
   if (!LAYOUTS[format]) throw new Error("未知的文檔格式");
   const formData = readFormData();
-  const isAutoDate = Boolean(document.getElementById("dateModeSwitch")?.checked);
-  const items = state.selectedImages.map((image, index) =>
-    describeImage(image, index, format, formData, isAutoDate, formData.caseDate),
-  );
-  const plan = planDocxPages(format, items, formData);
-  if (!(await confirmLongTextBeforeExport(plan))) return;
+  const items = describeImages(format, formData);
+  const pages = planPages(format, items, formData);
+  const violations = findLineLimitViolations(format, items, formData);
+  if (!(await confirmLineLimitsBeforeExport(violations))) return;
 
   showLoadingModal();
   try {
@@ -303,7 +122,7 @@ const handleGenerate = async () => {
     );
 
     const docx = window.docx;
-    const doc = createDocument(docx, format, formData, plan.pages);
+    const doc = createDocument(docx, format, formData, pages);
     const blob = await makeWord2007Compatible(await docx.Packer.toBlob(doc));
     hideLoadingModal();
 
@@ -330,7 +149,7 @@ const downloadBlob = (blob, fileName) => {
 };
 
 const createDocument = (docx, format, formData, pages) => {
-  const title = state.customDocTitles[format] ?? DEFAULT_TITLES[format];
+  const title = getDocumentTitle(format);
   const layout = LAYOUTS[format];
 
   const children = [];
@@ -441,12 +260,12 @@ const createTable = (docx, layout, rows) =>
 
 const textRow = (docx, cells) => new docx.TableRow({ cantSplit: true, children: cells });
 
-/** 說明列：至少兩行高，文字多時自動長高 */
-const descriptionRow = (docx, layout, item) =>
+/** 說明列：固定行高（刑事案件 2 行、交通事故 3 行）；超過時 Word 讓它自動長高 */
+const descriptionRow = (docx, layout, item, format) =>
   new docx.TableRow({
     cantSplit: true,
     height: {
-      value: DESCRIPTION_MIN_LINES * LINE_TWIPS + TEXT_BOTTOM_PADDING_TWIPS,
+      value: descriptionRowLines(format) * LINE_TWIPS + TEXT_BOTTOM_PADDING_TWIPS,
       rule: docx.HeightRule.ATLEAST,
     },
     children: [
@@ -525,7 +344,7 @@ const createCriminalTable = (docx, layout, item, formData, frameHeight) =>
       labelCell(docx, layout, 0, "攝影地址"),
       textCell(docx, layout, 1, item.address, 5),
     ]),
-    descriptionRow(docx, layout, item),
+    descriptionRow(docx, layout, item, "left"),
   ]);
 
 const createTrafficAccidentTable = (docx, layout, item, frameHeight) =>
@@ -537,7 +356,7 @@ const createTrafficAccidentTable = (docx, layout, item, frameHeight) =>
       labelCell(docx, layout, 3, "照片編號"),
       textCell(docx, layout, 4, String(item.number), 2, docx.AlignmentType.CENTER),
     ]),
-    descriptionRow(docx, layout, item),
+    descriptionRow(docx, layout, item, "middle"),
   ]);
 
 const createDefaultFooter = (docx) =>

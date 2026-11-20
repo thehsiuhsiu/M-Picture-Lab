@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-3";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-4";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,22 +14,19 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261121-3";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261121-3";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-3";
+} from "./utils.js?v=20261121-4";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261121-4";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-4";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261121-3";
+} from "./photoNumbering.js?v=20261121-4";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261121-3";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-3";
-import {
-  DESCRIPTION_MAX_LINES,
-  estimateWordDescriptionLines,
-} from "./docxGenerator.js?v=20261121-3";
+} from "./splitGroupLogic.js?v=20261121-4";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-4";
+import { updateLineHint } from "./lineLimitHints.js?v=20261121-4";
 import {
   createAnnotatedBlob,
   getDisplaySize,
@@ -41,9 +38,9 @@ import {
   rotateAnnotations,
   releaseAnnotatedPreview,
   swapAspect,
-} from "./annotations.js?v=20261121-3";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-3";
-import { attachDatePicker } from "./datePicker.js?v=20261121-3";
+} from "./annotations.js?v=20261121-4";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-4";
+import { attachDatePicker } from "./datePicker.js?v=20261121-4";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -885,6 +882,8 @@ const addImageToPreview = (imageData, counter) => {
   dateInput.maxLength = 80;
   dateInput.placeholder = DEFAULT_DATE_PLACEHOLDER;
   dateInput.value = state.imageDates[imageData.id] || "";
+  dateInput.dataset.lineField = "date";
+  dateInput.dataset.lineFormats = "left middle";
   dateInput.addEventListener("input", (e) => {
     state.imageDates[imageData.id] = e.target.value;
     updateExifDateWarnings();
@@ -899,6 +898,7 @@ const addImageToPreview = (imageData, counter) => {
     wrapperClass: "image-date-field",
     getFallback: () => imageData.date || document.getElementById("caseDate")?.value || "",
   });
+  updateLineHint(dateInput);
 
   const dateWarning = document.createElement("span");
   dateWarning.className = "exif-date-warning";
@@ -912,6 +912,8 @@ const addImageToPreview = (imageData, counter) => {
   addressInput.maxLength = 500;
   addressInput.placeholder = "攝影地址（留空時使用案件資料）";
   addressInput.value = state.imageAddresses[imageData.id] || "";
+  addressInput.dataset.lineField = "address";
+  addressInput.dataset.lineFormats = "left";
   addressInput.addEventListener("input", (e) => {
     state.imageAddresses[imageData.id] = e.target.value;
   });
@@ -921,29 +923,18 @@ const addImageToPreview = (imageData, counter) => {
     e.stopPropagation();
   });
   descriptionDiv.appendChild(addressInput);
+  updateLineHint(addressInput);
 
   const textarea = document.createElement("textarea");
   textarea.className = "image-description-textarea";
   textarea.maxLength = 5000;
   textarea.placeholder = "照片說明（選填）";
   textarea.value = state.imageDescriptions[imageData.id] || "";
-  // 邊打邊顯示輸出到 Word 約佔幾行，超過 3 行變橘色
-  const lineHint = document.createElement("p");
-  lineHint.className = "description-line-hint";
-  lineHint.setAttribute("aria-live", "polite");
-  const updateLineHint = () => {
-    const lines = estimateWordDescriptionLines(textarea.value);
-    const over = lines > DESCRIPTION_MAX_LINES;
-    lineHint.hidden = lines === 0;
-    lineHint.classList.toggle("is-over", over);
-    lineHint.textContent = over
-      ? `Word 約 ${lines} 行，超過 ${DESCRIPTION_MAX_LINES} 行，照片會縮小或接到下一頁`
-      : `Word 約 ${lines} 行（建議 ${DESCRIPTION_MAX_LINES} 行內）`;
-  };
-  updateLineHint();
+  // 欄位下方的行數提示（lineLimitHints.js）
+  textarea.dataset.lineField = "description";
+  textarea.dataset.lineFormats = "left";
   textarea.addEventListener("input", (e) => {
     state.imageDescriptions[imageData.id] = e.target.value;
-    updateLineHint();
   });
   textarea.addEventListener("dragover", (e) => {
     e.preventDefault();
@@ -953,11 +944,16 @@ const addImageToPreview = (imageData, counter) => {
     e.stopPropagation();
   });
   descriptionDiv.appendChild(textarea);
-  descriptionDiv.appendChild(lineHint);
+  updateLineHint(textarea);
 
   const accidentTagsContainer = document.createElement("div");
   accidentTagsContainer.className = "accident-tags-container";
   accidentTagsContainer.dataset.format = "middle";
+  // 勾選項目組成交通事故的說明，也有行數上限
+  accidentTagsContainer.dataset.lineField = "description";
+  accidentTagsContainer.dataset.lineFormats = "middle";
+  accidentTagsContainer.dataset.lineSource = "accident-tags";
+  accidentTagsContainer.dataset.imageId = imageData.id;
 
   if (!state.imageAccidentTags[imageData.id]) {
     state.imageAccidentTags[imageData.id] = {};
@@ -1014,6 +1010,7 @@ const addImageToPreview = (imageData, counter) => {
   });
 
   descriptionDiv.appendChild(accidentTagsContainer);
+  updateLineHint(accidentTagsContainer);
   imageContainer.appendChild(descriptionDiv);
 
   preview.appendChild(imageContainer);
