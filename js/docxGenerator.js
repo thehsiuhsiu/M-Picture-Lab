@@ -451,7 +451,8 @@ const descriptionRow = (docx, layout, item) =>
     },
     children: [
       labelCell(docx, layout, 0, "說明"),
-      textCell(docx, layout, 1, item.description, 5),
+      // 左右對齊（不是分散對齊）：每行兩端切齊，最後一行靠左
+      textCell(docx, layout, 1, item.description, 5, docx.AlignmentType.BOTH),
     ],
   });
 
