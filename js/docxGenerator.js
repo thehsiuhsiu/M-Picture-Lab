@@ -32,11 +32,11 @@ const PAGE = {
   height: 297,
   marginTop: 20,
   marginBottom: 10,
-  marginSide: 27,
+  marginSide: 24,
   headerDistance: 8, // 標題離紙張上緣
   footerDistance: 5, // 頁碼離紙張下緣
 };
-const TEXT_WIDTH_TWIPS = 11906 - 2 * Math.round((PAGE.marginSide / 25.4) * 1440); // 8844
+const TEXT_WIDTH_TWIPS = 11906 - 2 * Math.round((PAGE.marginSide / 25.4) * 1440); // 9184
 const TEXT_WIDTH_MM = (TEXT_WIDTH_TWIPS / 1440) * 25.4;
 const BODY_HEIGHT_MM = PAGE.height - PAGE.marginTop - PAGE.marginBottom;
 
@@ -56,6 +56,8 @@ const PHOTO_FRAME_MIN_MM = 85;
 // 照片貼齊框線：照片框的儲存格不留內距，只保留框線的寬度，避免照片壓到框線
 const PHOTO_GAP_MM = 0.4;
 const DESCRIPTION_MAX_LINES = 3;
+// 說明欄位預設至少兩行高，方便印出後手寫補充
+const DESCRIPTION_MIN_LINES = 2;
 
 const mmToTwips = (mm) => Math.round((mm / 25.4) * 1440);
 const mmToPixels = (mm) => (mm / 25.4) * 96; // docx 套件的圖片尺寸以 96 dpi 像素計
@@ -151,6 +153,9 @@ const caseHeaderLines = (layout, formData) =>
   );
 
 const descriptionLines = (layout, item) => estimateLines(item.description, spanWidth(layout, 1, 5).mm);
+/** 說明列實際佔的行數（至少兩行高） */
+const descriptionRowLines = (layout, item) =>
+  Math.max(DESCRIPTION_MIN_LINES, descriptionLines(layout, item));
 
 /** 一組（照片框以外的文字列）的高度 */
 const groupTextHeight = (format, layout, item, formData) => {
@@ -159,7 +164,7 @@ const groupTextHeight = (format, layout, item, formData) => {
       estimateLines(item.date, spanWidth(layout, 1, 2).mm),
       estimateLines(String(item.number), spanWidth(layout, 4, 2).mm),
     );
-    return rowHeight(dateLines) + rowHeight(descriptionLines(layout, item));
+    return rowHeight(dateLines) + rowHeight(descriptionRowLines(layout, item));
   }
   const dateLines = Math.max(
     estimateLines(item.date, spanWidth(layout, 2, 2).mm),
@@ -168,7 +173,7 @@ const groupTextHeight = (format, layout, item, formData) => {
   return (
     rowHeight(dateLines) +
     rowHeight(estimateLines(item.address, spanWidth(layout, 1, 5).mm)) +
-    rowHeight(descriptionLines(layout, item))
+    rowHeight(descriptionRowLines(layout, item))
   );
 };
 
@@ -440,6 +445,17 @@ const createTable = (docx, layout, rows) =>
 
 const textRow = (docx, cells) => new docx.TableRow({ cantSplit: true, children: cells });
 
+/** 說明列：至少兩行高，文字多時自動長高 */
+const descriptionRow = (docx, layout, item) =>
+  new docx.TableRow({
+    cantSplit: true,
+    height: { value: DESCRIPTION_MIN_LINES * LINE_TWIPS, rule: docx.HeightRule.ATLEAST },
+    children: [
+      labelCell(docx, layout, 0, "說明"),
+      textCell(docx, layout, 1, item.description, 5),
+    ],
+  });
+
 /** 照片框：照片等比例縮放，以較寬或較高的那一邊貼齊框線，不超出框線 */
 const photoRow = (docx, layout, item, frameHeight) => {
   const maxWidthMm = TEXT_WIDTH_MM - 2 * PHOTO_GAP_MM;
@@ -509,10 +525,7 @@ const createCriminalTable = (docx, layout, item, formData, frameHeight) =>
       labelCell(docx, layout, 0, "攝影地址"),
       textCell(docx, layout, 1, item.address, 5),
     ]),
-    textRow(docx, [
-      labelCell(docx, layout, 0, "說明"),
-      textCell(docx, layout, 1, item.description, 5),
-    ]),
+    descriptionRow(docx, layout, item),
   ]);
 
 const createTrafficAccidentTable = (docx, layout, item, frameHeight) =>
@@ -524,10 +537,7 @@ const createTrafficAccidentTable = (docx, layout, item, frameHeight) =>
       labelCell(docx, layout, 3, "照片編號"),
       textCell(docx, layout, 4, String(item.number), 2, docx.AlignmentType.CENTER),
     ]),
-    textRow(docx, [
-      labelCell(docx, layout, 0, "說明"),
-      textCell(docx, layout, 1, item.description, 5),
-    ]),
+    descriptionRow(docx, layout, item),
   ]);
 
 const createDefaultFooter = (docx) =>
