@@ -1762,8 +1762,9 @@ body.format-right .exif-date-warning {
   display: none;
 }
 
+/* 缺少日期與行數提示用同一種橘色 */
 #imagePreview.list-view .image-date-input.missing-exif-date {
-  border-color: var(--warning);
+  border-color: #d96c00;
 }
 
 #imagePreview.list-view .image-date-input.missing-exif-date + .exif-date-warning,
@@ -1772,7 +1773,7 @@ body.format-right .exif-date-warning {
   align-items: center;
   gap: 6px;
   margin-top: -2px;
-  color: var(--warning);
+  color: #c45f00;
   font-size: 13px;
   font-weight: 500;
 }

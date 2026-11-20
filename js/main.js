@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261121-6";
+import { state } from "./state.js?v=20261121-7";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,33 +14,33 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261121-6";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261121-6";
-import { initLineLimitHints } from "./lineLimitHints.js?v=20261121-6";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261121-6";
-import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261121-6";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261121-6";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261121-6";
+} from "./imageHandler.js?v=20261121-7";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261121-7";
+import { initLineLimitHints } from "./lineLimitHints.js?v=20261121-7";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261121-7";
+import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261121-7";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261121-7";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261121-7";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261121-6";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261121-6";
-import { initAnnotationEditor } from "./annotationEditor.js?v=20261121-6";
-import { createAnnotatedBlob, needsComposite } from "./annotations.js?v=20261121-6";
-import { initDocumentPreview } from "./documentPreview.js?v=20261121-6";
-import { attachDatePicker } from "./datePicker.js?v=20261121-6";
+} from "./projectPersistence.js?v=20261121-7";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261121-7";
+import { initAnnotationEditor } from "./annotationEditor.js?v=20261121-7";
+import { createAnnotatedBlob, needsComposite } from "./annotations.js?v=20261121-7";
+import { initDocumentPreview } from "./documentPreview.js?v=20261121-7";
+import { attachDatePicker } from "./datePicker.js?v=20261121-7";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261121-6";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261121-6";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261121-6";
+} from "./photoNumbering.js?v=20261121-7";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261121-7";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261121-7";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261121-6";
+} from "./splitOrderManager.js?v=20261121-7";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -513,7 +513,7 @@ const updateSidebarFields = (format) => {
   const addressLabelText = document.getElementById("addressLabelText");
   const personLabelText = document.getElementById("personLabelText");
 
-  if (dateLabelText) dateLabelText.textContent = "攝影日期";
+  if (dateLabelText) dateLabelText.textContent = "攝影日期（統一套用）";
   if (addressLabelText) addressLabelText.textContent = "攝影地址";
   if (personLabelText) personLabelText.textContent = "攝影人員";
 };
