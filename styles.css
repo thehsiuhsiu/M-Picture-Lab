@@ -5487,3 +5487,19 @@ body.annotate-open {
 .is-over-line-limit {
   border-color: #d96c00 !important;
 }
+
+/* 照片卡片：照片下方的原檔名（小圖排序模式不顯示） */
+.image-file-name {
+  display: none;
+  margin: 6px 2px 0;
+  overflow: hidden;
+  color: var(--text-3, #8a8a85);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#imagePreview.list-view .image-file-name {
+  display: block;
+}

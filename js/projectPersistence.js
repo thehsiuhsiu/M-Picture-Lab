@@ -1,6 +1,6 @@
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-4";
-import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261121-4";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-4";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-5";
+import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261121-5";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-5";
 import {
   createObjectUrl,
   revokeObjectUrl,
@@ -9,10 +9,10 @@ import {
   showPromptDialog,
   showToast,
   showUndoToast,
-} from "./utils.js?v=20261121-4";
-import { normalizeAnnotations, normalizeAspect } from "./annotations.js?v=20261121-4";
-import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261121-4";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261121-4";
+} from "./utils.js?v=20261121-5";
+import { normalizeAnnotations, normalizeAspect } from "./annotations.js?v=20261121-5";
+import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261121-5";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261121-5";
 
 const DATABASE_NAME = "mpicture-local-projects-v1";
 const DATABASE_VERSION = 3;

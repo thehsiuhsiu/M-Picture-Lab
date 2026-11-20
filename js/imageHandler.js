@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-4";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-5";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,19 +14,19 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261121-4";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261121-4";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-4";
+} from "./utils.js?v=20261121-5";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261121-5";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-5";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261121-4";
+} from "./photoNumbering.js?v=20261121-5";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261121-4";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-4";
-import { updateLineHint } from "./lineLimitHints.js?v=20261121-4";
+} from "./splitGroupLogic.js?v=20261121-5";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-5";
+import { updateLineHint } from "./lineLimitHints.js?v=20261121-5";
 import {
   createAnnotatedBlob,
   getDisplaySize,
@@ -38,9 +38,9 @@ import {
   rotateAnnotations,
   releaseAnnotatedPreview,
   swapAspect,
-} from "./annotations.js?v=20261121-4";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-4";
-import { attachDatePicker } from "./datePicker.js?v=20261121-4";
+} from "./annotations.js?v=20261121-5";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-5";
+import { attachDatePicker } from "./datePicker.js?v=20261121-5";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -864,6 +864,14 @@ const addImageToPreview = (imageData, counter) => {
   img.draggable = false;
   frame.appendChild(img);
   frame.appendChild(createPhotoTools(imageData.id));
+  // 卡片模式下顯示原檔名，方便辨認是哪一張照片
+  if (imageData.name) {
+    const fileName = document.createElement("p");
+    fileName.className = "image-file-name";
+    fileName.textContent = imageData.name;
+    fileName.title = imageData.name;
+    frame.appendChild(fileName);
+  }
   if (needsComposite(imageData.id)) {
     queueMicrotask(() =>
       updateCardImage(imageData).catch((error) =>
