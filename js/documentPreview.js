@@ -1,14 +1,22 @@
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-3";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-3";
+import { state, FORMAT_TITLES } from "./state.js?v=20261121-4";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-4";
 import {
   getMultiPhotoPageEntries,
   getMultiPhotoSettings,
-} from "./multiPhotoLayout.js?v=20261121-3";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261121-3";
+} from "./multiPhotoLayout.js?v=20261121-4";
+import {
+  buildSheetCss,
+  buildSheetHtml,
+  describeImages,
+  getDocumentTitle,
+  isLayoutFormat,
+  planPages,
+  readFormData,
+} from "./documentLayout.js?v=20261121-4";
 import {
   getPdfPageNumber,
   getPdfPageNumberSettings,
-} from "./pageNumbering.js?v=20261121-3";
+} from "./pageNumbering.js?v=20261121-4";
 
 const PREVIEW_UPDATE_DELAY_MS = 220;
 const MIN_ZOOM = 0.3;
@@ -42,176 +50,11 @@ const createElement = (tagName, className, text) => {
   return element;
 };
 
-const getValue = (id) => document.getElementById(id)?.value || "";
-
 const getPageSize = () =>
   state.selectedFormat === "right" ? getMultiPhotoSettings().count : 2;
 
 const getPageCount = () =>
   Math.ceil(state.selectedImages.length / getPageSize());
-
-const getDateText = (image) => {
-  const customDate = state.imageDates[image.id] || "";
-  const manualDate = getValue("caseDate");
-  const useExif = Boolean(document.getElementById("dateModeSwitch")?.checked);
-  return customDate || (useExif ? image.date || manualDate : manualDate);
-};
-
-const createCell = ({
-  text = "",
-  className = "",
-  colSpan = 1,
-  overflowCheck = false,
-} = {}) => {
-  const cell = createElement("td", className);
-  cell.colSpan = colSpan;
-  if (overflowCheck) {
-    const content = createElement("div", "document-cell-content", text);
-    content.dataset.overflowCheck = "true";
-    cell.appendChild(content);
-  } else {
-    cell.textContent = String(text);
-  }
-  return cell;
-};
-
-const appendRow = (table, cells, className = "") => {
-  const row = createElement("tr", className);
-  cells.forEach((cell) => row.appendChild(cell));
-  table.appendChild(row);
-  return row;
-};
-
-const createTable = () => {
-  const table = createElement("table", "document-table");
-  const colgroup = document.createElement("colgroup");
-  [15, 15, 17.5, 17.5, 15, 20].forEach((width) => {
-    const column = document.createElement("col");
-    column.style.width = `${width}%`;
-    colgroup.appendChild(column);
-  });
-  table.appendChild(colgroup);
-  return table;
-};
-
-const createPhotoRow = (table, image) => {
-  const photoCell = createCell({ className: "document-photo-cell", colSpan: 6 });
-  const photo = createElement("img", "document-photo");
-  photo.src = image.annotatedPreviewUrl || image.previewUrl;
-  photo.alt = image.name || "照片";
-  photo.loading = "eager";
-  photo.draggable = false;
-  photoCell.appendChild(photo);
-  appendRow(table, [photoCell], "document-photo-row");
-};
-
-const createCriminalHeader = () => {
-  const table = createTable();
-  table.classList.add("document-header-table");
-  appendRow(table, [
-    createCell({ text: "案由", className: "document-label-cell" }),
-    createCell({
-      text: getValue("zipPrefix"),
-      className: "document-value-cell document-center-cell",
-      colSpan: 2,
-      overflowCheck: true,
-    }),
-    createCell({ text: "單位", className: "document-label-cell" }),
-    createCell({
-      text: getValue("caseUni"),
-      className: "document-value-cell document-center-cell",
-      colSpan: 2,
-      overflowCheck: true,
-    }),
-  ]);
-  return table;
-};
-
-const createCriminalPhotoTable = (image, number) => {
-  const table = createTable();
-  createPhotoRow(table, image);
-
-  appendRow(table, [
-    createCell({ text: `編號(${number})`, className: "document-label-cell" }),
-    createCell({ text: "照片日期", className: "document-label-cell" }),
-    createCell({
-      text: getDateText(image),
-      className: "document-value-cell",
-      colSpan: 2,
-      overflowCheck: true,
-    }),
-    createCell({ text: "攝影人", className: "document-label-cell" }),
-    createCell({
-      text: getValue("caseNumber"),
-      className: "document-value-cell document-center-cell",
-      overflowCheck: true,
-    }),
-  ], "document-meta-row");
-
-  appendRow(table, [
-    createCell({ text: "攝影地址", className: "document-label-cell" }),
-    createCell({
-      text: state.imageAddresses[image.id] || getValue("caseAddress"),
-      className: "document-value-cell",
-      colSpan: 5,
-      overflowCheck: true,
-    }),
-  ], "document-text-row");
-
-  appendRow(table, [
-    createCell({ text: "說明", className: "document-label-cell" }),
-    createCell({
-      text: state.imageDescriptions[image.id] || "",
-      className: "document-value-cell",
-      colSpan: 5,
-      overflowCheck: true,
-    }),
-  ], "document-text-row");
-
-  return table;
-};
-
-const getAccidentTagsText = (image) => {
-  const tags = state.imageAccidentTags[image.id] || {};
-  return ACCIDENT_TAG_OPTIONS.map((option) => {
-    const checked = Boolean(tags[option.id]);
-    const box = checked ? "■" : "□";
-    if (option.id === "other") {
-      return `${box}其他:${checked && tags.otherText ? tags.otherText : "___________"}`;
-    }
-    return `${box}${option.label}`;
-  }).join(" ");
-};
-
-const createTrafficPhotoTable = (image, number) => {
-  const table = createTable();
-  createPhotoRow(table, image);
-  appendRow(table, [
-    createCell({ text: "攝影日期", className: "document-label-cell" }),
-    createCell({
-      text: getDateText(image),
-      className: "document-value-cell",
-      colSpan: 2,
-      overflowCheck: true,
-    }),
-    createCell({ text: "照片編號", className: "document-label-cell" }),
-    createCell({
-      text: number,
-      className: "document-value-cell document-center-cell",
-      colSpan: 2,
-    }),
-  ], "document-meta-row");
-  appendRow(table, [
-    createCell({ text: "說明", className: "document-label-cell" }),
-    createCell({
-      text: getAccidentTagsText(image),
-      className: "document-value-cell",
-      colSpan: 5,
-      overflowCheck: true,
-    }),
-  ], "document-traffic-text-row");
-  return table;
-};
 
 const createMultiPhotoCell = (entry) => {
   const cell = createElement(
@@ -295,7 +138,7 @@ const detectOverflow = (token) => {
       cell.classList.toggle("has-overflow", hasOverflow);
       if (hasOverflow) {
         overflowCount += 1;
-        cell.title = "內容過長，正式輸出可能換行或影響版面";
+        cell.title = "超過行數上限";
       } else {
         cell.removeAttribute("title");
       }
@@ -303,7 +146,7 @@ const detectOverflow = (token) => {
     if (warning) {
       warning.hidden = overflowCount === 0;
       warning.textContent = overflowCount
-        ? `本頁有 ${overflowCount} 個欄位內容過長，正式輸出前請確認版面。`
+        ? `本頁有 ${overflowCount} 個欄位超過行數上限；列印與 PDF 檔案需先修改，Word 可照樣輸出。`
         : "";
     }
   });
@@ -327,6 +170,16 @@ const applyAutoZoom = (stage) => {
   zoom = nextZoom;
   stage.style.setProperty("--document-preview-zoom", String(zoom));
   return true;
+};
+
+/** 版面規格的樣式只需要加一次 */
+const ensureSheetStyles = () => {
+  if (document.getElementById("documentSheetStyles")) return;
+  const style = document.createElement("style");
+  style.id = "documentSheetStyles";
+  style.textContent = `${buildSheetCss(".document-page-sheet .doc-sheet")}
+.document-page.document-page-sheet { padding: 0; }`;
+  document.head.appendChild(style);
 };
 
 const renderPreview = () => {
@@ -359,6 +212,31 @@ const renderPreview = () => {
   page.classList.add(FONT_CLASS_BY_VALUE[fontValue] || "font-preview-kai");
   page.setAttribute("aria-label", `文件第 ${currentPage + 1} 頁`);
 
+  const pageNumberSettings = getPdfPageNumberSettings();
+  const pageNumberText = pageNumberSettings.enabled
+    ? `第 ${getPdfPageNumber(currentPage, pageNumberSettings.startNumber)} 頁`
+    : "";
+
+  if (isLayoutFormat(state.selectedFormat)) {
+    // 刑事案件、交通事故：與列印、PDF 檔案、Word 用同一份版面規格
+    ensureSheetStyles();
+    const format = state.selectedFormat;
+    const formData = readFormData();
+    const pages = planPages(format, describeImages(format, formData), formData);
+    page.classList.add("document-page-sheet");
+    page.innerHTML = buildSheetHtml({
+      format,
+      title: getDocumentTitle(format),
+      page: pages[currentPage],
+      formData,
+      imageSrc: (item) => item.image.annotatedPreviewUrl || item.image.previewUrl,
+      pageNumberText,
+    });
+    stage.appendChild(page);
+    detectOverflow(token);
+    return;
+  }
+
   const title =
     state.customDocTitles[state.selectedFormat] ||
     FORMAT_TITLES[state.selectedFormat] ||
@@ -367,38 +245,10 @@ const renderPreview = () => {
   heading.dataset.overflowCheck = "true";
   page.appendChild(heading);
 
-  if (state.selectedFormat === "left") {
-    page.appendChild(createCriminalHeader());
-  }
+  page.appendChild(createMultiPhotoGrid(currentPage * getPageSize()));
 
-  const pageSize = getPageSize();
-  const firstIndex = currentPage * pageSize;
-  if (state.selectedFormat === "right") {
-    page.appendChild(createMultiPhotoGrid(firstIndex));
-  } else {
-    state.selectedImages
-      .slice(firstIndex, firstIndex + pageSize)
-      .forEach((image, index) => {
-        if (index > 0) {
-          page.appendChild(createElement("div", "document-table-spacer"));
-        }
-        page.appendChild(
-          state.selectedFormat === "left"
-            ? createCriminalPhotoTable(image, getPhotoNumber(firstIndex + index))
-            : createTrafficPhotoTable(image, getPhotoNumber(firstIndex + index)),
-        );
-      });
-  }
-
-  const pageNumberSettings = getPdfPageNumberSettings();
-  if (pageNumberSettings.enabled) {
-    page.appendChild(
-      createElement(
-        "div",
-        "document-page-number",
-        `第 ${getPdfPageNumber(currentPage, pageNumberSettings.startNumber)} 頁`,
-      ),
-    );
+  if (pageNumberText) {
+    page.appendChild(createElement("div", "document-page-number", pageNumberText));
   }
 
   stage.appendChild(page);

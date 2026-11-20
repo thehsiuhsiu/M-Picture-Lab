@@ -5471,20 +5471,19 @@ body.annotate-open {
   }
 }
 
-/* 照片說明：Word 行數提示（刑事案件版型） */
-.description-line-hint {
-  display: none;
+/* 欄位下方的行數提示（版面規格的行數上限） */
+.line-limit-hint {
   margin: 4px 2px 0;
   color: var(--text-3, #8a8a85);
   font-size: 12px;
   line-height: 1.4;
 }
 
-body.format-left .description-line-hint {
-  display: block;
-}
-
-.description-line-hint.is-over {
+.line-limit-hint.is-over {
   color: #d96c00;
   font-weight: 600;
+}
+
+.is-over-line-limit {
+  border-color: #d96c00 !important;
 }
