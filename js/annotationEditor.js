@@ -1,6 +1,6 @@
 // annotationEditor.js - 編輯視窗：旋轉、調整比例、標記（圈選、方框、箭頭、文字、編號、遮蔽）與進入長截圖分割
 
-import { state } from "./state.js?v=20261121-1";
+import { state } from "./state.js?v=20261121-2";
 import {
   ASPECT_PRESETS,
   DEFAULT_COLOR,
@@ -19,8 +19,8 @@ import {
   normalizeColor,
   PRESET_COLORS,
   rotateAnnotations,
-} from "./annotations.js?v=20261121-1";
-import { showDialog, showToast } from "./utils.js?v=20261121-1";
+} from "./annotations.js?v=20261121-2";
+import { showDialog, showToast } from "./utils.js?v=20261121-2";
 
 const TOOL_HINTS = {
   select: "點選標記可移動、改顏色或粗細；拖曳角落可縮放；點兩下文字可修改",
@@ -32,7 +32,7 @@ const TOOL_HINTS = {
   mask: "拖曳框出要遮蔽的範圍（例如無關民眾的臉、車牌）",
   zoom: "框出要放大的區域，放大框會自動出現在旁邊；用選取工具可拖曳放大框、拉角落改倍率",
 };
-const ASPECT_HINT = "照片被壓扁時，選回原本的比例；原圖不會改變，隨時可改回「原始」";
+const ASPECT_HINT = "拖曳照片四周的把手直接拉，或選常用比例；接近 16:9、4:3 會自動對齊（按住 Alt 不對齊）。原圖不會改變";
 const BOX_TYPES = new Set(["ellipse", "rect", "mask"]);
 const MIN_SHAPE_PX = 6;
 const ZOOM_SCALES = [3, 2.5, 2, 1.6, 1.3];
@@ -105,6 +105,8 @@ export const openAnnotationEditor = async (imageId, editorHandlers) => {
     aspect: initialAspect, // 調整比例 [寬, 高]，以目前（含尚未套用的旋轉）的方向表示
     initialAspect: JSON.stringify(initialAspect),
     aspectPanel: false, // 比例選項是否展開
+    customMode: Boolean(initialAspect) && !isPresetAspect(initialAspect), // 是否選了「自訂」
+    resize: null, // 正在用把手拉照片
     annotations: JSON.parse(initial),
     initial,
     tool: "ellipse",
@@ -256,22 +258,31 @@ const rotateView = (direction) => {
 
 /* ---------- 調整比例 ---------- */
 
-/** 目前照片（含尚未套用的旋轉）是否為直向；預設比例依此決定橫直。 */
-const isPortraitView = () => {
-  if (session.aspect) return session.aspect[1] > session.aspect[0];
+/** 目前照片（含尚未套用的旋轉）未調整比例時的寬高比。 */
+const originalViewRatio = () => {
   const original = session.originalSource;
   const width = original.naturalWidth || original.width;
   const height = original.naturalHeight || original.height;
-  return session.turns % 2 === 1 ? width > height : height > width;
+  return session.turns % 2 === 1 ? height / width : width / height;
 };
+
+const isPresetAspect = (aspect) =>
+  Boolean(aspect) && ASPECT_PRESETS.some((item) => formatAspect(item) === formatAspect(aspect));
 
 const setAspect = (aspect) => {
   if (!session) return;
   commitTextInput();
   const next = normalizeAspect(aspect);
-  if (JSON.stringify(next) === JSON.stringify(session.aspect)) return;
+  if (JSON.stringify(next) === JSON.stringify(session.aspect)) {
+    session.customMode = Boolean(next) && !isPresetAspect(next);
+    layoutCanvas();
+    syncControls();
+    render();
+    return;
+  }
   pushHistory();
   session.aspect = next;
+  session.customMode = Boolean(next) && !isPresetAspect(next);
   rebuildSource();
   layoutCanvas();
   syncControls();
@@ -282,7 +293,158 @@ const applyPresetAspect = (value) => {
   if (value === "original") return setAspect(null);
   const preset = ASPECT_PRESETS.find((item) => formatAspect(item) === value);
   if (!preset) return;
-  setAspect(isPortraitView() ? swapAspect(preset) : [...preset]);
+  setAspect([...preset]);
+};
+
+/** 按「自訂」：切到自訂、顯示寬高輸入框並帶入目前的比例。 */
+const chooseCustomAspect = () => {
+  if (!session) return;
+  commitTextInput();
+  session.customMode = true;
+  const widthInput = $("annotateAspectWidth");
+  const heightInput = $("annotateAspectHeight");
+  if (session.aspect) {
+    widthInput.value = session.aspect[0];
+    heightInput.value = session.aspect[1];
+  }
+  syncControls();
+  widthInput.focus();
+  widthInput.select();
+};
+
+/* ---------- 拖曳把手直接拉照片 ---------- */
+
+const ASPECT_HANDLES = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
+// 接近常用比例（或原始比例）3% 以內時自動吸附；按住 Alt 不吸附
+const SNAP_TOLERANCE = 0.03;
+const MIN_HANDLE_SIZE = 40;
+
+const snapTargets = () => [
+  ...ASPECT_PRESETS.flatMap((item) => [
+    { ratio: item[0] / item[1], aspect: [...item] },
+    { ratio: item[1] / item[0], aspect: [item[1], item[0]] },
+  ]),
+  { ratio: originalViewRatio(), aspect: null },
+];
+
+const availableStageSize = () => {
+  const stage = $("annotateStage");
+  const styles = getComputedStyle(stage);
+  return {
+    width: stage.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight),
+    height: stage.clientHeight - parseFloat(styles.paddingTop) - parseFloat(styles.paddingBottom),
+  };
+};
+
+const startHandleDrag = (event) => {
+  if (!session?.view || event.button > 0) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const handle = event.currentTarget;
+  handle.setPointerCapture(event.pointerId);
+  session.resize = {
+    dir: handle.dataset.aspectHandle,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    width: session.view.width,
+    height: session.view.height,
+    available: availableStageSize(),
+    result: null,
+  };
+};
+
+const moveHandleDrag = (event) => {
+  const drag = session?.resize;
+  if (!drag || drag.pointerId !== event.pointerId) return;
+  // 照片置中，拉一邊時兩邊一起變，所以位移乘 2 才會跟著游標
+  const dx = (event.clientX - drag.startX) * 2;
+  const dy = (event.clientY - drag.startY) * 2;
+  let width = drag.width;
+  let height = drag.height;
+  if (drag.dir.includes("e")) width += dx;
+  if (drag.dir.includes("w")) width -= dx;
+  if (drag.dir.includes("s")) height += dy;
+  if (drag.dir.includes("n")) height -= dy;
+  width = Math.min(drag.available.width, Math.max(MIN_HANDLE_SIZE, width));
+  height = Math.min(drag.available.height, Math.max(MIN_HANDLE_SIZE, height));
+  let ratio = Math.min(MAX_ASPECT_RATIO, Math.max(1 / MAX_ASPECT_RATIO, width / height));
+  let aspect = [Math.round(ratio * 100), 100];
+  if (!event.altKey) {
+    const target = snapTargets().find(
+      (item) => Math.abs(ratio / item.ratio - 1) < SNAP_TOLERANCE,
+    );
+    if (target) {
+      ratio = target.ratio;
+      aspect = target.aspect;
+    }
+  }
+  // 拉左右邊時保留高度、拉上下邊時保留寬度
+  if (drag.dir === "n" || drag.dir === "s") width = height * ratio;
+  else height = width / ratio;
+  if (width > drag.available.width) {
+    width = drag.available.width;
+    height = width / ratio;
+  }
+  if (height > drag.available.height) {
+    height = drag.available.height;
+    width = height * ratio;
+  }
+  drag.result = aspect;
+  // 拖曳中只用 CSS 拉伸畫面，放開才重新產生照片
+  const canvas = $("annotateCanvas");
+  const wrap = $("annotateCanvasWrap");
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  wrap.style.width = `${width}px`;
+  wrap.style.height = `${height}px`;
+  const badge = $("annotateAspectBadge");
+  if (badge) {
+    badge.hidden = false;
+    badge.textContent = aspect ? formatAspect(aspect) : "原始";
+  }
+};
+
+const endHandleDrag = (event) => {
+  const drag = session?.resize;
+  if (!drag || drag.pointerId !== event.pointerId) return;
+  session.resize = null;
+  const badge = $("annotateAspectBadge");
+  if (badge) badge.hidden = true;
+  if (drag.result === null && event.type !== "pointercancel") {
+    setAspect(null);
+  } else if (drag.result && event.type !== "pointercancel") {
+    setAspect(drag.result);
+    if (session.customMode) {
+      $("annotateAspectWidth").value = session.aspect[0];
+      $("annotateAspectHeight").value = session.aspect[1];
+    }
+  } else {
+    layoutCanvas();
+    render();
+  }
+};
+
+const createAspectHandles = () => {
+  const wrap = $("annotateCanvasWrap");
+  if (!wrap || wrap.querySelector(".annotate-aspect-handle")) return;
+  ASPECT_HANDLES.forEach((dir) => {
+    const handle = document.createElement("span");
+    handle.className = `annotate-aspect-handle handle-${dir}`;
+    handle.dataset.aspectHandle = dir;
+    handle.hidden = true;
+    handle.setAttribute("aria-hidden", "true");
+    handle.addEventListener("pointerdown", startHandleDrag);
+    handle.addEventListener("pointermove", moveHandleDrag);
+    handle.addEventListener("pointerup", endHandleDrag);
+    handle.addEventListener("pointercancel", endHandleDrag);
+    wrap.appendChild(handle);
+  });
+  const badge = document.createElement("span");
+  badge.id = "annotateAspectBadge";
+  badge.className = "annotate-aspect-badge";
+  badge.hidden = true;
+  wrap.appendChild(badge);
 };
 
 const applyCustomAspect = () => {
@@ -303,10 +465,12 @@ const toggleAspectPanel = () => {
   if (!session) return;
   commitTextInput();
   session.aspectPanel = !session.aspectPanel;
+  if (session.aspectPanel) session.selectedId = null;
   syncControls();
   if (session.aspectPanel) {
     document.querySelector("[data-annotate-aspect][aria-checked='true']")?.focus();
   }
+  render();
 };
 
 /* ---------- 畫布大小與座標 ---------- */
@@ -595,6 +759,7 @@ const restoreSnapshot = (value) => {
   session.annotations = data.a;
   session.turns = data.t;
   session.aspect = data.r || null;
+  session.customMode = Boolean(session.aspect) && !isPresetAspect(session.aspect);
   if (shapeChanged) {
     rebuildSource();
     layoutCanvas();
@@ -757,6 +922,8 @@ const commitTextInput = ({ cancel = false } = {}) => {
 
 const onPointerDown = (event) => {
   if (!session || event.button > 0) return;
+  // 調整比例時，照片只能用四周的把手拉，不畫標記
+  if (session.aspectPanel) return;
   if (session.editing) {
     commitTextInput();
     return;
@@ -1012,6 +1179,7 @@ const onPointerUp = () => {
 };
 
 const onDoubleClick = (event) => {
+  if (session?.aspectPanel) return;
   if (!session || session.editing) return;
   const hit = hitAnnotation(toRatio(event), 8);
   if (hit && (hit.type === "text" || hit.type === "label")) {
@@ -1093,31 +1261,28 @@ const syncControls = () => {
     if (label) label.textContent = session.aspect ? formatAspect(session.aspect) : "比例";
   }
   const current = session.aspect;
-  const portrait = isPortraitView();
-  let matchedAspect = !current;
+  const customChecked = session.customMode || (Boolean(current) && !isPresetAspect(current));
   document.querySelectorAll("[data-annotate-aspect]").forEach((button) => {
     const value = button.dataset.annotateAspect;
     let checked;
-    if (value === "original") checked = !current;
-    else if (value === "custom") checked = false;
-    else {
-      const preset = ASPECT_PRESETS.find((item) => formatAspect(item) === value);
-      const oriented = portrait ? swapAspect(preset) : preset;
-      checked = Boolean(current) && formatAspect(oriented) === formatAspect(current);
-      // 直向照片的按鈕顯示 9:16、3:4
-      button.textContent = formatAspect(oriented);
-    }
-    matchedAspect ||= checked;
+    if (value === "custom") checked = customChecked;
+    else if (customChecked) checked = false;
+    else if (value === "original") checked = !current;
+    else checked = Boolean(current) && value === formatAspect(current);
     button.setAttribute("aria-checked", String(checked));
   });
-  const customButton = document.querySelector("[data-annotate-aspect='custom']");
-  if (customButton) customButton.setAttribute("aria-checked", String(!matchedAspect));
-  if (showAspect && current && !matchedAspect) {
+  const customFields = $("annotateAspectCustom");
+  if (customFields) customFields.hidden = !customChecked;
+  if (showAspect && current && customChecked) {
     const widthInput = $("annotateAspectWidth");
     const heightInput = $("annotateAspectHeight");
     if (widthInput && document.activeElement !== widthInput) widthInput.value = current[0];
     if (heightInput && document.activeElement !== heightInput) heightInput.value = current[1];
   }
+  document.querySelectorAll(".annotate-aspect-handle").forEach((handle) => {
+    handle.hidden = !showAspect;
+  });
+  $("annotateCanvas").classList.toggle("is-aspect-mode", showAspect);
   const hint = $("annotateHint");
   if (hint) hint.textContent = showAspect ? ASPECT_HINT : TOOL_HINTS[session.tool] || "";
   $("annotateDeleteBtn").disabled = !selected;
@@ -1138,6 +1303,7 @@ export const initAnnotationEditor = () => {
   const modal = $("annotateModal");
   const canvas = $("annotateCanvas");
   if (!modal || !canvas) return;
+  createAspectHandles();
 
   document.querySelectorAll("[data-annotate-tool]").forEach((button) =>
     button.addEventListener("click", () => setTool(button.dataset.annotateTool)),
@@ -1168,12 +1334,8 @@ export const initAnnotationEditor = () => {
   document.querySelectorAll("[data-annotate-aspect]").forEach((button) =>
     button.addEventListener("click", () => {
       const value = button.dataset.annotateAspect;
-      if (value === "custom") {
-        $("annotateAspectWidth")?.focus();
-        $("annotateAspectWidth")?.select();
-      } else {
-        applyPresetAspect(value);
-      }
+      if (value === "custom") chooseCustomAspect();
+      else applyPresetAspect(value);
     }),
   );
   $("annotateAspectApplyBtn")?.addEventListener("click", applyCustomAspect);
