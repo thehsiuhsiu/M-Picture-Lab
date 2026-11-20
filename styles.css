@@ -5471,17 +5471,56 @@ body.annotate-open {
   }
 }
 
-/* 欄位下方的行數提示（版面規格的行數上限） */
+/* 欄位的行數提示（版面規格的行數上限）：疊在欄位右側，不佔版面空間 */
+.line-limit-field {
+  display: contents;
+}
+
+.line-limit-field.is-active {
+  position: relative;
+  display: block;
+}
+
 .line-limit-hint {
-  margin: 4px 2px 0;
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  z-index: 1;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--surface, #ffffff);
   color: var(--text-3, #8a8a85);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.line-limit-field.has-picker .line-limit-hint {
+  right: 40px;
+}
+
+.line-limit-field.is-multiline .line-limit-hint {
+  top: auto;
+  right: 18px;
+  bottom: 8px;
+  transform: none;
 }
 
 .line-limit-hint.is-over {
-  color: #d96c00;
+  background: #fdf0e3;
+  color: #c45f00;
   font-weight: 600;
+}
+
+/* 超過時在輸入框右側留位置給提示，文字不會被蓋住 */
+.line-limit-field.is-active input.is-over-line-limit {
+  padding-right: 120px;
+}
+
+.line-limit-field.has-picker.is-active input.is-over-line-limit {
+  padding-right: 150px;
 }
 
 .is-over-line-limit {

@@ -1,12 +1,12 @@
 // lineLimitHints.js - 欄位下方的行數提示：超過行數上限時變橘色（見 docs/adr/0005-shared-layout-spec.md）
 
-import { state } from "./state.js?v=20261121-4";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-4";
+import { state } from "./state.js?v=20261121-5";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-5";
 import {
   fieldLines,
   lineLimit,
   generateAccidentTagsText,
-} from "./documentLayout.js?v=20261121-4";
+} from "./documentLayout.js?v=20261121-5";
 
 // 案件資料欄位：輸入框 id → 欄位與適用版型
 const CASE_FIELDS = Object.freeze({
@@ -32,15 +32,29 @@ const describeTarget = (element) => {
   return { field, formats, text };
 };
 
+/**
+ * 提示疊在欄位右下角，不佔版面空間，出現或消失時不會讓網頁排版跳動。
+ * 欄位外包一層 .line-limit-field（平常 display: contents，不影響排版）。
+ */
 const getHint = (element) => {
   const anchor = element.closest(".date-field") || element;
-  const next = anchor.nextElementSibling;
-  if (next?.classList.contains("line-limit-hint")) return next;
-  const hint = document.createElement("p");
-  hint.className = "line-limit-hint";
-  hint.setAttribute("aria-live", "polite");
-  hint.hidden = true;
-  anchor.after(hint);
+  let field = anchor.parentElement;
+  if (!field?.classList.contains("line-limit-field")) {
+    field = document.createElement("span");
+    field.className = "line-limit-field";
+    field.classList.toggle("has-picker", anchor !== element);
+    field.classList.toggle("is-multiline", element.tagName === "TEXTAREA");
+    anchor.before(field);
+    field.appendChild(anchor);
+  }
+  let hint = field.querySelector(":scope > .line-limit-hint");
+  if (!hint) {
+    hint = document.createElement("span");
+    hint.className = "line-limit-hint";
+    hint.setAttribute("aria-live", "polite");
+    hint.hidden = true;
+    field.appendChild(hint);
+  }
   return hint;
 };
 
@@ -56,12 +70,13 @@ export const updateLineHint = (element) => {
   const over = lines > limit;
   // 說明一律顯示行數；其他欄位只有超過時才提示
   const showCount = field === "description" && format === "left" && lines > 0;
-  hint.hidden = !(over || showCount);
+  const visible = over || showCount;
+  hint.hidden = !visible;
+  hint.parentElement.classList.toggle("is-active", visible);
   hint.classList.toggle("is-over", over);
   element.classList.toggle("is-over-line-limit", over);
-  hint.textContent = over
-    ? `約 ${lines} 行，超過 ${limit} 行上限，列印與 PDF 需先精簡`
-    : `約 ${lines} 行（上限 ${limit} 行）`;
+  hint.textContent = over ? `約 ${lines} 行，超過 ${limit} 行` : `約 ${lines} 行／上限 ${limit} 行`;
+  hint.title = over ? "超過行數上限，列印與 PDF 檔案需先精簡；Word 可照樣輸出" : "";
 };
 
 export const refreshAllLineHints = () => {
