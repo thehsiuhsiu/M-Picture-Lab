@@ -1,6 +1,6 @@
 // annotationEditor.js - 編輯視窗：旋轉、調整比例、標記（圈選、方框、箭頭、文字、編號、遮蔽）與進入長截圖分割
 
-import { state } from "./state.js?v=20261121-12";
+import { state } from "./state.js?v=20261121-13";
 import {
   ASPECT_PRESETS,
   DEFAULT_COLOR,
@@ -19,8 +19,8 @@ import {
   normalizeColor,
   PRESET_COLORS,
   rotateAnnotations,
-} from "./annotations.js?v=20261121-12";
-import { showDialog, showToast } from "./utils.js?v=20261121-12";
+} from "./annotations.js?v=20261121-13";
+import { showDialog, showToast } from "./utils.js?v=20261121-13";
 
 const TOOL_HINTS = {
   select: "點選標記可移動、改顏色或粗細；拖曳角落可縮放；點兩下文字可修改",
