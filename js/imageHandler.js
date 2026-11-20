@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-2";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-3";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,18 +14,22 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261121-2";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261121-2";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-2";
+} from "./utils.js?v=20261121-3";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261121-3";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-3";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261121-2";
+} from "./photoNumbering.js?v=20261121-3";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261121-2";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-2";
+} from "./splitGroupLogic.js?v=20261121-3";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-3";
+import {
+  DESCRIPTION_MAX_LINES,
+  estimateWordDescriptionLines,
+} from "./docxGenerator.js?v=20261121-3";
 import {
   createAnnotatedBlob,
   getDisplaySize,
@@ -37,9 +41,9 @@ import {
   rotateAnnotations,
   releaseAnnotatedPreview,
   swapAspect,
-} from "./annotations.js?v=20261121-2";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-2";
-import { attachDatePicker } from "./datePicker.js?v=20261121-2";
+} from "./annotations.js?v=20261121-3";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-3";
+import { attachDatePicker } from "./datePicker.js?v=20261121-3";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -923,8 +927,23 @@ const addImageToPreview = (imageData, counter) => {
   textarea.maxLength = 5000;
   textarea.placeholder = "照片說明（選填）";
   textarea.value = state.imageDescriptions[imageData.id] || "";
+  // 邊打邊顯示輸出到 Word 約佔幾行，超過 3 行變橘色
+  const lineHint = document.createElement("p");
+  lineHint.className = "description-line-hint";
+  lineHint.setAttribute("aria-live", "polite");
+  const updateLineHint = () => {
+    const lines = estimateWordDescriptionLines(textarea.value);
+    const over = lines > DESCRIPTION_MAX_LINES;
+    lineHint.hidden = lines === 0;
+    lineHint.classList.toggle("is-over", over);
+    lineHint.textContent = over
+      ? `Word 約 ${lines} 行，超過 ${DESCRIPTION_MAX_LINES} 行，照片會縮小或接到下一頁`
+      : `Word 約 ${lines} 行（建議 ${DESCRIPTION_MAX_LINES} 行內）`;
+  };
+  updateLineHint();
   textarea.addEventListener("input", (e) => {
     state.imageDescriptions[imageData.id] = e.target.value;
+    updateLineHint();
   });
   textarea.addEventListener("dragover", (e) => {
     e.preventDefault();
@@ -934,6 +953,7 @@ const addImageToPreview = (imageData, counter) => {
     e.stopPropagation();
   });
   descriptionDiv.appendChild(textarea);
+  descriptionDiv.appendChild(lineHint);
 
   const accidentTagsContainer = document.createElement("div");
   accidentTagsContainer.className = "accident-tags-container";

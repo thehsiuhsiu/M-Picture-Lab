@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js：產生 Word 文件（刑案、交通事故兩種版型；多格照片只能輸出 PDF）
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-2";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-3";
 import {
   getFormattedDate,
   showLoadingModal,
@@ -8,10 +8,10 @@ import {
   blobToArrayBuffer,
   showToast,
   showDialog,
-} from "./utils.js?v=20261121-2";
-import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-2";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-2";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261121-2";
+} from "./utils.js?v=20261121-3";
+import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-3";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-3";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261121-3";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -192,51 +192,36 @@ const frameHeightFor = (format, layout, items, formData) => {
 };
 
 /**
- * 每頁原則上放 2 張。文字多時同頁兩個照片框一起變矮（最矮 85mm）；
- * 再放不下時，第二張搬到下一頁。
+ * 每頁固定放 2 張。文字多時同頁兩個照片框一起變矮（最矮 85mm）；
+ * 還是放不下時不另外拆頁，交給 Word 自然接到下一頁。
  */
 export const planDocxPages = (format, items, formData) => {
   const layout = LAYOUTS[format];
   const pages = [];
-  const movedNumbers = [];
-  let index = 0;
-  while (index < items.length) {
+  for (let index = 0; index < items.length; index += 2) {
     const pair = items.slice(index, index + 2);
-    if (pair.length === 2) {
-      const frame = frameHeightFor(format, layout, pair, formData);
-      if (frame >= PHOTO_FRAME_MIN_MM) {
-        pages.push({ items: pair, frameHeight: frame });
-        index += 2;
-        continue;
-      }
-      movedNumbers.push(pair[1].number);
-    }
-    const single = [items[index]];
-    const frame = frameHeightFor(format, layout, single, formData);
-    // 只有一張還是放不下時，照片框不再縮，交給 Word 自然換頁
-    pages.push({ items: single, frameHeight: Math.max(PHOTO_FRAME_MIN_MM, frame) });
-    index += 1;
+    const frame = frameHeightFor(format, layout, pair, formData);
+    pages.push({ items: pair, frameHeight: Math.max(PHOTO_FRAME_MIN_MM, frame) });
   }
   const longDescriptions = items
     .filter((item) => descriptionLines(layout, item) > DESCRIPTION_MAX_LINES)
     .map((item) => item.number);
-  return { pages, movedNumbers, longDescriptions };
+  return { pages, longDescriptions };
 };
 
-const confirmLongTextBeforeExport = async ({ movedNumbers, longDescriptions }) => {
-  if (!movedNumbers.length && !longDescriptions.length) return true;
-  const details = [];
-  if (longDescriptions.length) {
-    details.push(`說明超過 ${DESCRIPTION_MAX_LINES} 行：照片 ${longDescriptions.join("、")}`);
-  }
-  if (movedNumbers.length) {
-    details.push(`會單獨移到下一頁：照片 ${movedNumbers.join("、")}`);
-  }
+/** 照片說明輸出到 Word（刑事案件版型）約佔幾行，供說明欄位即時顯示 */
+export const estimateWordDescriptionLines = (text) =>
+  String(text ?? "").trim() ? descriptionLines(LAYOUTS.left, { description: text }) : 0;
+
+export { DESCRIPTION_MAX_LINES };
+
+const confirmLongTextBeforeExport = async ({ longDescriptions }) => {
+  if (!longDescriptions.length) return true;
   return showDialog({
-    title: "部分照片的文字較多",
+    title: "部分照片的說明較長",
     message:
-      "Word 文件每頁放 2 張照片，文字多時照片會稍微縮小；放不下時，那張照片會移到下一頁。可以回去精簡文字，或照樣輸出。",
-    details,
+      "Word 文件每頁放 2 張照片，說明多時照片會稍微縮小；還是放不下時，會自動接到下一頁。可以回去精簡文字，或照樣輸出。",
+    details: [`說明超過 ${DESCRIPTION_MAX_LINES} 行：照片 ${longDescriptions.join("、")}`],
     tone: "warning",
     confirmText: "照樣輸出",
     cancelText: "回去修改",

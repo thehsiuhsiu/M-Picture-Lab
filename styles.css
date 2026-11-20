@@ -5470,3 +5470,21 @@ body.annotate-open {
     height: 22px;
   }
 }
+
+/* 照片說明：Word 行數提示（刑事案件版型） */
+.description-line-hint {
+  display: none;
+  margin: 4px 2px 0;
+  color: var(--text-3, #8a8a85);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+body.format-left .description-line-hint {
+  display: block;
+}
+
+.description-line-hint.is-over {
+  color: #d96c00;
+  font-weight: 600;
+}
