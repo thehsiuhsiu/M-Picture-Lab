@@ -1,16 +1,16 @@
 // lineLimitCheck.js - 列印與 PDF 檔案輸出前檢查行數上限；超過時擋下並帶使用者去修改
 // （Word 不擋，見 docs/adr/0005-shared-layout-spec.md）
 
-import { state } from "./state.js?v=20261121-9";
-import { showDialog } from "./utils.js?v=20261121-9";
-import { handleViewModeChange } from "./imageHandler.js?v=20261121-9";
+import { state } from "./state.js?v=20261121-10";
+import { showDialog } from "./utils.js?v=20261121-10";
+import { handleViewModeChange } from "./imageHandler.js?v=20261121-10";
 import {
   describeImages,
   describeViolation,
   findLineLimitViolations,
   isLayoutFormat,
   readFormData,
-} from "./documentLayout.js?v=20261121-9";
+} from "./documentLayout.js?v=20261121-10";
 
 const CASE_INPUT_IDS = Object.freeze({
   caseReason: "zipPrefix",
