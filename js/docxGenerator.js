@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js：產生 Word 文件（刑案、交通事故兩種版型；多格照片只能輸出 PDF）
 
-import { state } from "./state.js?v=20261121-7";
+import { state } from "./state.js?v=20261121-8";
 import {
   getFormattedDate,
   showLoadingModal,
@@ -8,9 +8,9 @@ import {
   blobToArrayBuffer,
   showToast,
   showDialog,
-} from "./utils.js?v=20261121-7";
-import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-7";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-7";
+} from "./utils.js?v=20261121-8";
+import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-8";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-8";
 import {
   CELL_SIDE_PADDING_TWIPS,
   descriptionRowLines,
@@ -22,6 +22,8 @@ import {
   TEXT_BOTTOM_PADDING_TWIPS,
   TEXT_WIDTH_MM,
   TEXT_WIDTH_TWIPS,
+  TITLE_LINE_PT,
+  TITLE_PT,
   columnTwips,
   describeImages,
   describeViolation,
@@ -30,7 +32,7 @@ import {
   planPages,
   readFormData,
   spanWidth,
-} from "./documentLayout.js?v=20261121-7";
+} from "./documentLayout.js?v=20261121-8";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -398,9 +400,10 @@ const createDocumentStyles = (docx) => ({
       basedOn: "Normal",
       next: "Normal",
       quickFormat: true,
-      run: { size: 44, font: DOCX_KAI_FONT },
+      run: { size: TITLE_PT * 2, font: DOCX_KAI_FONT },
       paragraph: {
-        spacing: { before: 0, after: 0, line: 240, lineRule: docx.LineRuleType.AUTO },
+        // 固定行高：不論電腦上用哪種字型，標題高度都一樣，不會把下面的表格往下推
+        spacing: { before: 0, after: 0, line: TITLE_LINE_PT * 20, lineRule: docx.LineRuleType.EXACTLY },
       },
     },
   ],

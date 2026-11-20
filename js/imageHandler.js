@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-7";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-8";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,19 +14,19 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261121-7";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261121-7";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-7";
+} from "./utils.js?v=20261121-8";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261121-8";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-8";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261121-7";
+} from "./photoNumbering.js?v=20261121-8";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261121-7";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-7";
-import { updateLineHint } from "./lineLimitHints.js?v=20261121-7";
+} from "./splitGroupLogic.js?v=20261121-8";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-8";
+import { updateLineHint } from "./lineLimitHints.js?v=20261121-8";
 import {
   createAnnotatedBlob,
   getDisplaySize,
@@ -38,9 +38,9 @@ import {
   rotateAnnotations,
   releaseAnnotatedPreview,
   swapAspect,
-} from "./annotations.js?v=20261121-7";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-7";
-import { attachDatePicker } from "./datePicker.js?v=20261121-7";
+} from "./annotations.js?v=20261121-8";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-8";
+import { attachDatePicker } from "./datePicker.js?v=20261121-8";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
