@@ -4579,7 +4579,8 @@ body.annotate-open {
 }
 
 .annotate-size-btn,
-.annotate-mask-btn {
+.annotate-mask-btn,
+.annotate-aspect-btn {
   display: inline-grid;
   min-width: 44px;
   height: 30px;
@@ -4593,7 +4594,8 @@ body.annotate-open {
 }
 
 .annotate-size-btn[aria-checked="true"],
-.annotate-mask-btn[aria-checked="true"] {
+.annotate-mask-btn[aria-checked="true"],
+.annotate-aspect-btn[aria-checked="true"] {
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow-sm);
@@ -5342,4 +5344,52 @@ body.annotate-open {
 .date-popover-footer .date-popover-ok:hover {
   background: var(--accent-hover);
   color: var(--on-accent);
+}
+
+/* 編輯視窗：調整比例 */
+.annotate-aspect-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+}
+
+.annotate-aspect-input {
+  width: 56px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.15));
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  text-align: center;
+}
+
+.annotate-aspect-apply {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--surface-3);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.annotate-aspect-apply:hover {
+  background: var(--surface-2, var(--surface-3));
+}
+
+@media (max-width: 820px) {
+  .annotate-stylebar #annotateAspectGroup {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .annotate-aspect-custom {
+    flex: 0 0 auto;
+  }
 }

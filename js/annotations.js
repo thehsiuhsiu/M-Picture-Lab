@@ -3,8 +3,8 @@
 // 標記與原圖分開保存（見 docs/adr/0002-non-destructive-annotations.md）。
 // 座標一律存成「相對於照片寬高的比例」（0～1），照片縮放或旋轉時不必換算像素。
 
-import { state } from "./state.js?v=20261116-3";
-import { createObjectUrl, revokeObjectUrl, resizeImageForDoc } from "./utils.js?v=20261116-3";
+import { state } from "./state.js?v=20261121-1";
+import { createObjectUrl, revokeObjectUrl, resizeImageForDoc } from "./utils.js?v=20261121-1";
 
 export const ANNOTATION_TYPES = Object.freeze([
   "ellipse",
@@ -142,6 +142,59 @@ export const normalizeAnnotations = (raw) => {
 
 export const getAnnotations = (imageId) => state.imageAnnotations[imageId] || [];
 export const hasAnnotations = (imageId) => getAnnotations(imageId).length > 0;
+
+/* ---------- 調整比例 ---------- */
+// 比例和標記一樣與原圖分開保存，顯示與輸出時才拉伸（見 docs/adr/0004-non-destructive-aspect-ratio.md）。
+// 存成 [寬, 高] 的整數，例如 [16, 9]；照使用者輸入的數字保存（21:9 不化成 7:3）；沒有調整時不存。
+
+export const ASPECT_PRESETS = Object.freeze([
+  Object.freeze([16, 9]),
+  Object.freeze([4, 3]),
+]);
+export const MAX_ASPECT_PART = 50;
+export const MAX_ASPECT_RATIO = 5;
+// 拉伸後的照片最多約 1600 萬畫素（原圖更大時以原圖為上限），避免手機瀏覽器畫不出來
+const MAX_STRETCHED_PIXELS = 16_777_216;
+
+/** 檢查比例；不合法或沒有比例時回傳 null。 */
+export const normalizeAspect = (raw) => {
+  if (!Array.isArray(raw) || raw.length !== 2) return null;
+  const [w, h] = raw.map(Number);
+  if (![w, h].every((v) => Number.isInteger(v) && v >= 1 && v <= MAX_ASPECT_PART)) return null;
+  const ratio = w / h;
+  if (ratio > MAX_ASPECT_RATIO || ratio < 1 / MAX_ASPECT_RATIO) return null;
+  return [w, h];
+};
+
+export const getAspect = (imageId) => state.imageAspects[imageId] || null;
+export const hasAspect = (imageId) => Boolean(state.imageAspects[imageId]);
+/** 有標記或調整過比例的照片，顯示與輸出時都要重新合成。 */
+export const needsComposite = (imageId) => hasAnnotations(imageId) || hasAspect(imageId);
+
+/** 照片轉 90° 時，比例跟著轉（16:9 變 9:16）。 */
+export const swapAspect = (aspect) => (aspect ? [aspect[1], aspect[0]] : null);
+
+export const formatAspect = (aspect) => (aspect ? `${aspect[0]}:${aspect[1]}` : "原始");
+
+/** 拉伸成指定比例後的尺寸：只拉大不壓小，不讓細節流失。 */
+export const stretchedSize = (width, height, aspect) => {
+  if (!aspect || !width || !height) return { width, height };
+  const target = aspect[0] / aspect[1];
+  let w = width;
+  let h = height;
+  if (width / height < target) w = height * target;
+  else h = width / target;
+  const limit = Math.max(width * height, MAX_STRETCHED_PIXELS);
+  const shrink = Math.min(1, Math.sqrt(limit / (w * h)));
+  return {
+    width: Math.max(1, Math.round(w * shrink)),
+    height: Math.max(1, Math.round(h * shrink)),
+  };
+};
+
+/** 照片顯示與輸出時的尺寸（已套用比例）。 */
+export const getDisplaySize = (image) =>
+  stretchedSize(Number(image.width) || 0, Number(image.height) || 0, getAspect(image.id));
 
 /* ---------- 繪製 ---------- */
 
@@ -471,19 +524,26 @@ const canvasToBlob = (canvas, type, quality) =>
   );
 
 /**
- * 產生含標記的照片。沒有標記時直接回傳原圖。
+ * 產生含標記、已套用比例的照片。沒有標記也沒有調整比例時直接回傳原圖。
  * maxDimension 可限制輸出尺寸（例如照片卡片只需要小圖）。
+ * withAnnotations: false 時只套用比例（長截圖分割前用）。
  */
 export const createAnnotatedBlob = async (
   image,
-  { maxDimension = 0, type = "", quality = 0.92 } = {},
+  { maxDimension = 0, type = "", quality = 0.92, withAnnotations = true } = {},
 ) => {
-  const annotations = getAnnotations(image.id);
-  if (!annotations.length) return image.blob;
+  const annotations = withAnnotations ? getAnnotations(image.id) : [];
+  const aspect = getAspect(image.id);
+  if (!annotations.length && !aspect) return image.blob;
   const { image: source, url } = await loadImageElement(image.blob);
   try {
-    const naturalWidth = source.naturalWidth || image.width;
-    const naturalHeight = source.naturalHeight || image.height;
+    const stretched = stretchedSize(
+      source.naturalWidth || image.width,
+      source.naturalHeight || image.height,
+      aspect,
+    );
+    const naturalWidth = stretched.width;
+    const naturalHeight = stretched.height;
     const scale = maxDimension
       ? Math.min(1, maxDimension / Math.max(naturalWidth, naturalHeight))
       : 1;
@@ -510,7 +570,7 @@ export const createAnnotatedBlob = async (
 };
 
 /**
- * 照片卡片顯示用：有標記時產生含標記的小圖，回傳網址；沒有標記時回傳原圖網址。
+ * 照片卡片顯示用：有標記或調整過比例時產生合成後的小圖，回傳網址；否則回傳原圖網址。
  * 舊的小圖網址會一併釋放。
  */
 export const refreshAnnotatedPreview = async (image) => {
@@ -518,7 +578,7 @@ export const refreshAnnotatedPreview = async (image) => {
     revokeObjectUrl(image.annotatedPreviewUrl);
     image.annotatedPreviewUrl = "";
   }
-  if (!hasAnnotations(image.id)) return image.previewUrl;
+  if (!needsComposite(image.id)) return image.previewUrl;
   const blob = await createAnnotatedBlob(image, { maxDimension: DISPLAY_MAX_DIMENSION });
   image.annotatedPreviewUrl = createObjectUrl(blob);
   return image.annotatedPreviewUrl;
@@ -590,6 +650,6 @@ export const createAnnotationId = () =>
  * （以前是先存一張原尺寸的含標記照片，再縮小重存，會壓縮兩次。）
  */
 export const createDocumentImageBlob = (image, maxDimension) =>
-  hasAnnotations(image.id)
+  needsComposite(image.id)
     ? createAnnotatedBlob(image, { maxDimension, type: "image/jpeg", quality: 0.9 })
     : resizeImageForDoc(image.blob, maxDimension);

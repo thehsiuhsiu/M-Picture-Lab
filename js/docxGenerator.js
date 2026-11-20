@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js：產生 Word 文件（刑案、交通事故兩種版型；多格照片只能輸出 PDF）
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261116-3";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-1";
 import {
   getFormattedDate,
   showLoadingModal,
@@ -8,10 +8,10 @@ import {
   blobToArrayBuffer,
   showToast,
   showDialog,
-} from "./utils.js?v=20261116-3";
-import { createDocumentImageBlob } from "./annotations.js?v=20261116-3";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261116-3";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261116-3";
+} from "./utils.js?v=20261121-1";
+import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-1";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-1";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261121-1";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -443,8 +443,10 @@ const textRow = (docx, cells) => new docx.TableRow({ cantSplit: true, children: 
 const photoRow = (docx, layout, item, frameHeight) => {
   const maxWidthMm = TEXT_WIDTH_MM - CELL_PADDING_MM - PHOTO_PADDING_MM;
   const maxHeightMm = frameHeight - PHOTO_PADDING_MM;
-  const width = Math.max(1, Number(item.image.width) || 1);
-  const height = Math.max(1, Number(item.image.height) || 1);
+  // 調整過比例的照片，照框依拉伸後的形狀計算
+  const size = getDisplaySize(item.image);
+  const width = Math.max(1, Number(size.width) || 1);
+  const height = Math.max(1, Number(size.height) || 1);
   const scale = Math.min(maxWidthMm / width, maxHeightMm / height);
   return new docx.TableRow({
     cantSplit: true,

@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261116-3";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-1";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,26 +14,32 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261116-3";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261116-3";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261116-3";
+} from "./utils.js?v=20261121-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261121-1";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-1";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261116-3";
+} from "./photoNumbering.js?v=20261121-1";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261116-3";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261116-3";
+} from "./splitGroupLogic.js?v=20261121-1";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-1";
 import {
+  createAnnotatedBlob,
+  getDisplaySize,
   hasAnnotations,
+  hasAspect,
+  needsComposite,
+  normalizeAspect,
   refreshAnnotatedPreview,
   rotateAnnotations,
   releaseAnnotatedPreview,
-} from "./annotations.js?v=20261116-3";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261116-3";
-import { attachDatePicker } from "./datePicker.js?v=20261116-3";
+  swapAspect,
+} from "./annotations.js?v=20261121-1";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-1";
+import { attachDatePicker } from "./datePicker.js?v=20261121-1";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -671,6 +677,8 @@ export const replaceImageWithPreparedImages = (
   delete state.imageRotations[imageId];
   // 分割後各分段是新照片，原本的標記不沿用（分割前已提醒使用者）
   delete state.imageAnnotations[imageId];
+  // 比例在分割前已套用進照片（見 applyAspectToImage）
+  delete state.imageAspects[imageId];
   releaseAnnotatedPreview(original);
 
   replacements.forEach((record, index) => {
@@ -779,8 +787,8 @@ const updateCardImage = async (image) => {
   }
 };
 
-/** 編輯視窗按「完成」：先套用旋轉（標記已在視窗裡轉好），再保存標記。 */
-const saveEdits = async (imageId, annotations, turns = 0) => {
+/** 編輯視窗按「完成」：先套用旋轉（標記與比例已在視窗裡轉好），再保存標記與比例。 */
+const saveEdits = async (imageId, annotations, turns = 0, aspect = null) => {
   const image = state.selectedImages.find((item) => item.id === imageId);
   if (!image) return;
   const normalizedTurns = ((turns % 4) + 4) % 4;
@@ -789,6 +797,9 @@ const saveEdits = async (imageId, annotations, turns = 0) => {
   }
   if (annotations.length) state.imageAnnotations[imageId] = annotations;
   else delete state.imageAnnotations[imageId];
+  const normalizedAspect = normalizeAspect(aspect);
+  if (normalizedAspect) state.imageAspects[imageId] = normalizedAspect;
+  else delete state.imageAspects[imageId];
   try {
     await updateCardImage(image);
   } catch (error) {
@@ -801,7 +812,7 @@ const editorHandlers = {
   save: saveEdits,
   // 編輯視窗的「分割」：先保存旋轉與標記，再開啟長截圖分割；取消分割時回到編輯視窗
   split: async (imageId, edits) => {
-    if (edits.changed) await saveEdits(imageId, edits.annotations, edits.turns);
+    if (edits.changed) await saveEdits(imageId, edits.annotations, edits.turns, edits.aspect);
     if (!splitHandler) return;
     state.editingImageId = imageId;
     try {
@@ -852,7 +863,7 @@ const addImageToPreview = (imageData, counter) => {
   img.draggable = false;
   frame.appendChild(img);
   frame.appendChild(createPhotoTools(imageData.id));
-  if (hasAnnotations(imageData.id)) {
+  if (needsComposite(imageData.id)) {
     queueMicrotask(() =>
       updateCardImage(imageData).catch((error) =>
         console.warn("顯示含標記的照片失敗:", error),
@@ -1340,6 +1351,7 @@ export const removeImage = async (id) => {
   delete state.imageAccidentTags[id];
   delete state.imageRotations[id];
   delete state.imageAnnotations[id];
+  delete state.imageAspects[id];
   releaseAnnotatedPreview(imageData);
 
   if (imageData?.previewUrl) {
@@ -1487,8 +1499,12 @@ export const rotateImage = async (
     revokeObjectUrl(imageData.previewUrl);
   }
   imageData.previewUrl = rotatedData.previewUrl;
+  // 從編輯視窗來時（rotateMarks: false），標記與比例已在視窗裡轉好
   if (rotateMarks && hasAnnotations(imageId)) {
     state.imageAnnotations[imageId] = rotateAnnotations(state.imageAnnotations[imageId], degrees);
+  }
+  if (rotateMarks && hasAspect(imageId) && Math.abs(degrees) % 180 === 90) {
+    state.imageAspects[imageId] = swapAspect(state.imageAspects[imageId]);
   }
 
   const container = document.querySelector(
@@ -1500,7 +1516,7 @@ export const rotateImage = async (
       img.src = rotatedData.previewUrl;
     }
   }
-  if (hasAnnotations(imageId)) {
+  if (needsComposite(imageId)) {
     await updateCardImage(imageData).catch((error) =>
       console.warn("更新含標記的照片失敗:", error),
     );
@@ -1508,6 +1524,30 @@ export const rotateImage = async (
 
   console.log(
     `Image rotated by ${degrees} degrees. New rotation: ${newRotation}`,
+  );
+  notifyProjectChanged();
+};
+
+/**
+ * 把調整過的比例直接套用進照片（長截圖分割前用，分段要照調整後的樣子切）。
+ * 套用後照片本身就是新的形狀，不再保存比例，也無法改回原始比例。
+ */
+export const applyAspectToImage = async (imageId) => {
+  const imageData = state.selectedImages.find((img) => img.id === imageId);
+  if (!imageData || !hasAspect(imageId)) return;
+  const size = getDisplaySize(imageData);
+  const blob = await createAnnotatedBlob(imageData, { withAnnotations: false });
+  const previewUrl = await createThumbnail(blob, 800, 800, 0.8);
+  if (imageData.previewUrl) revokeObjectUrl(imageData.previewUrl);
+  imageData.blob = blob;
+  imageData.width = size.width;
+  imageData.height = size.height;
+  imageData.previewUrl = previewUrl;
+  delete state.imageAspects[imageId];
+  const img = document.querySelector(`.image-container[data-id="${imageId}"] img`);
+  if (img) img.src = previewUrl;
+  await updateCardImage(imageData).catch((error) =>
+    console.warn("更新含標記的照片失敗:", error),
   );
   notifyProjectChanged();
 };
@@ -1563,6 +1603,7 @@ export const replaceImageCollection = async (records) => {
   state.imageAccidentTags = {};
   state.imageRotations = {};
   state.imageAnnotations = {};
+  state.imageAspects = {};
 
   hydratedRecords.forEach((record) => {
     state.imageDescriptions[record.id] = record.description || "";
@@ -1571,6 +1612,8 @@ export const replaceImageCollection = async (records) => {
     state.imageAccidentTags[record.id] = record.accidentTags || {};
     state.imageRotations[record.id] = record.rotation || 0;
     if (record.annotations?.length) state.imageAnnotations[record.id] = record.annotations;
+    const aspect = normalizeAspect(record.aspect);
+    if (aspect) state.imageAspects[record.id] = aspect;
   });
 
   const preview = document.getElementById("imagePreview");
