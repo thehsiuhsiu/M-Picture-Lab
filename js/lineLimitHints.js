@@ -1,12 +1,12 @@
 // lineLimitHints.js - 欄位下方的行數提示：超過行數上限時變橘色（見 docs/adr/0005-shared-layout-spec.md）
 
-import { state } from "./state.js?v=20261121-12";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-12";
+import { state } from "./state.js?v=20261121-13";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-13";
 import {
   fieldLines,
   lineLimit,
   generateAccidentTagsText,
-} from "./documentLayout.js?v=20261121-12";
+} from "./documentLayout.js?v=20261121-13";
 
 // 案件資料欄位：輸入框 id → 欄位與適用版型
 const CASE_FIELDS = Object.freeze({

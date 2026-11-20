@@ -1,17 +1,17 @@
 // documentLayout.js - 版面規格：刑事案件與交通事故版型的 Word、列印、PDF 檔案、版面預覽共用
 // 所有排版數字以 Word 為準（見 docs/adr/0005-shared-layout-spec.md）。
 
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-12";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261121-12";
+import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-13";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261121-13";
 
 // ============ 頁面（A4，單位 mm） ============
 export const PAGE = Object.freeze({
   width: 210,
   height: 297,
-  marginTop: 22,
+  marginTop: 24,
   marginBottom: 10,
   marginSide: 24,
-  // 標題離紙張上緣 12mm，固定行高，底部約在 20.5mm，仍在表格開始的 22mm 之上
+  // 標題離紙張上緣 12mm，固定行高，底部約在 20.5mm，和表格（24mm 開始）之間留約 3.5mm
   headerDistance: 12,
   footerDistance: 5, // 頁碼離紙張下緣
 });
@@ -24,11 +24,14 @@ export const BODY_HEIGHT_MM = PAGE.height - PAGE.marginTop - PAGE.marginBottom;
 // ============ 文字 ============
 export const FONT_PT = 12; // 表格文字
 export const TITLE_PT = 22; // 文件標題
-export const TITLE_LINE_PT = 24; // 標題固定行高（12mm＋約 8.5mm，仍在表格開始的 22mm 之上）
+export const TITLE_LINE_PT = 24; // 標題固定行高（12mm＋約 8.5mm，表格從 24mm 開始）
 export const PAGE_NUMBER_PT = 10; // 頁碼
 export const LINE_PT = 15; // 固定行高
 export const LINE_TWIPS = LINE_PT * 20;
 export const LINE_MM = (LINE_PT / 72) * 25.4;
+// 同一頁上下兩組照片表格之間的空白：半行高
+export const GROUP_GAP_PT = LINE_PT / 2;
+const GROUP_GAP_MM = (GROUP_GAP_PT / 72) * 25.4;
 const FONT_EM_MM = (FONT_PT / 72) * 25.4;
 
 // 儲存格內距：左右用 Word 預設各 0.19 cm；
@@ -230,7 +233,7 @@ const groupTextHeight = (format, item, formData) => {
 const frameHeightFor = (format, items, formData) => {
   let fixed = TINY_PARAGRAPH_MM * 2 + SAFETY_MM;
   if (LAYOUTS[format].hasCaseHeader) fixed += rowHeight(caseHeaderLines(formData));
-  fixed += (items.length - 1) * LINE_MM; // 兩組之間空一行
+  fixed += (items.length - 1) * GROUP_GAP_MM; // 兩組之間空半行
   for (const item of items) fixed += groupTextHeight(format, item, formData);
   return Math.min(PHOTO_FRAME_MAX_MM, (BODY_HEIGHT_MM - fixed) / items.length);
 };
@@ -370,7 +373,7 @@ ${scope} table.doc-table {
   table-layout: fixed;
 }
 ${scope} table.doc-table + table.doc-table { margin-top: -1px; }
-${scope} .doc-gap { height: ${pt(LINE_PT)}; }
+${scope} .doc-gap { height: ${pt(GROUP_GAP_PT)}; }
 ${scope} .doc-table td {
   padding: ${mm(TEXT_BOTTOM_PADDING_MM / 2)} ${mm(CELL_SIDE_PADDING_MM)};
   border: 1px solid #000;

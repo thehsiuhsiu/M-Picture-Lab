@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js：產生 Word 文件（刑案、交通事故兩種版型；多格照片只能輸出 PDF）
 
-import { state } from "./state.js?v=20261121-12";
+import { state } from "./state.js?v=20261121-13";
 import {
   getFormattedDate,
   showLoadingModal,
@@ -8,14 +8,15 @@ import {
   blobToArrayBuffer,
   showToast,
   showDialog,
-} from "./utils.js?v=20261121-12";
-import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-12";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-12";
+} from "./utils.js?v=20261121-13";
+import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-13";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-13";
 import {
   CELL_SIDE_PADDING_MM,
   CELL_SIDE_PADDING_TWIPS,
   descriptionRowLines,
   FONT_PT,
+  GROUP_GAP_PT,
   LAYOUTS,
   LINE_TWIPS,
   PAGE,
@@ -33,7 +34,7 @@ import {
   planPages,
   readFormData,
   spanWidth,
-} from "./documentLayout.js?v=20261121-12";
+} from "./documentLayout.js?v=20261121-13";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -160,7 +161,21 @@ const createDocument = (docx, format, formData, pages) => {
     if (pageIndex > 0) children.push(createPageBreak(docx));
     if (layout.hasCaseHeader) children.push(createCaseHeaderTable(docx, layout, formData));
     page.items.forEach((item, itemIndex) => {
-      if (itemIndex > 0) children.push(new docx.Paragraph({ text: "", style: "Normal" }));
+      // 兩組之間空半行：固定行高的空段落
+      if (itemIndex > 0) {
+        children.push(
+          new docx.Paragraph({
+            style: "Normal",
+            children: [new docx.TextRun({ text: "", size: 2 })],
+            spacing: {
+              before: 0,
+              after: 0,
+              line: GROUP_GAP_PT * 20,
+              lineRule: docx.LineRuleType.EXACTLY,
+            },
+          }),
+        );
+      }
       children.push(
         format === "middle"
           ? createTrafficAccidentTable(docx, layout, item, page.frameHeight)
