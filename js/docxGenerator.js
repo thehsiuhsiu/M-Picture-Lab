@@ -1,6 +1,6 @@
 ﻿// docxGenerator.js：產生 Word 文件（刑案、交通事故兩種版型；多格照片只能輸出 PDF）
 
-import { state } from "./state.js?v=20261121-11";
+import { state } from "./state.js?v=20261121-12";
 import {
   getFormattedDate,
   showLoadingModal,
@@ -8,10 +8,11 @@ import {
   blobToArrayBuffer,
   showToast,
   showDialog,
-} from "./utils.js?v=20261121-11";
-import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-11";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-11";
+} from "./utils.js?v=20261121-12";
+import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-12";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-12";
 import {
+  CELL_SIDE_PADDING_MM,
   CELL_SIDE_PADDING_TWIPS,
   descriptionRowLines,
   FONT_PT,
@@ -32,7 +33,7 @@ import {
   planPages,
   readFormData,
   spanWidth,
-} from "./documentLayout.js?v=20261121-11";
+} from "./documentLayout.js?v=20261121-12";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -277,9 +278,9 @@ const descriptionRow = (docx, layout, item, format) =>
     ],
   });
 
-/** 照片框：照片等比例縮放，以較寬或較高的那一邊貼齊框線，不超出框線 */
+/** 照片框：照片等比例縮放，上下貼齊框線、左右保留 0.19 cm 內距，不超出框線 */
 const photoRow = (docx, layout, item, frameHeight) => {
-  const maxWidthMm = TEXT_WIDTH_MM - 2 * PHOTO_GAP_MM;
+  const maxWidthMm = TEXT_WIDTH_MM - 2 * CELL_SIDE_PADDING_MM;
   const maxHeightMm = frameHeight - 2 * PHOTO_GAP_MM;
   // 調整過比例的照片，照框依拉伸後的形狀計算
   const size = getDisplaySize(item.image);
@@ -310,12 +311,12 @@ const photoRow = (docx, layout, item, frameHeight) => {
         columnSpan: layout.columns.length,
         width: { size: TEXT_WIDTH_TWIPS, type: docx.WidthType.DXA },
         verticalAlign: docx.VerticalAlign.CENTER,
-        // 不用 Word 預設的左右內距（各 0.19 cm），照片才能貼齊框線
+        // 上下貼齊框線；左右保留 Word 預設的 0.19 cm，舊版 Word 的上下表格才會對齊
         margins: {
           top: mmToTwips(PHOTO_GAP_MM),
           bottom: mmToTwips(PHOTO_GAP_MM),
-          left: mmToTwips(PHOTO_GAP_MM),
-          right: mmToTwips(PHOTO_GAP_MM),
+          left: CELL_SIDE_PADDING_TWIPS,
+          right: CELL_SIDE_PADDING_TWIPS,
         },
       }),
     ],

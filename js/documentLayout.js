@@ -1,8 +1,8 @@
 // documentLayout.js - 版面規格：刑事案件與交通事故版型的 Word、列印、PDF 檔案、版面預覽共用
 // 所有排版數字以 Word 為準（見 docs/adr/0005-shared-layout-spec.md）。
 
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-11";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261121-11";
+import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-12";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261121-12";
 
 // ============ 頁面（A4，單位 mm） ============
 export const PAGE = Object.freeze({
@@ -46,7 +46,8 @@ const SAFETY_MM = 4; // 估算誤差的保留空間
 export const PHOTO_FRAME_MAX_MM = 95;
 // 只有 Word 會用到：文字超過行數上限時照片框一起變矮，最矮 85mm
 export const PHOTO_FRAME_MIN_MM = 85;
-// 照片貼齊框線，只留框線的寬度
+// 照片上下貼齊框線，只留框線的寬度；左右用和文字格相同的內距（0.19 cm），
+// 否則舊版 Word（2003／2007）會依每個表格第一格的內距決定表格位置，上下表格會左右錯開
 export const PHOTO_GAP_MM = 0.4;
 
 // ============ 表格欄位 ============
@@ -396,7 +397,7 @@ ${scope} .doc-table .doc-description-row .doc-text {
   justify-content: center;
 }
 ${scope} .doc-table td.doc-photo {
-  padding: ${mm(PHOTO_GAP_MM)};
+  padding: ${mm(PHOTO_GAP_MM)} ${mm(CELL_SIDE_PADDING_MM)};
   text-align: center;
   white-space: normal;
 }
