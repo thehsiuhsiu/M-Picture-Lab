@@ -53,7 +53,8 @@ const SAFETY_MM = 4; // 估算誤差的保留空間
 // 照片框：一般 95mm；文字換行多時同頁一起變矮，最矮 85mm（約可多容納 3 行說明）
 const PHOTO_FRAME_MAX_MM = 95;
 const PHOTO_FRAME_MIN_MM = 85;
-const PHOTO_PADDING_MM = 2;
+// 照片貼齊框線：照片框的儲存格不留內距，只保留框線的寬度，避免照片壓到框線
+const PHOTO_GAP_MM = 0.4;
 const DESCRIPTION_MAX_LINES = 3;
 
 const mmToTwips = (mm) => Math.round((mm / 25.4) * 1440);
@@ -439,10 +440,10 @@ const createTable = (docx, layout, rows) =>
 
 const textRow = (docx, cells) => new docx.TableRow({ cantSplit: true, children: cells });
 
-/** 照片框：照片等比例縮放，左右、上下都不超出框線 */
+/** 照片框：照片等比例縮放，以較寬或較高的那一邊貼齊框線，不超出框線 */
 const photoRow = (docx, layout, item, frameHeight) => {
-  const maxWidthMm = TEXT_WIDTH_MM - CELL_PADDING_MM - PHOTO_PADDING_MM;
-  const maxHeightMm = frameHeight - PHOTO_PADDING_MM;
+  const maxWidthMm = TEXT_WIDTH_MM - 2 * PHOTO_GAP_MM;
+  const maxHeightMm = frameHeight - 2 * PHOTO_GAP_MM;
   // 調整過比例的照片，照框依拉伸後的形狀計算
   const size = getDisplaySize(item.image);
   const width = Math.max(1, Number(size.width) || 1);
@@ -472,6 +473,13 @@ const photoRow = (docx, layout, item, frameHeight) => {
         columnSpan: layout.columns.length,
         width: { size: TEXT_WIDTH_TWIPS, type: docx.WidthType.DXA },
         verticalAlign: docx.VerticalAlign.CENTER,
+        // 不用 Word 預設的左右內距（各 0.19 cm），照片才能貼齊框線
+        margins: {
+          top: mmToTwips(PHOTO_GAP_MM),
+          bottom: mmToTwips(PHOTO_GAP_MM),
+          left: mmToTwips(PHOTO_GAP_MM),
+          right: mmToTwips(PHOTO_GAP_MM),
+        },
       }),
     ],
   });
