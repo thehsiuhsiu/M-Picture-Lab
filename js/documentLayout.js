@@ -1,9 +1,9 @@
 // documentLayout.js - 版面規格：刑事案件與交通事故版型的 Word、列印、PDF 檔案、版面預覽共用
 // 所有排版數字以 Word 為準（見 docs/adr/0005-shared-layout-spec.md）。
 
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261123-1";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261123-1";
-import { DEFAULT_FIELD_LABELS, getFieldLabel } from "./fieldLabels.js?v=20261123-1";
+import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261123-2";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261123-2";
+import { DEFAULT_FIELD_LABELS, getFieldLabel } from "./fieldLabels.js?v=20261123-2";
 
 // ============ 頁面（A4，單位 mm） ============
 export const PAGE = Object.freeze({

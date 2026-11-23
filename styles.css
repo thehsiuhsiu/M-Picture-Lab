@@ -2851,10 +2851,42 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   grid-column: span 2;
 }
 
+/* 日期欄：寬度夠時「自動帶入個別照片日期」放在標籤右邊，不夠時放到輸入框下面
+   （依這一欄本身的寬度判斷，不是整個視窗寬度） */
 .case-date-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+}
+
+.case-date-field > .form-group-row,
+.case-date-field > .form-group,
+.case-date-field > .date-mode-row {
+  grid-column: 1 / -1;
+}
+
+@container (min-width: 320px) {
+  .case-date-field > .form-group-row {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .case-date-field > .date-mode-row {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 0;
+    height: 19.5px;
+    white-space: nowrap;
+  }
+
+  .case-date-field > .form-group-row > label {
+    white-space: nowrap;
+  }
+
+  .case-date-field > .form-group {
+    grid-row: 2;
+  }
 }
 
 /* 開關比標籤文字高；把這一列固定成和其他標籤一樣高，下方輸入框才會對齊 */
