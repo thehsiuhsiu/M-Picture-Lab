@@ -1,8 +1,9 @@
 // documentLayout.js - 版面規格：刑事案件與交通事故版型的 Word、列印、PDF 檔案、版面預覽共用
 // 所有排版數字以 Word 為準（見 docs/adr/0005-shared-layout-spec.md）。
 
-import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261121-13";
-import { getPhotoNumber } from "./photoNumbering.js?v=20261121-13";
+import { state, ACCIDENT_TAG_OPTIONS, FORMAT_TITLES } from "./state.js?v=20261123-1";
+import { getPhotoNumber } from "./photoNumbering.js?v=20261123-1";
+import { DEFAULT_FIELD_LABELS, getFieldLabel } from "./fieldLabels.js?v=20261123-1";
 
 // ============ 頁面（A4，單位 mm） ============
 export const PAGE = Object.freeze({
@@ -263,8 +264,11 @@ const FIELD_LABELS = Object.freeze({
   description: "說明",
 });
 
-export const fieldLabel = (format, field) =>
-  format === "middle" && field === "date" ? "攝影日期" : FIELD_LABELS[field];
+export const fieldLabel = (format, field) => {
+  if (format === "middle" && field === "date") return "攝影日期";
+  // 案由、單位、攝影地址、攝影人員用使用者自訂的名稱
+  return DEFAULT_FIELD_LABELS[field] ? getFieldLabel(field) : FIELD_LABELS[field];
+};
 
 /**
  * 找出超過行數上限的欄位。
@@ -435,8 +439,8 @@ const photoRow = (src, frameHeight) => {
 const caseHeaderTable = (formData) => {
   const layout = LAYOUTS.left;
   return `<table class="doc-table">${colgroup(layout)}<tr>
-${label("案由")}${value(formData.caseReason, { span: 2, lines: lineLimit("left", "caseReason") })}
-${label("單位")}${value(formData.caseUnit, { span: 2, lines: lineLimit("left", "caseUnit") })}
+${label(getFieldLabel("caseReason"))}${value(formData.caseReason, { span: 2, lines: lineLimit("left", "caseReason") })}
+${label(getFieldLabel("caseUnit"))}${value(formData.caseUnit, { span: 2, lines: lineLimit("left", "caseUnit") })}
 </tr></table>`;
 };
 
@@ -445,9 +449,9 @@ ${photoRow(src, frameHeight)}
 <tr>
 <td class="doc-center">${escapeHtml(`編號(${item.number})`)}</td>
 ${label("照片日期")}${value(item.date, { span: 2 })}
-${label("攝影人")}${value(formData.caseNumber, { align: "doc-center" })}
+${label(getFieldLabel("photographer"))}${value(formData.caseNumber, { align: "doc-center" })}
 </tr>
-<tr>${label("攝影地址")}${value(item.address, { span: 5 })}</tr>
+<tr>${label(getFieldLabel("address"))}${value(item.address, { span: 5 })}</tr>
 <tr class="doc-description-row">${label("說明")}${value(item.description, { span: 5, align: "doc-justify", lines: lineLimit("left", "description") })}</tr>
 </table>`;
 

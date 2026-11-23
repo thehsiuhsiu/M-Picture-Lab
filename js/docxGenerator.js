@@ -1,6 +1,7 @@
 ﻿// docxGenerator.js：產生 Word 文件（刑案、交通事故兩種版型；多格照片只能輸出 PDF）
 
-import { state } from "./state.js?v=20261121-13";
+import { state } from "./state.js?v=20261123-1";
+import { getFieldLabel } from "./fieldLabels.js?v=20261123-1";
 import {
   getFormattedDate,
   showLoadingModal,
@@ -8,9 +9,9 @@ import {
   blobToArrayBuffer,
   showToast,
   showDialog,
-} from "./utils.js?v=20261121-13";
-import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261121-13";
-import { makeWord2007Compatible } from "./docxCompat.js?v=20261121-13";
+} from "./utils.js?v=20261123-1";
+import { createDocumentImageBlob, getDisplaySize } from "./annotations.js?v=20261123-1";
+import { makeWord2007Compatible } from "./docxCompat.js?v=20261123-1";
 import {
   CELL_SIDE_PADDING_MM,
   CELL_SIDE_PADDING_TWIPS,
@@ -34,7 +35,7 @@ import {
   planPages,
   readFormData,
   spanWidth,
-} from "./documentLayout.js?v=20261121-13";
+} from "./documentLayout.js?v=20261123-1";
 
 const platformName =
   globalThis.navigator?.userAgentData?.platform ||
@@ -341,9 +342,9 @@ const photoRow = (docx, layout, item, frameHeight) => {
 const createCaseHeaderTable = (docx, layout, formData) =>
   createTable(docx, layout, [
     textRow(docx, [
-      labelCell(docx, layout, 0, "案由"),
+      labelCell(docx, layout, 0, getFieldLabel("caseReason")),
       textCell(docx, layout, 1, formData.caseReason, 2),
-      labelCell(docx, layout, 3, "單位"),
+      labelCell(docx, layout, 3, getFieldLabel("caseUnit")),
       textCell(docx, layout, 4, formData.caseUnit, 2),
     ]),
   ]);
@@ -355,11 +356,11 @@ const createCriminalTable = (docx, layout, item, formData, frameHeight) =>
       textCell(docx, layout, 0, `編號(${item.number})`, 1, docx.AlignmentType.CENTER),
       labelCell(docx, layout, 1, "照片日期"),
       textCell(docx, layout, 2, item.date, 2),
-      labelCell(docx, layout, 4, "攝影人"),
+      labelCell(docx, layout, 4, getFieldLabel("photographer")),
       textCell(docx, layout, 5, formData.caseNumber, 1, docx.AlignmentType.CENTER),
     ]),
     textRow(docx, [
-      labelCell(docx, layout, 0, "攝影地址"),
+      labelCell(docx, layout, 0, getFieldLabel("address")),
       textCell(docx, layout, 1, item.address, 5),
     ]),
     descriptionRow(docx, layout, item, "left"),

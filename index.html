@@ -50,7 +50,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.js" integrity="sha384-mjCisVk+9cQGYprByJbHxzwFO7BVEgR6iCftsCqnmHNKA8uzLYoRng5h1qKMvHjp" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js" integrity="sha384-KrOocIA+lZcNUz2MDavnT/FuX+CbTREJihUi0bp8QUSwhE2AkGTNpv2b7yMbBkx5" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="styles.css?v=20261121-13" />
+    <link rel="stylesheet" href="styles.css?v=20261123-1" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;600&amp;display=swap"
       rel="stylesheet"
@@ -357,16 +357,6 @@
           <div class="case-date-field" data-format="left middle">
           <div class="form-group-row" data-format="left middle">
             <label for="caseDate" id="dateLabelText">攝影日期（統一套用）</label>
-            <label class="switch">
-              <input
-                type="checkbox"
-                id="dateModeSwitch"
-                role="switch"
-                aria-label="自動帶入照片日期"
-              />
-              <span class="slider"></span>
-            </label>
-            <span id="dateModeLabel" class="disabled">自動帶入照片日期</span>
           </div>
           <div class="form-group" data-format="left middle">
             <input
@@ -376,6 +366,19 @@
               maxlength="80"
               placeholder="例：115年05月16日09時18分"
             />
+          </div>
+          <!-- 開關放在輸入框下面：文字較長，放在標籤同一列會在窄畫面擠成兩行 -->
+          <div class="date-mode-row" data-format="left middle">
+            <label class="switch">
+              <input
+                type="checkbox"
+                id="dateModeSwitch"
+                role="switch"
+                aria-labelledby="dateModeLabel"
+              />
+              <span class="slider"></span>
+            </label>
+            <label for="dateModeSwitch" id="dateModeLabel" class="disabled">自動帶入個別照片日期</label>
           </div>
           </div>
 
@@ -1344,7 +1347,7 @@
       </div>
     </div>
 
-    <script type="module" src="js/main.js?v=20261121-13"></script>
+    <script type="module" src="js/main.js?v=20261123-1"></script>
 
 
     <div id="consentModal" class="modal consent-modal" aria-hidden="true">

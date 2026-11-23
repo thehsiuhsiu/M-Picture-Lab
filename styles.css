@@ -874,6 +874,7 @@ html:not([data-theme-mode]) .theme-toggle-icon .theme-icon-system {
 }
 
 .form-group > label,
+.field-label-row > label,
 .sidebar-label,
 .form-group-row > label:first-child {
   color: var(--text-2);
@@ -894,6 +895,86 @@ html:not([data-theme-mode]) .theme-toggle-icon .theme-icon-system {
 #dateModeLabel {
   color: var(--text-2);
   font-size: 13px;
+  cursor: pointer;
+}
+
+/* 日期輸入框下方的「自動帶入個別照片日期」開關 */
+.date-mode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+  padding-left: 2px;
+}
+
+/* 可自訂的欄位名稱：名稱＋小鉛筆，點鉛筆就地改名 */
+.field-label-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 19.5px;
+}
+
+.field-label-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-3);
+  opacity: 0.55;
+}
+
+.field-label-row:hover .field-label-edit,
+.field-label-edit:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .field-label-edit:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
+}
+
+.field-label-edit:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.field-label-editor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-label-input {
+  width: 6.5em;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--accent-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--ring);
+  outline: none;
+}
+
+.field-label-reset {
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--accent-ink);
+  font-size: 12px;
 }
 
 #dateModeLabel.disabled {
@@ -2753,7 +2834,8 @@ html[data-theme="dark"] .app-dialog.tone-danger .delete-confirm-btn.confirm {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px 16px;
-  align-items: end;
+  /* 上緣對齊：日期欄下面多了「自動帶入個別照片日期」開關，其他欄位的名稱與輸入框仍和它同一高度 */
+  align-items: start;
   padding: 0 10px 10px;
 }
 
