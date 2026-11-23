@@ -1,6 +1,11 @@
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-13";
-import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261121-13";
-import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261121-13";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261123-1";
+import { IMAGE_SECURITY_LIMITS } from "./imageHandler.js?v=20261123-1";
+import { PROJECT_CHANGED_EVENT } from "./projectEvents.js?v=20261123-1";
+import {
+  DEFAULT_FIELD_LABELS,
+  FIELD_LABEL_KEYS,
+  normalizeFieldLabels,
+} from "./fieldLabels.js?v=20261123-1";
 import {
   createObjectUrl,
   revokeObjectUrl,
@@ -9,10 +14,10 @@ import {
   showPromptDialog,
   showToast,
   showUndoToast,
-} from "./utils.js?v=20261121-13";
-import { normalizeAnnotations, normalizeAspect } from "./annotations.js?v=20261121-13";
-import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261121-13";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261121-13";
+} from "./utils.js?v=20261123-1";
+import { normalizeAnnotations, normalizeAspect } from "./annotations.js?v=20261123-1";
+import { normalizePhotoStartNumber } from "./photoNumbering.js?v=20261123-1";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261123-1";
 
 const DATABASE_NAME = "mpicture-local-projects-v1";
 const DATABASE_VERSION = 3;
@@ -623,6 +628,7 @@ const normalizeProjectStructure = (rawProject) => {
       "photoStartNumber",
       "pdfPageNumberEnabled",
       "pdfPageStartNumber",
+      "fieldLabels",
     ]),
     "專案設定",
   );
@@ -706,6 +712,7 @@ const normalizeProjectStructure = (rawProject) => {
         9999,
         "PDF 頁碼起始編號",
       ),
+      fieldLabels: readFieldLabels(settings.fieldLabels),
     },
     images,
   };
@@ -750,6 +757,7 @@ const captureProject = () => {
       pdfPageStartNumber: normalizePdfPageStartNumber(
         document.getElementById("pdfPageStartNumber")?.value || 1,
       ),
+      fieldLabels: normalizeFieldLabels(state.fieldLabels),
     },
     images: state.selectedImages.map((image) => ({
       name: image.name,
@@ -776,6 +784,17 @@ const captureProject = () => {
   };
 };
 
+/** 欄位名稱：舊專案沒有這項時用預設；只接受四個已知欄位、每個是短字串 */
+const readFieldLabels = (value) => {
+  if (value === undefined) return normalizeFieldLabels();
+  const labels = requirePlainObject(value, "欄位名稱");
+  assertOnlyKeys(labels, new Set(FIELD_LABEL_KEYS), "欄位名稱");
+  FIELD_LABEL_KEYS.forEach((key) => {
+    if (labels[key] !== undefined) requireString(labels[key], 20, "欄位名稱");
+  });
+  return normalizeFieldLabels(labels);
+};
+
 const hasMeaningfulContent = (project) => {
   return (
     project.images.length > 0 ||
@@ -788,7 +807,10 @@ const hasMeaningfulContent = (project) => {
     project.settings.multiPhotoOrder !== "horizontal" ||
     project.settings.photoStartNumber !== 1 ||
     project.settings.pdfPageNumberEnabled ||
-    project.settings.pdfPageStartNumber !== 1
+    project.settings.pdfPageStartNumber !== 1 ||
+    FIELD_LABEL_KEYS.some(
+      (key) => project.settings.fieldLabels[key] !== DEFAULT_FIELD_LABELS[key],
+    )
   );
 };
 
@@ -1405,6 +1427,7 @@ const createEmptyProject = () => ({
     photoStartNumber: 1,
     pdfPageNumberEnabled: false,
     pdfPageStartNumber: 1,
+    fieldLabels: normalizeFieldLabels(),
   },
   images: [],
 });

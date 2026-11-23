@@ -18,6 +18,7 @@ export const state = {
   imageRotations: {}, // 儲存圖片旋轉角度，以 image id 為 key
   imageAnnotations: {}, // 儲存照片標記（與原圖分開），以 image id 為 key
   imageAspects: {}, // 儲存照片的調整比例 [寬, 高]（與原圖分開），以 image id 為 key
+  fieldLabels: null, // 案件資料的欄位名稱（可依專案自訂），見 fieldLabels.js
   customDocTitles: {
     left: "刑案照片黏貼表",
     middle: "非道路交通事故照片黏貼紀錄表",

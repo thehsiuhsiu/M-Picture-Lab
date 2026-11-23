@@ -1,6 +1,6 @@
 ﻿// main.js - 主入口模組
 
-import { state } from "./state.js?v=20261121-13";
+import { state } from "./state.js?v=20261123-1";
 import {
   handleImageSelection,
   handleViewModeChange,
@@ -14,33 +14,34 @@ import {
   updateExifDateWarnings,
   refreshDisplayedPhotoNumbers,
   getLastPhotoViewMode,
-} from "./imageHandler.js?v=20261121-13";
-import { handleGenerateWrapper } from "./docxGenerator.js?v=20261121-13";
-import { initLineLimitHints } from "./lineLimitHints.js?v=20261121-13";
-import { handleGeneratePDF } from "./pdfGenerator.js?v=20261121-13";
-import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261121-13";
-import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261121-13";
-import { initGooglePhotosImport } from "./googlePhotos.js?v=20261121-13";
+} from "./imageHandler.js?v=20261123-1";
+import { handleGenerateWrapper } from "./docxGenerator.js?v=20261123-1";
+import { initLineLimitHints } from "./lineLimitHints.js?v=20261123-1";
+import { handleGeneratePDF } from "./pdfGenerator.js?v=20261123-1";
+import { handleGeneratePdfFile } from "./pdfFileGenerator.js?v=20261123-1";
+import { EMPTY_STATE_HTML, showToast, createObjectUrl } from "./utils.js?v=20261123-1";
+import { initGooglePhotosImport } from "./googlePhotos.js?v=20261123-1";
 import {
   initProjectPersistence,
   shouldWarnBeforeUnload,
-} from "./projectPersistence.js?v=20261121-13";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261121-13";
-import { initAnnotationEditor } from "./annotationEditor.js?v=20261121-13";
-import { createAnnotatedBlob, needsComposite } from "./annotations.js?v=20261121-13";
-import { initDocumentPreview } from "./documentPreview.js?v=20261121-13";
-import { attachDatePicker } from "./datePicker.js?v=20261121-13";
+} from "./projectPersistence.js?v=20261123-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261123-1";
+import { initAnnotationEditor } from "./annotationEditor.js?v=20261123-1";
+import { createAnnotatedBlob, needsComposite } from "./annotations.js?v=20261123-1";
+import { initDocumentPreview } from "./documentPreview.js?v=20261123-1";
+import { attachDatePicker } from "./datePicker.js?v=20261123-1";
+import { applyFieldLabels, setupFieldLabelEditors } from "./fieldLabels.js?v=20261123-1";
 import {
   getPhotoNumber,
   normalizePhotoStartNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261121-13";
-import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261121-13";
-import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261121-13";
+} from "./photoNumbering.js?v=20261123-1";
+import { normalizePdfPageStartNumber } from "./pageNumbering.js?v=20261123-1";
+import { initLongScreenshotSplitter } from "./longScreenshotSplitter.js?v=20261123-1";
 import {
   confirmSplitOrderBeforeExport,
   initSplitOrderManager,
-} from "./splitOrderManager.js?v=20261121-13";
+} from "./splitOrderManager.js?v=20261123-1";
 
 const initEmptyState = () => {
   const imagePreview = document.getElementById("imagePreview");
@@ -456,6 +457,8 @@ const applyProjectSnapshot = async (project) => {
     if (element) element.value = value;
   });
 
+  applyFieldLabels(project.settings.fieldLabels);
+
   state.customDocTitles.left = project.titles.left;
   state.customDocTitles.middle = project.titles.middle;
   state.customDocTitles.right = project.titles.right;
@@ -510,12 +513,7 @@ const updateSidebarFields = (format) => {
   });
 
   const dateLabelText = document.getElementById("dateLabelText");
-  const addressLabelText = document.getElementById("addressLabelText");
-  const personLabelText = document.getElementById("personLabelText");
-
   if (dateLabelText) dateLabelText.textContent = "攝影日期（統一套用）";
-  if (addressLabelText) addressLabelText.textContent = "攝影地址";
-  if (personLabelText) personLabelText.textContent = "攝影人員";
 };
 
 const initDocumentTitles = () => {
@@ -871,7 +869,7 @@ const setupDateModeSwitch = () => {
 
   function setDateInputMode() {
     dateInput.disabled = false;
-    dateModeLabel.textContent = "自動帶入照片日期";
+    dateModeLabel.textContent = "自動帶入個別照片日期";
     dateModeLabel.classList.toggle("disabled", !dateSwitch.checked);
     updateExifDateWarnings();
   }
@@ -1357,6 +1355,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initSplitOrderManager();
   setupEventListeners();
   setupSidebarInputs();
+  setupFieldLabelEditors();
   setupDateModeSwitch();
   setupMultiPhotoSettings();
   setupPhotoNumbering();

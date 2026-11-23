@@ -1,6 +1,6 @@
 ﻿// imageHandler.js - 圖片處理模組
 
-import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261121-13";
+import { state, ACCIDENT_TAG_OPTIONS } from "./state.js?v=20261123-1";
 import {
   createThumbnail,
   formatExifDate,
@@ -14,19 +14,19 @@ import {
   showDialog,
   showNotice,
   showToast,
-} from "./utils.js?v=20261121-13";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261121-13";
-import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261121-13";
+} from "./utils.js?v=20261123-1";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261123-1";
+import { updateSplitOrderWarning } from "./splitOrderManager.js?v=20261123-1";
 import {
   getPhotoNumber,
   updatePhotoNumberingWarning,
-} from "./photoNumbering.js?v=20261121-13";
+} from "./photoNumbering.js?v=20261123-1";
 import {
   acceptCurrentSplitGroupForImages,
   flattenSplitGroupReplacement,
-} from "./splitGroupLogic.js?v=20261121-13";
-import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261121-13";
-import { updateLineHint } from "./lineLimitHints.js?v=20261121-13";
+} from "./splitGroupLogic.js?v=20261123-1";
+import { getMissingOutputDateEntries } from "./dateValidation.js?v=20261123-1";
+import { updateLineHint } from "./lineLimitHints.js?v=20261123-1";
 import {
   createAnnotatedBlob,
   getDisplaySize,
@@ -38,9 +38,10 @@ import {
   rotateAnnotations,
   releaseAnnotatedPreview,
   swapAspect,
-} from "./annotations.js?v=20261121-13";
-import { openAnnotationEditor } from "./annotationEditor.js?v=20261121-13";
-import { attachDatePicker } from "./datePicker.js?v=20261121-13";
+} from "./annotations.js?v=20261123-1";
+import { openAnnotationEditor } from "./annotationEditor.js?v=20261123-1";
+import { attachDatePicker } from "./datePicker.js?v=20261123-1";
+import { photoAddressPlaceholder } from "./fieldLabels.js?v=20261123-1";
 
 export const IMAGE_SECURITY_LIMITS = Object.freeze({
   maxCount: 500,
@@ -918,7 +919,7 @@ const addImageToPreview = (imageData, counter) => {
   addressInput.type = "text";
   addressInput.className = "image-address-input";
   addressInput.maxLength = 500;
-  addressInput.placeholder = "攝影地址（留空時使用案件資料）";
+  addressInput.placeholder = photoAddressPlaceholder();
   addressInput.value = state.imageAddresses[imageData.id] || "";
   addressInput.dataset.lineField = "address";
   addressInput.dataset.lineFormats = "left";
