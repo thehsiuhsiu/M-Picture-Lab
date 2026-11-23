@@ -1,7 +1,7 @@
 // fieldLabels.js：案件資料的欄位名稱（網頁上和文件表格裡用同一個名稱，可依專案自訂）
 
-import { state } from "./state.js?v=20261123-1";
-import { notifyProjectChanged } from "./projectEvents.js?v=20261123-1";
+import { state } from "./state.js?v=20261123-2";
+import { notifyProjectChanged } from "./projectEvents.js?v=20261123-2";
 
 export const DEFAULT_FIELD_LABELS = Object.freeze({
   caseReason: "案由",
